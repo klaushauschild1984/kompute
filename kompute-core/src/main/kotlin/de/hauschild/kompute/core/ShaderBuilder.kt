@@ -1,21 +1,13 @@
 package de.hauschild.kompute.core
 
 interface ShaderBuilder {
-    fun inputBuffer(
-        name: String,
-        data: FloatArray,
-    ): ShaderBuilder
+    fun input(name: String): InputBuilder
 
-    fun outputBuffer(
-        name: String,
-        data: FloatArray,
-    ): ShaderBuilder
+    fun output(name: String): OutputBuilder
 
     fun dispatch(
         x: Int,
-        y: Int,
-        z: Int,
-    ): ShaderBuilder
-
-    fun execute(): ShaderResult
+        y: Int = 1,
+        z: Int = 1,
+    ): DispatchBuilder
 }

@@ -5,5 +5,5 @@ interface Backend : AutoCloseable {
 
     fun initialize()
 
-    fun shader(path: String): ShaderBuilder
+    fun shader(source: ShaderSource): ShaderBuilder
 }
