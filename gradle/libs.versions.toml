@@ -1,10 +1,12 @@
 [versions]
 kotlin = "2.1.0"
+kotlin-logging = "7.0.3"
 ktlint-plugin = "12.1.0"
 ktlint = "1.4.1"
 lwjgl = "3.3.4"
 
 [libraries]
+kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
 lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 

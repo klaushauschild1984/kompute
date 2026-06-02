@@ -1,5 +1,23 @@
 package de.hauschild.kompute.core
 
-interface Kompute : AutoCloseable {
-    fun shader(path: String): ShaderBuilder
+import de.hauschild.kompute.core.Backend.Type
+import java.util.ServiceLoader
+
+object Kompute {
+    @JvmStatic
+    fun kotlin(): Backend = load(Type.Kotlin)
+
+    @JvmStatic
+    fun openGL(): Backend = load(Type.OpenGL)
+
+    private fun load(type: Type): Backend {
+        val backend = (
+            ServiceLoader
+                .load(Backend::class.java)
+                .firstOrNull { it.type() == type }
+                ?: error("No Backend found for $type")
+        )
+        backend.initialize()
+        return backend
+    }
 }
