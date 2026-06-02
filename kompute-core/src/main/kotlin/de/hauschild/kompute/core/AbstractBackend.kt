@@ -11,7 +11,7 @@ abstract class AbstractBackend : Backend {
         if (initialized) {
             throw IllegalStateException("Backend already initialized")
         }
-        logger.debug { "Initializing ${this::class.simpleName}" }
+        logger.debug { "Initializing ${this::class.simpleName} v${BuildInfo.VERSION}" }
         doInitialize()
         initialized = true
     }

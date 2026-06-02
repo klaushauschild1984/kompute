@@ -6,10 +6,4 @@ interface Backend : AutoCloseable {
     fun initialize()
 
     fun shader(path: String): ShaderBuilder
-
-    sealed interface Type {
-        data object OpenGL : Type
-
-        data object Kotlin : Type
-    }
 }

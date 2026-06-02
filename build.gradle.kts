@@ -1,1 +1,3 @@
-// Submodule konfigurieren sich über kompute.kotlin-conventions
+allprojects {
+    version = "0.0.0-SNAPSHOT"
+}

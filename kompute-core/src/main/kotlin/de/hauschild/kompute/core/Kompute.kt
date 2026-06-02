@@ -1,6 +1,5 @@
 package de.hauschild.kompute.core
 
-import de.hauschild.kompute.core.Backend.Type
 import java.util.ServiceLoader
 
 object Kompute {
