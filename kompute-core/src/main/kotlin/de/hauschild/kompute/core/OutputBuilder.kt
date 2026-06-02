@@ -4,6 +4,7 @@ package de.hauschild.kompute.core
  * Configures output data.
  */
 class OutputBuilder(
+    private val index: Int,
     private val name: String,
     private val context: ExecutionContext,
     private val executor: (ExecutionContext) -> ShaderResult,
@@ -13,7 +14,7 @@ class OutputBuilder(
      * @param data the float array to use for the buffer
      */
     fun buffer(data: FloatArray): ShaderBuilder {
-        context.outputs[name] = data
+        context.outputs[index to name] = data
         return ShaderBuilder(context, executor)
     }
 }

@@ -4,7 +4,7 @@ package de.hauschild.kompute.core
  * Configures input data.
  */
 class InputBuilder(
-    private val name: String,
+    private val index: Int,
     private val context: ExecutionContext,
     private val executor: (ExecutionContext) -> ShaderResult,
 ) {
@@ -13,7 +13,7 @@ class InputBuilder(
      * @param data the float array to use for the buffer
      */
     fun buffer(data: FloatArray): ShaderBuilder {
-        context.inputs[name] = data
+        context.inputs[index] = data
         return ShaderBuilder(context, executor)
     }
 }
