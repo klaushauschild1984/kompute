@@ -8,6 +8,7 @@ import de.hauschild.kompute.core.Type
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil.NULL
 
 class OpenGLBackend : AbstractBackend() {
@@ -37,7 +38,42 @@ class OpenGLBackend : AbstractBackend() {
     }
 
     override fun execute(context: ExecutionContext): ShaderResult {
-        TODO("Not yet implemented")
+        val results = mutableMapOf<String, FloatArray>()
+        Shader(context.source).use { shader ->
+            shader.compile()
+            Program(shader).use { program ->
+                program.link()
+
+                val inputs =
+                    context.inputs.map { (index, data) ->
+                        val buffer = Buffer(index, data)
+                        buffer.bindAsInput()
+                        buffer
+                    }
+                val outputs =
+                    context.outputs.mapValues { (binding, data) ->
+                        val (index, name) = binding
+                        val buffer = Buffer(index, data, name)
+                        buffer.bindAsOutput()
+                        buffer
+                    }
+
+                program.activate()
+
+                logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
+                GL43.glDispatchCompute(context.x, context.y, context.z)
+                GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
+
+                inputs.forEach { it.close() }
+                outputs.forEach { (binding, buffer) ->
+                    val (_, name) = binding
+                    results[name] = buffer.read()
+                    buffer.close()
+                }
+            }
+        }
+
+        return ShaderResult(results)
     }
 
     override fun close() {
