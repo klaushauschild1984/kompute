@@ -18,4 +18,11 @@ abstract class AbstractBackend : Backend {
     }
 
     abstract fun doInitialize()
+
+    override fun shader(source: ShaderSource): ShaderBuilder {
+        val context = ExecutionContext(source)
+        return ShaderBuilder(context) { ctx -> execute(ctx) }
+    }
+
+    abstract fun execute(context: ExecutionContext): ShaderResult
 }

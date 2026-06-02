@@ -1,9 +1,9 @@
 package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.AbstractBackend
+import de.hauschild.kompute.core.ExecutionContext
 import de.hauschild.kompute.core.InternalApi
-import de.hauschild.kompute.core.ShaderBuilder
-import de.hauschild.kompute.core.ShaderSource
+import de.hauschild.kompute.core.ShaderResult
 import de.hauschild.kompute.core.Type
 
 class OpenGLBackend : AbstractBackend() {
@@ -12,7 +12,9 @@ class OpenGLBackend : AbstractBackend() {
 
     override fun doInitialize() = Unit
 
-    override fun shader(source: ShaderSource): ShaderBuilder = TODO("Not yet implemented")
+    override fun execute(context: ExecutionContext): ShaderResult {
+        TODO("Not yet implemented")
+    }
 
     override fun close() = Unit
 }
