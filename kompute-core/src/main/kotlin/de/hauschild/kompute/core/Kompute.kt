@@ -9,6 +9,7 @@ object Kompute {
     @JvmStatic
     fun openGL(): Backend = load(Type.OpenGL)
 
+    @OptIn(InternalApi::class)
     private fun load(type: Type): Backend {
         val backend = (
             ServiceLoader

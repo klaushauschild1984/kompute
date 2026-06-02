@@ -7,6 +7,7 @@ abstract class AbstractBackend : Backend {
 
     private var initialized = false
 
+    @InternalApi
     override fun initialize() {
         if (initialized) {
             throw IllegalStateException("Backend already initialized")

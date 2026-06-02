@@ -17,6 +17,6 @@ Kompute.openGL().use { backend ->
         .output("result").buffer(FloatArray(4))
         .dispatch(4)
         .execute()
-        .getOutput<FloatArray>("result")
+        .output("result")
 }
 ```
