@@ -1,0 +1,13 @@
+[versions]
+kotlin = "2.1.0"
+ktlint-plugin = "12.1.0"
+ktlint = "1.4.1"
+lwjgl = "3.3.4"
+
+[libraries]
+lwjgl = { module = "org.lwjgl:lwjgl", version.ref = "lwjgl" }
+lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }
