@@ -12,9 +12,9 @@ Buffer names in Kotlin must match the binding names declared in the GLSL shader 
 ```kotlin
 Kompute.openGL().use { backend ->
     val result = backend.shader(ShaderSource.File(Path.of("shaders/multiply.glsl")))
-        .input("data").buffer(floatArrayOf(1f, 2f, 3f, 4f))
-        .input("factor").buffer(floatArrayOf(2f))
-        .output("result").buffer(FloatArray(4))
+        .input(0).buffer(floatArrayOf(1f, 2f, 3f, 4f))
+        .input(1).buffer(floatArrayOf(2f))
+        .output(2, "result").buffer(FloatArray(4))
         .dispatch(4)
         .execute()
         .output("result")
