@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm")
+    id("io.gitlab.arturbosch.detekt")
     id("org.jlleitschuh.gradle.ktlint")
     id("jacoco")
 }
@@ -47,6 +48,17 @@ tasks.jacocoTestReport {
     reports {
         html.required = true
         csv.required = true
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+}
+
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+    reports {
+        html.required = true
+        sarif.required = true
     }
 }
 

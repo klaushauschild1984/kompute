@@ -28,7 +28,7 @@ abstract class AbstractBackend : Backend {
     @InternalApi
     override fun initialize() {
         if (initialized) {
-            throw IllegalStateException("Backend already initialized")
+            error("Backend already initialized")
         }
         logger.debug { "Initializing ${this::class.simpleName} v${BuildInfo.VERSION}" }
         doInitialize()

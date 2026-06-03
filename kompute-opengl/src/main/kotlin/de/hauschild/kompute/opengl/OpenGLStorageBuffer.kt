@@ -39,7 +39,7 @@ class OpenGLStorageBuffer(
         logger.trace {
             """
             Data:
-            ${buffer.take(100).joinToString(", ")}
+            ${buffer.take(MAX_TRACE_ELEMENTS).joinToString(", ")}
             """.trimIndent()
         }
         return buffer
@@ -54,5 +54,6 @@ class OpenGLStorageBuffer(
 
     companion object {
         private val logger = KotlinLogging.logger {}
+        private const val MAX_TRACE_ELEMENTS = 100
     }
 }

@@ -15,6 +15,11 @@ import org.lwjgl.system.MemoryUtil.NULL
 class OpenGLBackend : AbstractBackend() {
     private var window: Long = NULL
 
+    companion object {
+        private const val OPENGL_VERSION_MAJOR = 4
+        private const val OPENGL_VERSION_MINOR = 3
+    }
+
     @InternalApi
     override fun type(): Type = Type.OpenGL
 
@@ -22,8 +27,8 @@ class OpenGLBackend : AbstractBackend() {
         if (!GLFW.glfwInit()) error("Failed to initialize GLFW")
         GLFW.glfwDefaultWindowHints()
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4)
-        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 3)
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR)
+        GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
 
         window = GLFW.glfwCreateWindow(1, 1, "Kompute", NULL, NULL)
@@ -39,37 +44,41 @@ class OpenGLBackend : AbstractBackend() {
     }
 
     override fun execute(context: ExecutionContext): ShaderResult {
-        val results = mutableMapOf<String, FloatArray>()
         OpenGLShader(context.source).use { shader ->
             shader.compile()
             OpenGLProgram(shader).use { program ->
                 program.link()
+                program.activate()
 
-                val storageBuffer = mutableListOf<OpenGLStorageBuffer>()
-                context.data.forEach { shaderData ->
-                    when (shaderData) {
-                        is StorageBuffer -> storageBuffer.add(OpenGLStorageBuffer(shaderData))
-                    }
-                }
+                return ShaderResult(dispatch(context))
+            }
+        }
+    }
 
-                try {
-                    storageBuffer.forEach { buffer -> buffer.bind() }
+    private fun dispatch(context: ExecutionContext): Map<String, FloatArray> {
+        val results = mutableMapOf<String, FloatArray>()
 
-                    program.activate()
-
-                    logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
-                    GL43.glDispatchCompute(context.x, context.y, context.z)
-                    GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
-                    storageBuffer
-                        .filter { buffer -> buffer.isOutput() }
-                        .forEach { buffer -> results[buffer.outputName()] = buffer.read() }
-                } finally {
-                    storageBuffer.forEach { it.close() }
-                }
+        val storageBuffer = mutableListOf<OpenGLStorageBuffer>()
+        context.data.forEach { shaderData ->
+            when (shaderData) {
+                is StorageBuffer -> storageBuffer.add(OpenGLStorageBuffer(shaderData))
             }
         }
 
-        return ShaderResult(results)
+        try {
+            storageBuffer.forEach { buffer -> buffer.bind() }
+
+            logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
+            GL43.glDispatchCompute(context.x, context.y, context.z)
+            GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
+            storageBuffer
+                .filter { buffer -> buffer.isOutput() }
+                .forEach { buffer -> results[buffer.outputName()] = buffer.read() }
+
+            return results
+        } finally {
+            storageBuffer.forEach { it.close() }
+        }
     }
 
     override fun close() {

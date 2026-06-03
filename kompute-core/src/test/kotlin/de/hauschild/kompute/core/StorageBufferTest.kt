@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 class StorageBufferTest {
     @ParameterizedTest(name = "{2}")
     @MethodSource
+    @Suppress("UnusedParameter")
     fun validate(
         buffer: ShaderData.StorageBuffer,
         validExpected: Boolean,

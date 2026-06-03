@@ -1,4 +1,5 @@
 [versions]
+detekt = "1.23.7"
 jmh = "0.7.2"
 kotlin = "2.1.0"
 kotlin-logging = "7.0.3"
@@ -13,6 +14,7 @@ lwjgl-glfw = { module = "org.lwjgl:lwjgl-glfw", version.ref = "lwjgl" }
 lwjgl-opengl = { module = "org.lwjgl:lwjgl-opengl", version.ref = "lwjgl" }
 
 [plugins]
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 jmh = { id = "me.champeau.jmh", version.ref = "jmh" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }
