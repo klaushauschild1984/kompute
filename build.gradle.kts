@@ -20,10 +20,10 @@ tasks.register<JacocoReport>("jacocoAggregatedReport") {
         ":kompute-opengl:jacocoTestReport",
     )
 
-    executionData.from(fileTree(rootDir) {
-        include("**/build/jacoco/test.exec")
-        exclude("kompute-benchmark/**", "kompute-kotlin/**")
-    })
+    executionData.from(
+        project(":kompute-core").layout.buildDirectory.file("jacoco/test.exec"),
+        project(":kompute-opengl").layout.buildDirectory.file("jacoco/test.exec"),
+    )
 
     sourceDirectories.from(
         project(":kompute-core").file("src/main/kotlin"),
