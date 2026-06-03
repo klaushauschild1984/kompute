@@ -1,3 +1,3 @@
 rootProject.name = "kompute"
 
-include("kompute-core", "kompute-opengl", "kompute-kotlin")
+include("kompute-core", "kompute-opengl", "kompute-benchmark")
