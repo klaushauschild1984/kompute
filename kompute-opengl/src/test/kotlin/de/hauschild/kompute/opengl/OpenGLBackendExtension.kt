@@ -14,25 +14,25 @@ class OpenGLBackendExtension :
     ParameterResolver {
     override fun beforeAll(context: ExtensionContext?) {
         val backend = Kompute.openGL()
-        context!!.getStore(NAMESPACE).put(BACKEND, backend)
+        requireNotNull(context).getStore(NAMESPACE).put(BACKEND, backend)
     }
 
     override fun afterAll(context: ExtensionContext?) {
-        context!!.getStore(NAMESPACE).get(BACKEND, Backend::class.java).close()
+        requireNotNull(context).getStore(NAMESPACE).get(BACKEND, Backend::class.java).close()
     }
 
     override fun supportsParameter(
         parameterContext: ParameterContext?,
         extensionContext: ExtensionContext?,
-    ): Boolean = parameterContext!!.parameter!!.type == Backend::class.java
+    ): Boolean = requireNotNull(parameterContext).parameter.type == Backend::class.java
 
     override fun resolveParameter(
         parameterContext: ParameterContext?,
         extensionContext: ExtensionContext?,
-    ): Any? = extensionContext!!.getStore(NAMESPACE)!!.get(BACKEND, Backend::class.java)
+    ): Any? = requireNotNull(extensionContext).getStore(NAMESPACE).get(BACKEND, Backend::class.java)
 
     companion object {
         const val BACKEND = "backend"
-        val NAMESPACE: ExtensionContext.Namespace? = ExtensionContext.Namespace.create(OpenGLBackendExtension::class)
+        val NAMESPACE: ExtensionContext.Namespace = ExtensionContext.Namespace.create(OpenGLBackendExtension::class)
     }
 }
