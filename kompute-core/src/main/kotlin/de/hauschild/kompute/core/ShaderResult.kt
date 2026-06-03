@@ -1,14 +1,22 @@
 package de.hauschild.kompute.core
 
 /**
- * Triggers the execution of the configured compute shader.
+ * Holds the output data from a compute shader execution.
+ *
+ * Contains all storage buffers that were marked as output via [ShaderData.StorageBuffer.asOutput].
+ * Use [storageBuffer] to retrieve computed results by their registered name.
  */
 class ShaderResult(
-    private val outputs: Map<String, FloatArray>,
+    private val storageBuffer: Map<String, FloatArray>,
 ) {
     /**
-     * Retrieve the output parameter with the given name.
-     * @param name the name of the output parameter to retrieve
+     * Retrieves the output storage buffer with the given name.
+     *
+     * The name must match the one specified via [ShaderData.StorageBuffer.asOutput].
+     *
+     * @param name the output name to retrieve
+     * @return the computed float data from the GPU
+     * @throws IllegalStateException if no output with the given name exists
      */
-    fun output(name: String): FloatArray = outputs[name] ?: error("No output named '$name'")
+    fun storageBuffer(name: String): FloatArray = storageBuffer[name] ?: error("No output named '$name'")
 }
