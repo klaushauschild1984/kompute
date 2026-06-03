@@ -5,7 +5,9 @@
         </encoder>
     </appender>
 
-    <root level="DEBUG">
+    <root level="INFO">
         <appender-ref ref="CONSOLE"/>
     </root>
+
+    <logger name="de.hauschild.kompute" level="INFO"/>
 </configuration>
