@@ -20,3 +20,22 @@ Kompute.openGL().use { backend ->
         .output("result")
 }
 ```
+
+## TODOs
+
+A collection of topics I want to address in the future enhancing the library.
+
+* [ ] API
+  * [ ] specific exception handling
+  * [ ] binding validation (collisions, shader inspection)
+  * [ ] generalize buffer setup (SSBO ↔ UBO, just size scalar uniform)
+* [ ] OpenGL
+  * [ ] optimization
+    * [ ] shader caching
+    * [ ] pre-compilation
+    * [ ] multi-dispatch
+* [ ] Vulkan
+  * [ ] general implementation
+* [ ] Benchmarking
+  * [ ] Mandelbrot-Set (plus visualization)
+  * [ ] Monte-Carlo Pi calculation
