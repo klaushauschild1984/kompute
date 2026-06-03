@@ -16,6 +16,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("ch.qos.logback:logback-classic:1.5.18")
 }
 
