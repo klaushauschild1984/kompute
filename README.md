@@ -13,9 +13,78 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 - JDK 21+
 - OpenGL 4.3+ capable GPU
-- Linux (Windows and macOS support planned)
+- Linux or Windows
+
+> **macOS:** OpenGL support on macOS is limited to 4.1 — compute shaders require 4.3 and are therefore not supported.
+> macOS support depends on the upcoming Vulkan backend.
+
+## Getting Started
+
+Add the JitPack repository and the dependency to your build.
+
+> **Note:** LWJGL native bindings are not included transitively — add the ones matching your target platform.
+
+### Gradle (Kotlin DSL)
+
+```kotlin
+repositories {
+    maven("https://jitpack.io")
+}
+
+dependencies {
+    implementation("com.github.klaushauschild1984.kompute:kompute-opengl:v0.1.0")
+
+    runtimeOnly("org.lwjgl:lwjgl:3.3.4:natives-linux")
+    runtimeOnly("org.lwjgl:lwjgl-glfw:3.3.4:natives-linux")
+    runtimeOnly("org.lwjgl:lwjgl-opengl:3.3.4:natives-linux")
+}
+```
+
+### Maven
+
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+<dependencies>
+    <dependency>
+        <groupId>com.github.klaushauschild1984.kompute</groupId>
+        <artifactId>kompute-opengl</artifactId>
+        <version>v0.1.0</version>
+    </dependency>
+    <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl</artifactId>
+        <version>3.3.4</version>
+        <classifier>natives-linux</classifier>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-glfw</artifactId>
+        <version>3.3.4</version>
+        <classifier>natives-linux</classifier>
+        <scope>runtime</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.lwjgl</groupId>
+        <artifactId>lwjgl-opengl</artifactId>
+        <version>3.3.4</version>
+        <classifier>natives-linux</classifier>
+        <scope>runtime</scope>
+    </dependency>
+</dependencies>
+```
 
 ## Usage
+
+Select a backend, attach a compute shader, configure storage buffers, dispatch and read results.
+
+### Kotlin
 
 ```kotlin
 Kompute.openGL().use { openGL ->
@@ -28,6 +97,22 @@ Kompute.openGL().use { openGL ->
         .dispatch(x = 64)
         .execute()
     println(result.storageBuffer("result").contentToString())
+}
+```
+
+### Java
+
+```java
+try (Backend backend = Kompute.openGL()) {
+    float[] result = backend
+        .shader(new ShaderSource.Code(glslCode))
+        .data(
+            new ShaderData.StorageBuffer(0).data(input),
+            new ShaderData.StorageBuffer(1).size(128).asOutput("result")
+        )
+        .dispatch(64)
+        .execute()
+        .storageBuffer("result");
 }
 ```
 
@@ -112,6 +197,19 @@ A collection of topics I want to address in the future enhancing the library.
 * [ ] Showcasing
   * [ ] Mandelbrot-Set (plus visualization)
   * [ ] Monte-Carlo Pi calculation
+
+## Milestones
+
+| Version  | Focus |
+|----------|-------|
+| `v0.1.0` | OpenGL Storage Buffer — initial release |
+| `v0.2.0` | UBO + scalar uniform support |
+| `v0.3.0` | Windows support |
+| `v0.4.0` | `image2D` support |
+| `v0.5.0` | OpenGL optimizations (shader caching, pre-compilation, multi-dispatch) |
+| `v0.6.0` | Stability (exception handling, binding validation) |
+| `v0.7.0` | Vulkan backend |
+| `v1.0.0` | Stable, complete API |
 
 ## Contributing
 
