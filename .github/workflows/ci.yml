@@ -34,12 +34,19 @@ jobs:
               env:
                   LIBGL_ALWAYS_SOFTWARE: "1"
 
-            -   name: Upload Detekt results
-                uses: github/codeql-action/upload-sarif@v3
+            -   name: Upload Detekt results (core)
+                uses: github/codeql-action/upload-sarif@v4
                 if: always()
                 with:
-                    sarif_file: ${{ github.workspace }}
-                    category: detekt
+                    sarif_file: kompute-core/build/reports/detekt/detekt.sarif
+                    category: detekt-core
+
+            -   name: Upload Detekt results (opengl)
+                uses: github/codeql-action/upload-sarif@v4
+                if: always()
+                with:
+                    sarif_file: kompute-opengl/build/reports/detekt/detekt.sarif
+                    category: detekt-opengl
 
             -   name: Test Report
                 uses: dorny/test-reporter@v1
