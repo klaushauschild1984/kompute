@@ -1,5 +1,6 @@
 package de.hauschild.kompute.benchmark
 
+import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import de.hauschild.kompute.core.ShaderSource.Stream
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
@@ -48,15 +49,13 @@ open class MatrixMultiplyBenchmark {
                     MatrixMultiplyBenchmark::class.java
                         .getResourceAsStream("matrix-multiply.glsl")!!,
                 ),
-            ).input(0)
-            .buffer(matrix.a)
-            .input(1)
-            .buffer(matrix.b)
-            .output(2, "c")
-            .buffer(matrix.c)
-            .dispatch(matrix.size / 8, matrix.size / 8)
+            ).data(
+                StorageBuffer(0).data(matrix.a),
+                StorageBuffer(1).data(matrix.b),
+                StorageBuffer(2).size(matrix.size * matrix.size).asOutput("c"),
+            ).dispatch(matrix.size / 8, matrix.size / 8)
             .execute()
-            .output("c")
+            .storageBuffer("c")
 
     @State(Scope.Benchmark)
     open class MatrixState {
@@ -65,13 +64,11 @@ open class MatrixMultiplyBenchmark {
 
         lateinit var a: FloatArray
         lateinit var b: FloatArray
-        lateinit var c: FloatArray
 
         @Setup(Level.Trial)
         fun setup() {
             a = FloatArray(size * size) { it.toFloat() }
             b = FloatArray(size * size) { it.toFloat() }
-            c = FloatArray(size * size)
         }
     }
 }
