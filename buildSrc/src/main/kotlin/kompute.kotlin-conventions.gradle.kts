@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm")
     id("org.jlleitschuh.gradle.ktlint")
+    id("jacoco")
 }
 
 group = "de.hauschild.kompute"
@@ -59,6 +60,14 @@ tasks.test {
     useJUnitPlatform()
     testLogging {
         showStandardStreams = true
+    }
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        html.required.set(true)
     }
 }
 
