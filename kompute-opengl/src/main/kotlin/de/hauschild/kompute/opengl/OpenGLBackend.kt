@@ -60,15 +60,16 @@ class OpenGLBackend : AbstractBackend() {
 
                 program.activate()
 
-                logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
-                GL43.glDispatchCompute(context.x, context.y, context.z)
-                GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
-
-                inputs.forEach { it.close() }
-                outputs.forEach { (binding, buffer) ->
-                    val (_, name) = binding
-                    results[name] = buffer.read()
-                    buffer.close()
+                try {
+                    logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
+                    GL43.glDispatchCompute(context.x, context.y, context.z)
+                    GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
+                    outputs.forEach { (binding, buffer) ->
+                        val (_, name) = binding
+                        results[name] = buffer.read()
+                    }
+                } finally {
+                    (inputs + outputs.values).forEach { it.close() }
                 }
             }
         }
