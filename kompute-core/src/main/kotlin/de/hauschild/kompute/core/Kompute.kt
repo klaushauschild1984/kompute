@@ -4,9 +4,6 @@ import java.util.ServiceLoader
 
 object Kompute {
     @JvmStatic
-    fun kotlin(): Backend = load(Type.Kotlin)
-
-    @JvmStatic
     fun openGL(): Backend = load(Type.OpenGL)
 
     @OptIn(InternalApi::class)
