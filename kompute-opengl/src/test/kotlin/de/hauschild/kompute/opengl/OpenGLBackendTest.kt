@@ -1,6 +1,7 @@
 package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.Backend
+import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import de.hauschild.kompute.core.ShaderSource.Stream
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,13 +24,12 @@ class OpenGLBackendTest {
                         OpenGLBackendTest::class.java
                             .getResourceAsStream("copy.glsl")!!,
                     ),
-                ).input(0)
-                .buffer(floatArrayOf(1f, 2f, 3f))
-                .output(1, "result")
-                .buffer(FloatArray(3))
-                .dispatch(3)
+                ).data(
+                    StorageBuffer(0).data(floatArrayOf(1f, 2f, 3f)),
+                    StorageBuffer(1).size(3).asOutput("result"),
+                ).dispatch(3)
                 .execute()
-                .output("result")
+                .storageBuffer("result")
 
         assertArrayEquals(floatArrayOf(1f, 2f, 3f), result)
     }

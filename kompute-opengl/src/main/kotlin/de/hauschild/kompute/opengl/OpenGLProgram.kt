@@ -4,8 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
 
-class Program(
-    private val shader: Shader,
+class OpenGLProgram(
+    private val shader: OpenGLShader,
 ) : AutoCloseable {
     private var programId: Int = 0
 
