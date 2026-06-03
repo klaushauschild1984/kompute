@@ -18,8 +18,12 @@ class OpenGLBackendTest {
     fun `Copy Shader (3 elements)`(backend: Backend) {
         val result =
             backend
-                .shader(Stream(OpenGLBackendTest::class.java.getResourceAsStream("copy.glsl")!!))
-                .input(0)
+                .shader(
+                    Stream(
+                        OpenGLBackendTest::class.java
+                            .getResourceAsStream("copy.glsl")!!,
+                    ),
+                ).input(0)
                 .buffer(floatArrayOf(1f, 2f, 3f))
                 .output(1, "result")
                 .buffer(FloatArray(3))
