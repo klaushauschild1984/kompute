@@ -34,7 +34,7 @@ class OpenGLBackend : AbstractBackend() {
         val vendor = GL11.glGetString(GL11.GL_VENDOR)
         val openGlVersion = GL11.glGetString(GL11.GL_VERSION)
 
-        logger.debug { "OpenGL Backend initialized with renderer: $renderer, vendor: $vendor, version: $openGlVersion" }
+        logger.info { "OpenGL Backend initialized with renderer: $renderer, vendor: $vendor, version: $openGlVersion" }
     }
 
     override fun execute(context: ExecutionContext): ShaderResult {
