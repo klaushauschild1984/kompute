@@ -48,7 +48,7 @@ class Buffer(
         logger.trace {
             """
             Data:
-            ${buffer.contentToString()}
+            ${buffer.take(100).joinToString(", ")}
             """.trimIndent()
         }
         return buffer
