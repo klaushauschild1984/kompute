@@ -11,17 +11,17 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 ## Usage
 
-Buffer names in Kotlin must match the binding names declared in the GLSL shader source.
-
 ```kotlin
-Kompute.openGL().use { backend ->
-    val result = backend.shader(ShaderSource.File(Path.of("shaders/multiply.glsl")))
-        .input(0).buffer(floatArrayOf(1f, 2f, 3f, 4f))
-        .input(1).buffer(floatArrayOf(2f))
-        .output(2, "result").buffer(FloatArray(4))
-        .dispatch(4)
+Kompute.openGL().use { openGL ->
+    val result = openGL
+        .shader(ShaderSource.Code(glslCode))
+        .data(
+            StorageBuffer(0).data(input),
+            StorageBuffer(1).size(128).asOutput("result"),
+        )
+        .dispatch(x = 64)
         .execute()
-        .output("result")
+    println(result.storageBuffer("result").contentToString())
 }
 ```
 
@@ -49,8 +49,13 @@ A collection of topics I want to address in the future enhancing the library.
 
 * [ ] API
   * [ ] specific exception handling
+  * [ ] generalize buffer setup
+    * [x] API overhaul
+    * [ ] UBO support
+    * [ ] scalar uniform support
+    * [ ] atomic counter support
+    * [ ] image2D support
   * [ ] binding validation (collisions, shader inspection)
-  * [ ] generalize buffer setup (SSBO ↔ UBO, just size scalar uniform)
 * [ ] OpenGL
   * [ ] optimization
     * [ ] shader caching
@@ -58,6 +63,6 @@ A collection of topics I want to address in the future enhancing the library.
     * [ ] multi-dispatch
 * [ ] Vulkan
   * [ ] general implementation
-* [ ] Benchmarking
+* [ ] Showcasing
   * [ ] Mandelbrot-Set (plus visualization)
   * [ ] Monte-Carlo Pi calculation

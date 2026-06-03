@@ -4,29 +4,41 @@ import java.io.InputStream
 import java.nio.file.Path
 
 /**
- * Represents the source of a compute shader.
+ * Represents the source code of a compute shader.
+ *
+ * Three variants are provided to cover different use cases:
+ * - [Code] for inline GLSL strings, useful in tests or generated shaders
+ * - [File] for shader files stored on disk
+ * - [Stream] for classpath resources or other stream-based sources
  */
 sealed interface ShaderSource {
     /**
-     * Represents the shader as plain source code.
-     * @param glsl the GLSL source code of the compute shader
+     * Inline GLSL source code.
+     *
+     * @param glsl the complete GLSL compute shader source code
      */
     data class Code(
         val glsl: String,
     ) : ShaderSource
 
     /**
-     * Represents the shader as a file on disk.
-     * @param path the path to the compute shader file
+     * Shader source loaded from a file on disk.
+     *
+     * The file must exist and be readable when the backend compiles the shader.
+     *
+     * @param path the path to the compute shader source file
      */
     data class File(
         val path: Path,
     ) : ShaderSource
 
     /**
-     * Represents the shader as an input stream, e.g. for classpath resources.
-     * The stream will be read once and closed afterwards.
-     * @param inputStream the input stream containing the compute shader source
+     * Shader source loaded from an input stream, e.g. for classpath resources.
+     *
+     * The stream is read once and closed automatically by the backend.
+     * The caller must not use the stream after passing it here.
+     *
+     * @param inputStream the input stream containing the complete compute shader source
      */
     data class Stream(
         val inputStream: InputStream,

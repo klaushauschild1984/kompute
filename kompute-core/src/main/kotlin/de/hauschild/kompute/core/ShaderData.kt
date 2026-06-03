@@ -1,0 +1,113 @@
+package de.hauschild.kompute.core
+
+/**
+ * Represents data passed to or received from a compute shader.
+ *
+ * Defines the different types of shader data (storage buffers, etc.) that can be attached to
+ * a shader computation. Each implementation validates its own configuration before execution.
+ *
+ * @see ShaderData.StorageBuffer
+ */
+sealed interface ShaderData {
+    /**
+     * Validates this shader data configuration.
+     *
+     * @throws IllegalArgumentException if the configuration is invalid
+     */
+    fun validate()
+
+    /**
+     * A storage buffer that can be read and/or written by the compute shader.
+     *
+     * Storage buffers are the primary data exchange mechanism between host and GPU.
+     * Each buffer is bound to a binding index declared in the shader source.
+     *
+     * Configuration rules:
+     * - Exactly one of [data] or [size] must be provided
+     * - If [data] is provided, the buffer is initialized with the given input data
+     * - If [size] is provided, an empty buffer of that size is allocated (output only)
+     * - A size-only buffer must have [asOutput] called to name the result
+     *
+     * Example:
+     * ```
+     * // Input buffer
+     * StorageBuffer(0).data(floatArrayOf(1f, 2f, 3f))
+     *
+     * // Output buffer
+     * StorageBuffer(1).size(128).asOutput("result")
+     *
+     * // Read-write buffer
+     * StorageBuffer(2).data(existing).asOutput("updated")
+     * ```
+     *
+     * @param index the binding index in the shader — must be non-negative
+     */
+    class StorageBuffer(
+        val index: Int,
+    ) : ShaderData {
+        var data: FloatArray? = null
+            private set
+        var size: Int? = null
+            private set
+        var outputName: String? = null
+            private set
+
+        /**
+         * Sets the input data for this buffer.
+         *
+         * Cannot be combined with [size].
+         *
+         * @param data the float data to upload to the GPU
+         * @return this [StorageBuffer] for chaining
+         */
+        fun data(data: FloatArray): StorageBuffer {
+            this.data = data
+            return this
+        }
+
+        /**
+         * Sets the output size for this buffer.
+         *
+         * An empty buffer of this size is allocated on the GPU. The shader writes results here.
+         * Must be combined with [asOutput]. Cannot be combined with [data].
+         *
+         * @param size the number of float elements to allocate
+         * @return this [StorageBuffer] for chaining
+         */
+        fun size(size: Int): StorageBuffer {
+            this.size = size
+            return this
+        }
+
+        /**
+         * Marks this buffer as an output retrievable by the given name.
+         *
+         * Required when [size] is used. Allows retrieving computed results via
+         * [ShaderResult.storageBuffer].
+         *
+         * @param name a unique name to identify this output in [ShaderResult]
+         * @return this [StorageBuffer] for chaining
+         */
+        fun asOutput(name: String): StorageBuffer {
+            this.outputName = name
+            return this
+        }
+
+        /**
+         * Validates the buffer configuration.
+         *
+         * @throws IllegalArgumentException if the index is negative, neither [data] nor [size]
+         * is provided, both are provided, or [size] is provided without an output name
+         */
+        override fun validate() {
+            require(index >= 0) { "Index must be non-negative for StorageBuffer" }
+            require(data != null || size != null) { "Either data or size must be provided for StorageBuffer" }
+            if (data != null) {
+                require(size == null) { "Size should not be combined together with data" }
+            }
+            if (size != null) {
+                require(outputName != null) { "Output name must be provided for StorageBuffer with size" }
+            }
+        }
+    }
+}

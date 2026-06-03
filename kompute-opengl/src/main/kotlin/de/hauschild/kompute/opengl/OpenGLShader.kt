@@ -5,7 +5,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
 
-class Shader(
+class OpenGLShader(
     private val source: ShaderSource,
 ) : AutoCloseable {
     private var shaderId: Int = 0

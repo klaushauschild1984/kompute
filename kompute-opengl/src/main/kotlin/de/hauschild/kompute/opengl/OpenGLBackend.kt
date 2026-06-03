@@ -3,6 +3,7 @@ package de.hauschild.kompute.opengl
 import de.hauschild.kompute.core.AbstractBackend
 import de.hauschild.kompute.core.ExecutionContext
 import de.hauschild.kompute.core.InternalApi
+import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import de.hauschild.kompute.core.ShaderResult
 import de.hauschild.kompute.core.Type
 import org.lwjgl.glfw.GLFW
@@ -39,37 +40,31 @@ class OpenGLBackend : AbstractBackend() {
 
     override fun execute(context: ExecutionContext): ShaderResult {
         val results = mutableMapOf<String, FloatArray>()
-        Shader(context.source).use { shader ->
+        OpenGLShader(context.source).use { shader ->
             shader.compile()
-            Program(shader).use { program ->
+            OpenGLProgram(shader).use { program ->
                 program.link()
 
-                val inputs =
-                    context.inputs.map { (index, data) ->
-                        val buffer = Buffer(index, data)
-                        buffer.bindAsInput()
-                        buffer
+                val storageBuffer = mutableListOf<OpenGLStorageBuffer>()
+                context.data.forEach { shaderData ->
+                    when (shaderData) {
+                        is StorageBuffer -> storageBuffer.add(OpenGLStorageBuffer(shaderData))
                     }
-                val outputs =
-                    context.outputs.mapValues { (binding, data) ->
-                        val (index, name) = binding
-                        val buffer = Buffer(index, data, name)
-                        buffer.bindAsOutput()
-                        buffer
-                    }
-
-                program.activate()
+                }
 
                 try {
+                    storageBuffer.forEach { buffer -> buffer.bind() }
+
+                    program.activate()
+
                     logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
                     GL43.glDispatchCompute(context.x, context.y, context.z)
                     GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
-                    outputs.forEach { (binding, buffer) ->
-                        val (_, name) = binding
-                        results[name] = buffer.read()
-                    }
+                    storageBuffer
+                        .filter { buffer -> buffer.isOutput() }
+                        .forEach { buffer -> results[buffer.outputName()] = buffer.read() }
                 } finally {
-                    (inputs + outputs.values).forEach { it.close() }
+                    storageBuffer.forEach { it.close() }
                 }
             }
         }
