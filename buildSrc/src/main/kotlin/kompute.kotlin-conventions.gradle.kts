@@ -41,6 +41,7 @@ val generateBuildInfo by tasks.registering {
             internal object BuildInfo {
                 const val VERSION: String = "$projectVersion"
             }
+
             """.trimIndent(),
         )
     }
@@ -73,4 +74,7 @@ tasks.jacocoTestReport {
 
 ktlint {
     version.set("1.4.1")
+    filter {
+        exclude("**/generated/**")
+    }
 }
