@@ -211,7 +211,7 @@ A collection of topics I want to address in the future enhancing the library.
 
 | Version  | Focus |
 |----------|-------|
-| `v0.1.0` | OpenGL Storage Buffer — initial release |
+| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
 | `v0.2.0` | UBO + scalar uniform support |
 | `v0.3.0` | Windows support |
 | `v0.4.0` | `image2D` support |
