@@ -29,3 +29,22 @@ jobs:
               run: xvfb-run ./gradlew check
               env:
                   LIBGL_ALWAYS_SOFTWARE: "1"
+
+            -   name: Test Report
+                uses: dorny/test-reporter@v1
+                if: always()
+                with:
+                    name: Tests
+                    path: '**/build/test-results/test/*.xml'
+                    reporter: java-junit
+
+            -   name: Generate Coverage Badge
+                uses: cicirello/jacoco-badge-generator@v2
+                with:
+                    jacoco-csv-file: build/reports/jacoco/jacocoAggregatedReport/jacocoAggregatedReport.csv
+
+            -   name: Commit Badge
+                uses: stefanzweifel/git-auto-commit-action@v5
+                with:
+                    commit_message: "Update coverage badge"
+                    file_pattern: ".github/badges/*.svg"

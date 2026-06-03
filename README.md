@@ -5,6 +5,10 @@ provides a high-level API for managing GPU resources, executing compute operatio
 the CPU and GPU. With Kompute, developers can leverage the power of GPU acceleration for computationally intensive
 tasks, such as machine learning inference, physics simulations, and data processing.
 
+[![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml)
+
+![Coverage](.github/badges/jacoco.svg)
+
 ## Usage
 
 Buffer names in Kotlin must match the binding names declared in the GLSL shader source.
