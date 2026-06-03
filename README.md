@@ -146,7 +146,16 @@ StorageBuffer(2).data(existing).asOutput("updated")
 
 ## Performance
 
+Benchmarks are implemented using [JMH](https://github.com/openjdk/jmh) in the `kompute-benchmark` module.
+Each benchmark compares a naive Kotlin CPU implementation against the OpenGL compute shader backend.
+Backend initialization and shader compilation are excluded from the measurement — only buffer transfer,
+dispatch and readback are measured.
+
 ### Matrix multiplication
+
+Matrix multiplication computes `C = A × B` for two square float matrices.
+The Kotlin implementation uses a naive O(n³) triple loop. The OpenGL shader launches one thread per
+output element in a 2D workgroup grid (`local_size_x = 8, local_size_y = 8`).
 
 | Size of matrix | Kotlin (ms) | OpenGL (ms) | Speedup |
 |----------------|-------------|-------------|---------|
