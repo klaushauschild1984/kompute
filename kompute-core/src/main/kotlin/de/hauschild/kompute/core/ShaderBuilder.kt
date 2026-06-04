@@ -1,5 +1,8 @@
 package de.hauschild.kompute.core
 
+import de.hauschild.kompute.core.ShaderData.OutputCapable
+import de.hauschild.kompute.core.ShaderData.StorageBuffer
+
 /**
  * Attaches input and output data to a compute shader.
  *
@@ -20,8 +23,38 @@ class ShaderBuilder(
      * @throws IllegalArgumentException if any item fails validation
      */
     fun data(vararg data: ShaderData): DispatchBuilder {
+        require(data.isNotEmpty()) {
+            "At least one data is required"
+        }
+
         data.forEach { it.validate() }
+
+        require(data.filterIsInstance<OutputCapable>().any { it.isOutput() }) {
+            "At least one output is required"
+        }
+
+        val duplicates =
+            data
+                .filterIsInstance<OutputCapable>()
+                .mapNotNull { it.outputName }
+                .groupBy { it }
+                .filter { (_, occurrences) -> occurrences.size > 1 }
+                .keys
+        require(duplicates.isEmpty()) { "There are duplicated output names: $duplicates" }
+
+        data
+            .groupBy { it::class }
+            .forEach { (_, items) ->
+                when (items.first()) {
+                    is StorageBuffer -> {
+                        val storageBuffers = items.filterIsInstance<StorageBuffer>()
+                        StorageBuffer.crossValidate(storageBuffers)
+                    }
+                }
+            }
+
         context.data.addAll(data.toList())
+
         return DispatchBuilder(context, executor)
     }
 }

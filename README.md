@@ -195,8 +195,12 @@ A collection of topics I want to address in the future enhancing the library.
     * [ ] scalar uniform support
     * [ ] atomic counter support
     * [ ] image2D support
-  * [ ] binding validation (collisions, shader inspection)
+  * [ ] binding validation
+    * [x] index collisions
+    * [x] name collisions
+    * [ ] basic binding index verification against shader source
 * [ ] OpenGL
+  * [x] backend-specific binding validation
   * [ ] optimization
     * [ ] shader caching
     * [ ] pre-compilation
@@ -209,16 +213,16 @@ A collection of topics I want to address in the future enhancing the library.
 
 ## Milestones
 
-| Version  | Focus |
-|----------|-------|
+| Version                                                                       | Focus |
+|-------------------------------------------------------------------------------|-------|
 | [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
-| `v0.2.0` | UBO + scalar uniform support |
-| `v0.3.0` | Windows support |
-| `v0.4.0` | `image2D` support |
-| `v0.5.0` | OpenGL optimizations (shader caching, pre-compilation, multi-dispatch) |
-| `v0.6.0` | Stability (exception handling, binding validation) |
-| `v0.7.0` | Vulkan backend |
-| `v1.0.0` | Stable, complete API |
+| `v0.2.0`                                                                      | Stability (exception handling, binding validation) |
+| `v0.3.0`                                                                      | UBO + scalar uniform support |
+| `v0.4.0`                                                                      | Windows support |
+| `v0.5.0`                                                                      | `image2D` support |
+| `v0.6.0`                                                                      | OpenGL optimizations (shader caching, pre-compilation, multi-dispatch) |
+| `v0.7.0`                                                                      | Vulkan backend |
+| `v1.0.0`                                                                      | Stable, complete API |
 
 ## Contributing
 

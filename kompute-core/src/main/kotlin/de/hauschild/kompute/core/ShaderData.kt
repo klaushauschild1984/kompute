@@ -44,12 +44,13 @@ sealed interface ShaderData {
      */
     class StorageBuffer(
         val index: Int,
-    ) : ShaderData {
+    ) : ShaderData,
+        OutputCapable {
         var data: FloatArray? = null
             private set
         var size: Int? = null
             private set
-        var outputName: String? = null
+        override var outputName: String? = null
             private set
 
         /**
@@ -109,5 +110,28 @@ sealed interface ShaderData {
                 require(outputName != null) { "Output name must be provided for StorageBuffer with size" }
             }
         }
+
+        companion object {
+            fun crossValidate(storageBuffers: List<StorageBuffer>) {
+                val duplicates =
+                    storageBuffers
+                        .map { it.index }
+                        .groupBy { it }
+                        .filter { (_, occurrences) -> occurrences.size > 1 }
+                        .keys
+                require(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
+            }
+        }
+    }
+
+    /**
+     * Describes the capability of a [ShaderData] to act as output data.
+     */
+    interface OutputCapable {
+        /** Optional output name */
+        val outputName: String?
+
+        /** Determines whether this [ShaderData] is utilized as output data or not. */
+        fun isOutput(): Boolean = outputName != null
     }
 }

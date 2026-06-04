@@ -13,7 +13,8 @@ import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil.NULL
 
 class OpenGLBackend : AbstractBackend() {
-    private var window: Long = NULL
+    private var windowHandle: Long = NULL
+    private var maxShaderStorageBufferBindings: Int = 0
 
     companion object {
         private const val OPENGL_VERSION_MAJOR = 4
@@ -31,15 +32,16 @@ class OpenGLBackend : AbstractBackend() {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
 
-        window = GLFW.glfwCreateWindow(1, 1, "Kompute", NULL, NULL)
-        if (window == NULL) error("Failed to create GLFW window")
-        GLFW.glfwMakeContextCurrent(window)
+        windowHandle = GLFW.glfwCreateWindow(1, 1, "Kompute", NULL, NULL)
+        if (windowHandle == NULL) error("Failed to create GLFW window")
+        GLFW.glfwMakeContextCurrent(windowHandle)
         GL.createCapabilities()
+
+        maxShaderStorageBufferBindings = GL11.glGetInteger(GL43.GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS)
 
         val renderer = GL11.glGetString(GL11.GL_RENDERER)
         val vendor = GL11.glGetString(GL11.GL_VENDOR)
         val openGlVersion = GL11.glGetString(GL11.GL_VERSION)
-
         logger.info { "OpenGL Backend initialized with renderer: $renderer, vendor: $vendor, version: $openGlVersion" }
     }
 
@@ -61,7 +63,11 @@ class OpenGLBackend : AbstractBackend() {
         val storageBuffer = mutableListOf<OpenGLStorageBuffer>()
         context.data.forEach { shaderData ->
             when (shaderData) {
-                is StorageBuffer -> storageBuffer.add(OpenGLStorageBuffer(shaderData))
+                is StorageBuffer -> {
+                    val openGLStorageBuffer = OpenGLStorageBuffer(shaderData)
+                    openGLStorageBuffer.validate(maxShaderStorageBufferBindings)
+                    storageBuffer.add(openGLStorageBuffer)
+                }
             }
         }
 
@@ -73,7 +79,7 @@ class OpenGLBackend : AbstractBackend() {
             GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
             storageBuffer
                 .filter { buffer -> buffer.isOutput() }
-                .forEach { buffer -> results[buffer.outputName()] = buffer.read() }
+                .forEach { buffer -> results[buffer.outputName!!] = buffer.read() }
 
             return results
         } finally {
@@ -83,8 +89,8 @@ class OpenGLBackend : AbstractBackend() {
 
     override fun close() {
         logger.debug { "Closing OpenGL Backend" }
-        if (window == NULL) return
-        GLFW.glfwDestroyWindow(window)
+        if (windowHandle == NULL) return
+        GLFW.glfwDestroyWindow(windowHandle)
         GLFW.glfwTerminate()
     }
 }
