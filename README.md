@@ -188,7 +188,7 @@ xvfb-run ./gradlew build
 A collection of topics I want to address in the future enhancing the library.
 
 * [ ] API
-  * [ ] specific exception handling
+  * [x] specific exception handling
   * [ ] generalize buffer setup
     * [x] API overhaul
     * [ ] UBO support

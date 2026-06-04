@@ -2,6 +2,7 @@ package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.ShaderData.OutputCapable
 import de.hauschild.kompute.core.ShaderData.StorageBuffer
+import de.hauschild.kompute.core.requireConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 
@@ -12,7 +13,7 @@ class OpenGLStorageBuffer(
     private var glHandle: Int = 0
 
     fun validate(maxBindings: Int) {
-        require(source.index < maxBindings) {
+        requireConfiguration(source.index < maxBindings) {
             "StorageBuffer index ${source.index} exceeds maximum binding index ${maxBindings - 1}"
         }
     }

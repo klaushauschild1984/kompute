@@ -25,7 +25,7 @@ object Kompute {
      * Creates and initializes an OpenGL compute backend.
      *
      * @return an initialized [Backend] for OpenGL compute operations
-     * @throws IllegalStateException if no OpenGL backend is found or initialization fails
+     * @throws KomputeBackendInitializationException if no OpenGL backend is found or initialization fails
      */
     @JvmStatic
     fun openGL(): Backend = load(Type.OpenGL)
@@ -36,7 +36,7 @@ object Kompute {
             ServiceLoader
                 .load(Backend::class.java)
                 .firstOrNull { it.type() == type }
-                ?: error("No Backend found for $type")
+                ?: throw KomputeBackendInitializationException("No Backend found for $type")
         )
         backend.initialize()
         return backend

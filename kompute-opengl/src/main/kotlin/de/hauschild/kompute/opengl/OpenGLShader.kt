@@ -1,6 +1,7 @@
 package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.ShaderSource
+import de.hauschild.kompute.core.requireBackendInitialization
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
@@ -35,8 +36,8 @@ class OpenGLShader(
         GL43.glShaderSource(glHandle, glsl)
         logger.debug { "Compiling shader" }
         GL43.glCompileShader(glHandle)
-        if (GL43.glGetShaderi(glHandle, GL43.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-            error("Shader compile error: ${GL43.glGetShaderInfoLog(glHandle)}")
+        requireBackendInitialization(GL43.glGetShaderi(glHandle, GL43.GL_COMPILE_STATUS) == GL11.GL_TRUE) {
+            "Shader compile error: ${GL43.glGetShaderInfoLog(glHandle)}"
         }
     }
 

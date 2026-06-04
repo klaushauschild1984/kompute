@@ -20,14 +20,14 @@ class StorageBufferTest {
         if (validExpected) {
             buffer.validate()
         } else {
-            assertFailsWith<IllegalArgumentException> { buffer.validate() }
+            assertFailsWith<KomputeConfigurationException> { buffer.validate() }
         }
     }
 
     @Test
     fun `cross validation`() {
         val exception =
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<KomputeConfigurationException> {
                 StorageBuffer.crossValidate(
                     listOf(
                         StorageBuffer(0),
