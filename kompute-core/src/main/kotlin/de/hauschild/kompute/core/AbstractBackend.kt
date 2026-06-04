@@ -49,6 +49,7 @@ abstract class AbstractBackend : Backend {
      * @param source the compute shader source to use
      * @return a [ShaderBuilder] for configuring shader data
      */
+    @Suppress("TooGenericExceptionCaught")
     override fun shader(source: ShaderSource): ShaderBuilder {
         val context = ExecutionContext(source)
         return ShaderBuilder(context) { ctx ->
