@@ -8,7 +8,7 @@ import org.lwjgl.opengl.GL43
 class OpenGLShader(
     private val source: ShaderSource,
 ) : AutoCloseable {
-    private var shaderId: Int = 0
+    private var glHandle: Int = 0
 
     fun compile() {
         val glsl =
@@ -31,22 +31,22 @@ class OpenGLShader(
                     source.inputStream.use { it.reader().readText() }
                 }
             }
-        shaderId = GL43.glCreateShader(GL43.GL_COMPUTE_SHADER)
-        GL43.glShaderSource(shaderId, glsl)
+        glHandle = GL43.glCreateShader(GL43.GL_COMPUTE_SHADER)
+        GL43.glShaderSource(glHandle, glsl)
         logger.debug { "Compiling shader" }
-        GL43.glCompileShader(shaderId)
-        if (GL43.glGetShaderi(shaderId, GL43.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-            error("Shader compile error: ${GL43.glGetShaderInfoLog(shaderId)}")
+        GL43.glCompileShader(glHandle)
+        if (GL43.glGetShaderi(glHandle, GL43.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+            error("Shader compile error: ${GL43.glGetShaderInfoLog(glHandle)}")
         }
     }
 
     fun attach(programId: Int) {
-        GL43.glAttachShader(programId, shaderId)
+        GL43.glAttachShader(programId, glHandle)
     }
 
     override fun close() {
-        if (shaderId == 0) return
-        GL43.glDeleteShader(shaderId)
+        if (glHandle == 0) return
+        GL43.glDeleteShader(glHandle)
     }
 
     companion object {
