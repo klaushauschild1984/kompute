@@ -213,16 +213,16 @@ A collection of topics I want to address in the future enhancing the library.
 
 ## Milestones
 
-| Version                                                                       | Focus |
-|-------------------------------------------------------------------------------|-------|
-| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
-| `v0.2.0`                                                                      | Stability (exception handling, binding validation) |
-| `v0.3.0`                                                                      | UBO + scalar uniform support |
-| `v0.4.0`                                                                      | Windows support |
-| `v0.5.0`                                                                      | `image2D` support |
-| `v0.6.0`                                                                      | OpenGL optimizations (shader caching, pre-compilation, multi-dispatch) |
-| `v0.7.0`                                                                      | Vulkan backend |
-| `v1.0.0`                                                                      | Stable, complete API |
+| Version                                                                        | Focus |
+|--------------------------------------------------------------------------------|-------|
+| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0)  | OpenGL Storage Buffer — initial release |
+| [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0)  | Stability (exception handling, binding validation) |
+| `v0.3.0`                                                                       | UBO + scalar uniform support |
+| `v0.4.0`                                                                       | Windows support |
+| `v0.5.0`                                                                       | `image2D` support |
+| `v0.6.0`                                                                       | OpenGL optimizations (shader caching, pre-compilation, multi-dispatch) |
+| `v0.7.0`                                                                       | Vulkan backend |
+| `v1.0.0`                                                                       | Stable, complete API |
 
 ## Contributing
 
