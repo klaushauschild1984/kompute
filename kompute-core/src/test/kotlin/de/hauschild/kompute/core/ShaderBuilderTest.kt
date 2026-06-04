@@ -13,7 +13,7 @@ class ShaderBuilderTest {
             ShaderBuilder(ExecutionContext(Code(""))) {
                 ShaderResult(emptyMap())
             }
-        val exception = assertFailsWith<IllegalArgumentException> { builder.data() }
+        val exception = assertFailsWith<KomputeConfigurationException> { builder.data() }
         assertEquals("At least one data is required", exception.message)
     }
 
@@ -24,7 +24,7 @@ class ShaderBuilderTest {
                 ShaderResult(emptyMap())
             }
         val exception =
-            assertFailsWith<IllegalArgumentException> { builder.data(StorageBuffer(0).data(floatArrayOf())) }
+            assertFailsWith<KomputeConfigurationException> { builder.data(StorageBuffer(0).data(floatArrayOf())) }
         assertEquals("At least one output is required", exception.message)
     }
 
@@ -35,7 +35,7 @@ class ShaderBuilderTest {
                 ShaderResult(emptyMap())
             }
         val exception =
-            assertFailsWith<IllegalArgumentException> {
+            assertFailsWith<KomputeConfigurationException> {
                 builder.data(
                     StorageBuffer(0).size(1).asOutput("output"),
                     StorageBuffer(1).size(1).asOutput("output"),

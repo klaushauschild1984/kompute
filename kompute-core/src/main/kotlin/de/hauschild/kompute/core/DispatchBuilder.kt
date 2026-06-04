@@ -20,14 +20,19 @@ class DispatchBuilder(
      * @param y number of workgroups in the y dimension (defaults to 1)
      * @param z number of workgroups in the z dimension (defaults to 1)
      * @return an [ExecutionBuilder] to trigger shader execution
+     * @throws [KomputeConfigurationException] if one of the work group count are less than zero
      */
     fun dispatch(
         x: Int,
         y: Int = 1,
         z: Int = 1,
     ): ExecutionBuilder {
+        val workGroupCountValidationMessage = { "Work group count must be greater than or equal to one" }
+        requireConfiguration(x >= 1, workGroupCountValidationMessage)
         context.x = x
+        requireConfiguration(y >= 1, workGroupCountValidationMessage)
         context.y = y
+        requireConfiguration(z >= 1, workGroupCountValidationMessage)
         context.z = z
         return ExecutionBuilder(context, executor)
     }

@@ -14,6 +14,8 @@ interface Backend : AutoCloseable {
 
     /**
      * Initializes the backend, preparing it for use.
+     *
+     * @throws [KomputeBackendInitializationException] if backend initialization fails
      */
     @InternalApi
     fun initialize()

@@ -20,16 +20,16 @@ class ShaderBuilder(
      *
      * @param data the shader data to attach (storage buffers, etc.)
      * @return a [DispatchBuilder] to configure the compute grid dimensions
-     * @throws IllegalArgumentException if any item fails validation
+     * @throws KomputeConfigurationException if any item fails validation
      */
     fun data(vararg data: ShaderData): DispatchBuilder {
-        require(data.isNotEmpty()) {
+        requireConfiguration(data.isNotEmpty()) {
             "At least one data is required"
         }
 
         data.forEach { it.validate() }
 
-        require(data.filterIsInstance<OutputCapable>().any { it.isOutput() }) {
+        requireConfiguration(data.filterIsInstance<OutputCapable>().any { it.isOutput() }) {
             "At least one output is required"
         }
 
@@ -40,7 +40,7 @@ class ShaderBuilder(
                 .groupBy { it }
                 .filter { (_, occurrences) -> occurrences.size > 1 }
                 .keys
-        require(duplicates.isEmpty()) { "There are duplicated output names: $duplicates" }
+        requireConfiguration(duplicates.isEmpty()) { "There are duplicated output names: $duplicates" }
 
         data
             .groupBy { it::class }

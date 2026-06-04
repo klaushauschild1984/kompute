@@ -6,6 +6,8 @@ import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import de.hauschild.kompute.core.ShaderResult
 import de.hauschild.kompute.core.Type
+import de.hauschild.kompute.core.requireBackendInitialization
+import de.hauschild.kompute.core.requireConfiguration
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
@@ -15,6 +17,9 @@ import org.lwjgl.system.MemoryUtil.NULL
 class OpenGLBackend : AbstractBackend() {
     private var windowHandle: Long = NULL
     private var maxShaderStorageBufferBindings: Int = 0
+    private var maxComputeWorkGroupCountX: Int = 0
+    private var maxComputeWorkGroupCountY: Int = 0
+    private var maxComputeWorkGroupCountZ: Int = 0
 
     companion object {
         private const val OPENGL_VERSION_MAJOR = 4
@@ -25,7 +30,9 @@ class OpenGLBackend : AbstractBackend() {
     override fun type(): Type = Type.OpenGL
 
     override fun doInitialize() {
-        if (!GLFW.glfwInit()) error("Failed to initialize GLFW")
+        requireBackendInitialization(GLFW.glfwInit()) {
+            "Failed to initialize GLFW"
+        }
         GLFW.glfwDefaultWindowHints()
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR)
@@ -33,11 +40,16 @@ class OpenGLBackend : AbstractBackend() {
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
 
         windowHandle = GLFW.glfwCreateWindow(1, 1, "Kompute", NULL, NULL)
-        if (windowHandle == NULL) error("Failed to create GLFW window")
+        requireBackendInitialization(windowHandle != NULL) {
+            "Failed to create GLFW window"
+        }
         GLFW.glfwMakeContextCurrent(windowHandle)
         GL.createCapabilities()
 
         maxShaderStorageBufferBindings = GL11.glGetInteger(GL43.GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS)
+        maxComputeWorkGroupCountX = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0)
+        maxComputeWorkGroupCountY = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1)
+        maxComputeWorkGroupCountZ = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2)
 
         val renderer = GL11.glGetString(GL11.GL_RENDERER)
         val vendor = GL11.glGetString(GL11.GL_VENDOR)
@@ -45,19 +57,29 @@ class OpenGLBackend : AbstractBackend() {
         logger.info { "OpenGL Backend initialized with renderer: $renderer, vendor: $vendor, version: $openGlVersion" }
     }
 
-    override fun execute(context: ExecutionContext): ShaderResult {
+    override fun dispatch(context: ExecutionContext): ShaderResult {
         OpenGLShader(context.source).use { shader ->
             shader.compile()
             OpenGLProgram(shader).use { program ->
                 program.link()
                 program.activate()
 
-                return ShaderResult(dispatch(context))
+                return ShaderResult(dispatchBuffers(context))
             }
         }
     }
 
-    private fun dispatch(context: ExecutionContext): Map<String, FloatArray> {
+    private fun dispatchBuffers(context: ExecutionContext): Map<String, FloatArray> {
+        requireConfiguration(context.x <= maxComputeWorkGroupCountX) {
+            "Work group count x must not exceed physical limit $maxComputeWorkGroupCountX"
+        }
+        requireConfiguration(context.y <= maxComputeWorkGroupCountY) {
+            "Work group count y must not exceed physical limit $maxComputeWorkGroupCountY"
+        }
+        requireConfiguration(context.z <= maxComputeWorkGroupCountZ) {
+            "Work group count z must not exceed physical limit $maxComputeWorkGroupCountZ"
+        }
+
         val results = mutableMapOf<String, FloatArray>()
 
         val storageBuffer = mutableListOf<OpenGLStorageBuffer>()

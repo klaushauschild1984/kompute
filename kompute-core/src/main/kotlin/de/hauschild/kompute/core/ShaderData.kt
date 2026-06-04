@@ -101,13 +101,15 @@ sealed interface ShaderData {
          * is provided, both are provided, or [size] is provided without an output name
          */
         override fun validate() {
-            require(index >= 0) { "Index must be non-negative for StorageBuffer" }
-            require(data != null || size != null) { "Either data or size must be provided for StorageBuffer" }
+            requireConfiguration(index >= 0) { "Index must be non-negative for StorageBuffer" }
+            requireConfiguration(
+                data != null || size != null,
+            ) { "Either data or size must be provided for StorageBuffer" }
             if (data != null) {
-                require(size == null) { "Size should not be combined together with data" }
+                requireConfiguration(size == null) { "Size should not be combined together with data" }
             }
             if (size != null) {
-                require(outputName != null) { "Output name must be provided for StorageBuffer with size" }
+                requireConfiguration(outputName != null) { "Output name must be provided for StorageBuffer with size" }
             }
         }
 
@@ -119,7 +121,7 @@ sealed interface ShaderData {
                         .groupBy { it }
                         .filter { (_, occurrences) -> occurrences.size > 1 }
                         .keys
-                require(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
+                requireConfiguration(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
             }
         }
     }

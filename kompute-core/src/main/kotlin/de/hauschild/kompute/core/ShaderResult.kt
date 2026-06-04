@@ -16,7 +16,8 @@ class ShaderResult(
      *
      * @param name the output name to retrieve
      * @return the computed float data from the GPU
-     * @throws IllegalStateException if no output with the given name exists
+     * @throws KomputeConfigurationException if no output with the given name exists
      */
-    fun storageBuffer(name: String): FloatArray = storageBuffer[name] ?: error("No output named '$name'")
+    fun storageBuffer(name: String): FloatArray =
+        storageBuffer[name] ?: throw KomputeConfigurationException("No output named '$name'")
 }

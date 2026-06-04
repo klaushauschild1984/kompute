@@ -10,7 +10,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  *
  * Subclasses must implement:
  * - [doInitialize] for backend-specific setup
- * - [execute] for the actual GPU computation
+ * - [dispatch] for the actual GPU computation
  */
 abstract class AbstractBackend : Backend {
     /** Logger available to subclasses for debugging and diagnostics. */
@@ -23,13 +23,11 @@ abstract class AbstractBackend : Backend {
      *
      * Delegates to [doInitialize] for backend-specific setup.
      *
-     * @throws IllegalStateException if called more than once
+     * @throws KomputeBackendInitializationException if called more than once
      */
     @InternalApi
     override fun initialize() {
-        if (initialized) {
-            error("Backend already initialized")
-        }
+        requireBackendInitialization(!initialized) { "Backend already initialized" }
         logger.debug { "Initializing ${this::class.simpleName} v${BuildInfo.VERSION}" }
         doInitialize()
         initialized = true
@@ -41,7 +39,7 @@ abstract class AbstractBackend : Backend {
      * Called once by [initialize]. Implementations should validate GPU capabilities
      * and set up required resources.
      *
-     * @throws IllegalStateException if GPU resources are unavailable or initialization fails
+     * @throws KomputeBackendInitializationException if GPU resources are unavailable or initialization fails
      */
     abstract fun doInitialize()
 
@@ -53,18 +51,26 @@ abstract class AbstractBackend : Backend {
      */
     override fun shader(source: ShaderSource): ShaderBuilder {
         val context = ExecutionContext(source)
-        return ShaderBuilder(context) { ctx -> execute(ctx) }
+        return ShaderBuilder(context) { ctx ->
+            try {
+                dispatch(ctx)
+            } catch (komputeException: KomputeException) {
+                throw komputeException
+            } catch (exception: Exception) {
+                throw KomputeBackendDispatchException("Unexpected error during GPU dispatch", exception)
+            }
+        }
     }
 
     /**
-     * Executes the configured compute shader on the GPU.
+     * Dispatches the execution of the configured compute shader on the GPU.
      *
      * Called by [ExecutionBuilder.execute]. Implementations compile and link the shader,
      * bind buffers, dispatch the computation, and return results.
      *
      * @param context the execution context with shader source, data, and dispatch dimensions
      * @return a [ShaderResult] containing all output buffers
-     * @throws IllegalStateException if GPU execution fails
+     * @throws KomputeBackendDispatchException if GPU execution fails
      */
-    abstract fun execute(context: ExecutionContext): ShaderResult
+    abstract fun dispatch(context: ExecutionContext): ShaderResult
 }
