@@ -219,18 +219,26 @@ dispatch and readback are measured.
 ### Matrix multiplication
 
 Matrix multiplication computes `C = A × B` for two square float matrices.
-The Kotlin implementation uses a naive O(n³) triple loop. The OpenGL shader launches one thread per
-output element in a 2D workgroup grid (`local_size_x = 8, local_size_y = 8`).
+The OpenGL shader launches one thread per output element in a 2D workgroup grid
+(`local_size_x = 8, local_size_y = 8`).
 
-| Size of matrix | Kotlin (ms) | OpenGL (ms) | Speedup |
-|----------------|-------------|-------------|---------|
-| 128×128        | 1,404       | 0,208       | ~6,7×   |
-| 512×512        | 124,424     | 2,172       | ~57×    |
-| 1024×1024      | 2735,201    | 27,989      | ~97×    |
+Two CPU baselines are compared:
+
+- **Naive** — plain O(n³) triple loop, no parallelism
+- **Optimized** — parallelized with Kotlin coroutines *(planned)*
+
+> The naive baseline shows the raw GPU advantage out-of-the-box. The optimized baseline
+> will show what CPU-side parallelism can recover — and where GPU processing still wins.
+
+| Size of matrix | Kotlin naive (ms) | Kotlin optimized (ms) | OpenGL (ms) | GPU vs. naive | GPU vs. optimized |
+|----------------|-------------------|-----------------------|-------------|---------------|-------------------|
+| 128×128        | 1,404             | —                     | 0,208       | ~6,7×         | —                 |
+| 512×512        | 124,424           | —                     | 2,172       | ~57×          | —                 |
+| 1024×1024      | 2735,201          | —                     | 27,989      | ~97×          | —                 |
 
 ```mermaid
 xychart-beta
-  title "OpenGL Speedup over Kotlin CPU"
+  title "OpenGL Speedup over Kotlin CPU (naive)"
   x-axis ["128×128", "512×512", "1024×1024"]
   y-axis "Speedup (×)" 0 --> 100
   bar [6.7, 57.3, 97.7]
