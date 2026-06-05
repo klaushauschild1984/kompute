@@ -29,25 +29,24 @@ class ShaderBuilder(
 
         data.forEach { it.validate() }
 
-        requireConfiguration(data.filterIsInstance<OutputCapable>().any { it.isOutput() }) {
+        requireConfiguration(data.filterIsInstance<OutputCapable<*>>().any { it.isOutput }) {
             "At least one output is required"
         }
 
         val duplicates =
             data
-                .filterIsInstance<OutputCapable>()
-                .mapNotNull { it.outputName }
+                .filterIsInstance<OutputCapable<*>>()
                 .groupBy { it }
                 .filter { (_, occurrences) -> occurrences.size > 1 }
                 .keys
-        requireConfiguration(duplicates.isEmpty()) { "There are duplicated output names: $duplicates" }
+        requireConfiguration(duplicates.isEmpty()) { "There are duplicated outputs: $duplicates" }
 
         data
             .groupBy { it::class }
             .forEach { (_, items) ->
                 when (items.first()) {
-                    is StorageBuffer -> {
-                        val storageBuffers = items.filterIsInstance<StorageBuffer>()
+                    is StorageBuffer<*> -> {
+                        val storageBuffers = items.filterIsInstance<StorageBuffer<*>>()
                         StorageBuffer.crossValidate(storageBuffers)
                     }
                 }

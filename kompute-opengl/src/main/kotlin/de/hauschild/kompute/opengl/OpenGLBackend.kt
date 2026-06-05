@@ -3,6 +3,7 @@ package de.hauschild.kompute.opengl
 import de.hauschild.kompute.core.AbstractBackend
 import de.hauschild.kompute.core.ExecutionContext
 import de.hauschild.kompute.core.InternalApi
+import de.hauschild.kompute.core.ShaderData.OutputCapable
 import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import de.hauschild.kompute.core.ShaderResult
 import de.hauschild.kompute.core.Type
@@ -69,7 +70,7 @@ class OpenGLBackend : AbstractBackend() {
         }
     }
 
-    private fun dispatchBuffers(context: ExecutionContext): Map<String, FloatArray> {
+    private fun dispatchBuffers(context: ExecutionContext): Map<OutputCapable<*>, Any> {
         requireConfiguration(context.x <= maxComputeWorkGroupCountX) {
             "Work group count x must not exceed physical limit $maxComputeWorkGroupCountX"
         }
@@ -80,12 +81,12 @@ class OpenGLBackend : AbstractBackend() {
             "Work group count z must not exceed physical limit $maxComputeWorkGroupCountZ"
         }
 
-        val results = mutableMapOf<String, FloatArray>()
+        val results = mutableMapOf<OutputCapable<*>, Any>()
 
-        val storageBuffer = mutableListOf<OpenGLStorageBuffer>()
+        val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
         context.data.forEach { shaderData ->
             when (shaderData) {
-                is StorageBuffer -> {
+                is StorageBuffer<*> -> {
                     val openGLStorageBuffer = OpenGLStorageBuffer(shaderData)
                     openGLStorageBuffer.validate(maxShaderStorageBufferBindings)
                     storageBuffer.add(openGLStorageBuffer)
@@ -100,8 +101,8 @@ class OpenGLBackend : AbstractBackend() {
             GL43.glDispatchCompute(context.x, context.y, context.z)
             GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
             storageBuffer
-                .filter { buffer -> buffer.isOutput() }
-                .forEach { buffer -> results[buffer.outputName!!] = buffer.read() }
+                .filter { buffer -> buffer.isOutput }
+                .forEach { buffer -> results[buffer.source] = buffer.read() }
 
             return results
         } finally {
