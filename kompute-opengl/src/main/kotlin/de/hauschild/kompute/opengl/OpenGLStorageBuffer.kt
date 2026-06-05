@@ -3,7 +3,6 @@ package de.hauschild.kompute.opengl
 import de.hauschild.kompute.core.KomputeConfigurationException
 import de.hauschild.kompute.core.ShaderData.OutputCapable
 import de.hauschild.kompute.core.ShaderData.StorageBuffer
-import de.hauschild.kompute.core.requireConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
@@ -12,36 +11,14 @@ import java.nio.ByteBuffer
 /**
  * Wraps an OpenGL shader storage buffer object (SSBO) for a [StorageBuffer].
  *
- * Handles GPU buffer allocation, data upload, dispatch, and readback.
- * Must be used within a `use` block — releases the OpenGL buffer handle on close.
- *
  * @param T the data type — must be [FloatArray], [IntArray], [DoubleArray], or [ByteArray]
- * @property source the [StorageBuffer] configuration this buffer is based on
+ * @param source the [StorageBuffer] configuration this buffer is based on
  */
 class OpenGLStorageBuffer<T : Any>(
-    val source: StorageBuffer<T>,
-) : AutoCloseable,
+    source: StorageBuffer<T>,
+) : OpenGLBuffer<StorageBuffer<T>>(source),
 OutputCapable<T> by source {
-    private var glHandle: Int = 0
-
-    /**
-     * Validates that the buffer's binding index is within the GPU's supported range.
-     *
-     * @param maxBindings the maximum number of shader storage buffer bindings supported by the GPU
-     * @throws de.hauschild.kompute.core.KomputeConfigurationException if the index exceeds the limit
-     */
-    fun validate(maxBindings: Int) {
-        requireConfiguration(source.index < maxBindings) {
-            "StorageBuffer index ${source.index} exceeds maximum binding index ${maxBindings - 1}"
-        }
-    }
-
-    /**
-     * Allocates the GPU buffer and uploads input data or reserves output memory.
-     *
-     * @throws KomputeConfigurationException if the data type is not supported
-     */
-    fun bind() {
+    override fun bind() {
         val kind = if (isOutput) "output" else "input"
         logger.debug {
             "Binding $kind buffer ${source.index}"
@@ -111,13 +88,6 @@ OutputCapable<T> by source {
             }
         }
         return buffer
-    }
-
-    override fun close() {
-        if (glHandle == 0) {
-            return
-        }
-        GL43.glDeleteBuffers(glHandle)
     }
 
     companion object {

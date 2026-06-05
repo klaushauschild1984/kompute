@@ -255,21 +255,9 @@ Tests require a display server and OpenGL-capable GPU. On headless systems use:
 xvfb-run ./gradlew build
 ```
 
-## TODOs
+## Showcases
 
-A collection of topics I want to address in the future enhancing the library.
-
-* [ ] Core
-  * [ ] basic binding index verification against shader source
-  * [ ] `kompute-serialization` module — Jackson-style annotation-based struct serialization (`@GpuStruct`, `@GpuField`) with automatic std430/std140 alignment handling
-* [ ] OpenGL
-  * [ ] internal optimizations
-    * [ ] shader caching
-    * [ ] pre-compilation
-    * [ ] multi-dispatch
-* [ ] Showcasing
-  * [ ] Mandelbrot-Set (plus visualization)
-  * [ ] Monte-Carlo Pi calculation
+*Coming soon: Mandelbrot set, Monte-Carlo sampling*
 
 ## Milestones
 
@@ -281,8 +269,9 @@ A collection of topics I want to address in the future enhancing the library.
 | `v0.4.0`                                                                      | UBO support |
 | `v0.5.0`                                                                      | Scalar uniform + atomic counter support |
 | `v0.6.0`                                                                      | `image2D` support |
-| `v0.7.0`                                                                      | Windows support |
-| `v0.8.0`                                                                      | Vulkan backend |
+| `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
+| `v0.8.0`                                                                      | Windows support |
+| `v0.9.0`                                                                      | Vulkan backend |
 | `v1.0.0`                                                                      | Stable, complete API |
 
 ## Contributing

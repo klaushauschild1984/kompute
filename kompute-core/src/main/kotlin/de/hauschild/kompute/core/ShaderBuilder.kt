@@ -1,7 +1,7 @@
 package de.hauschild.kompute.core
 
+import de.hauschild.kompute.core.ShaderData.IndexBinding
 import de.hauschild.kompute.core.ShaderData.OutputCapable
-import de.hauschild.kompute.core.ShaderData.StorageBuffer
 
 /**
  * Attaches input and output data to a compute shader.
@@ -45,15 +45,11 @@ class ShaderBuilder(
         requireConfiguration(duplicates.isEmpty()) { "There are duplicated outputs: $duplicates" }
 
         data
+            .filterIsInstance<IndexBinding>()
             .groupBy { it::class }
-            .forEach { (_, items) ->
-                when (items.first()) {
-                    is StorageBuffer<*> -> {
-                        val storageBuffers : List<StorageBuffer<*>> = items.filterIsInstance<StorageBuffer<*>>()
-                        StorageBuffer.crossValidate(storageBuffers)
-                    }
-                }
-            }
+            .forEach { (_, items) -> IndexBinding.crossValidate(items) }
+
+        // TODO: verify binding indices declared in context.source against the provided data bindings
 
         context.data.addAll(data.toList())
 

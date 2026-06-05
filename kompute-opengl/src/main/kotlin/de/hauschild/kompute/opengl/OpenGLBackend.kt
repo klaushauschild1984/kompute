@@ -5,6 +5,7 @@ import de.hauschild.kompute.core.ExecutionContext
 import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.ShaderData.OutputCapable
 import de.hauschild.kompute.core.ShaderData.StorageBuffer
+import de.hauschild.kompute.core.ShaderData.UniformBuffer
 import de.hauschild.kompute.core.ShaderResult
 import de.hauschild.kompute.core.Type
 import de.hauschild.kompute.core.requireBackendInitialization
@@ -24,6 +25,7 @@ import org.lwjgl.system.MemoryUtil.NULL
 class OpenGLBackend : AbstractBackend() {
     private var windowHandle: Long = NULL
     private var maxShaderStorageBufferBindings: Int = 0
+    private var maxUniformBufferBindings: Int = 0
     private var maxComputeWorkGroupCountX: Int = 0
     private var maxComputeWorkGroupCountY: Int = 0
     private var maxComputeWorkGroupCountZ: Int = 0
@@ -49,6 +51,7 @@ class OpenGLBackend : AbstractBackend() {
         GL.createCapabilities()
 
         maxShaderStorageBufferBindings = GL11.glGetInteger(GL43.GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS)
+        maxUniformBufferBindings = GL11.glGetInteger(GL43.GL_MAX_UNIFORM_BUFFER_BINDINGS)
         maxComputeWorkGroupCountX = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0)
         maxComputeWorkGroupCountY = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1)
         maxComputeWorkGroupCountZ = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2)
@@ -60,6 +63,7 @@ class OpenGLBackend : AbstractBackend() {
     }
 
     override fun dispatch(context: ExecutionContext): ShaderResult {
+        // TODO: support multi-dispatch — reuse the linked program across multiple glDispatchCompute calls
         OpenGLShader(context.source).use { shader ->
             shader.compile()
             OpenGLProgram(shader).use { program ->
@@ -85,6 +89,7 @@ class OpenGLBackend : AbstractBackend() {
         val results = mutableMapOf<OutputCapable<*>, Any>()
 
         val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
+        val uniformBuffers = mutableListOf<OpenGLUniformBuffer>()
         context.data.forEach { shaderData ->
             when (shaderData) {
                 is StorageBuffer<*> -> {
@@ -92,11 +97,17 @@ class OpenGLBackend : AbstractBackend() {
                     openGLStorageBuffer.validate(maxShaderStorageBufferBindings)
                     storageBuffer.add(openGLStorageBuffer)
                 }
+                is UniformBuffer -> {
+                    val openGLUniformBuffer = OpenGLUniformBuffer(shaderData)
+                    openGLUniformBuffer.validate(maxUniformBufferBindings)
+                    uniformBuffers.add(openGLUniformBuffer)
+                }
             }
         }
+        val buffers = storageBuffer + uniformBuffers
 
         try {
-            storageBuffer.forEach { buffer -> buffer.bind() }
+            buffers.forEach { buffer -> buffer.bind() }
 
             logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
             GL43.glDispatchCompute(context.x, context.y, context.z)
@@ -107,7 +118,7 @@ class OpenGLBackend : AbstractBackend() {
 
             return results
         } finally {
-            storageBuffer.forEach { it.close() }
+            buffers.forEach { it.close() }
         }
     }
 
