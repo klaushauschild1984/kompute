@@ -6,11 +6,24 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
 
+/**
+ * Wraps an OpenGL compute shader object.
+ *
+ * Compiles the shader from a [ShaderSource] and attaches it to an OpenGL program.
+ * Must be used within a `use` block — releases the OpenGL shader handle on close.
+ *
+ * @param source the shader source to compile
+ */
 class OpenGLShader(
     private val source: ShaderSource,
 ) : AutoCloseable {
     private var glHandle: Int = 0
 
+    /**
+     * Compiles the shader source into an OpenGL compute shader.
+     *
+     * @throws de.hauschild.kompute.core.KomputeBackendInitializationException if compilation fails
+     */
     fun compile() {
         val glsl =
             when (source) {
@@ -41,12 +54,19 @@ class OpenGLShader(
         }
     }
 
+    /**
+     * Attaches this shader to the given OpenGL program.
+     *
+     * @param programId the OpenGL handle of the program to attach to
+     */
     fun attach(programId: Int) {
         GL43.glAttachShader(programId, glHandle)
     }
 
     override fun close() {
-        if (glHandle == 0) return
+        if (glHandle == 0) {
+            return
+        }
         GL43.glDeleteShader(glHandle)
     }
 

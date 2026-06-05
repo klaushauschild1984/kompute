@@ -11,12 +11,16 @@ import java.util.ServiceLoader
  * Example usage:
  * ```
  * Kompute.openGL().use { openGL ->
+ *     val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
  *     val result = openGL
  *         .shader(ShaderSource.Code(glslCode))
- *         .data(StorageBuffer(0).data(input).asOutput("result"))
+ *         .data(
+ *             StorageBuffer<FloatArray>(0).data(input),
+ *             output,
+ *         )
  *         .dispatch(x = 64)
  *         .execute()
- *     println(result.storageBuffer("result").contentToString())
+ *     println(result[output].contentToString())
  * }
  * ```
  */
@@ -33,10 +37,10 @@ object Kompute {
     @OptIn(InternalApi::class)
     private fun load(type: Type): Backend {
         val backend = (
-            ServiceLoader
-                .load(Backend::class.java)
-                .firstOrNull { it.type() == type }
-                ?: throw KomputeBackendInitializationException("No Backend found for $type")
+                ServiceLoader
+                    .load(Backend::class.java)
+                    .firstOrNull { it.type() == type }
+                    ?: throw KomputeBackendInitializationException("No Backend found for $type")
         )
         backend.initialize()
         return backend

@@ -13,9 +13,10 @@ import io.github.oshai.kotlinlogging.KotlinLogging
  * - [dispatch] for the actual GPU computation
  */
 abstract class AbstractBackend : Backend {
-    /** Logger available to subclasses for debugging and diagnostics. */
+    /**
+     * Logger available to subclasses for debugging and diagnostics.
+     */
     protected val logger = KotlinLogging.logger {}
-
     private var initialized = false
 
     /**

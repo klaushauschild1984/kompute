@@ -8,6 +8,12 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
 import org.junit.jupiter.api.extension.ParameterResolver
 
+/**
+ * JUnit 5 extension that manages an [OpenGLBackend] lifecycle for integration tests.
+ *
+ * Creates a shared [de.hauschild.kompute.core.Backend] instance before all tests and closes it after.
+ * Injects the backend as a parameter into test methods that declare a [de.hauschild.kompute.core.Backend] parameter.
+ */
 class OpenGLBackendExtension :
     BeforeAllCallback,
     AfterAllCallback,

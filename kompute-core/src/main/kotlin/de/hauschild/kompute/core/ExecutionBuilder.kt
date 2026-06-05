@@ -5,6 +5,9 @@ package de.hauschild.kompute.core
  *
  * This is the final step in the shader pipeline after data and dispatch dimensions
  * have been configured via [ShaderBuilder] and [DispatchBuilder].
+ *
+ * @param context
+ * @param executor
  */
 class ExecutionBuilder(
     private val context: ExecutionContext,

@@ -6,6 +6,8 @@ package de.hauschild.kompute.core
  * Used by [Kompute] to identify and load specific backend implementations.
  */
 sealed interface Type {
-    /** OpenGL compute backend using GLSL compute shaders. */
+    /**
+     * OpenGL compute backend.
+     */
     data object OpenGL : Type
 }

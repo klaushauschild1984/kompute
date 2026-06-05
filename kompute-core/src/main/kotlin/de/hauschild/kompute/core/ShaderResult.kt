@@ -4,6 +4,8 @@ import de.hauschild.kompute.core.ShaderData.OutputCapable
 
 /**
  * Holds the output data from a compute shader execution.
+ *
+ * @param outputs
  */
 class ShaderResult(
     private val outputs: Map<OutputCapable<*>, Any>,
@@ -12,6 +14,7 @@ class ShaderResult(
      * Retrieves the output data for the given [OutputCapable].
      * It is required that it was marked as output beforehand, so that [OutputCapable.isOutput] is true.
      *
+     * @param output
      * @return the data for the particular [OutputCapable]
      * @throws KomputeConfigurationException if no output is available for the given [OutputCapable]
      */

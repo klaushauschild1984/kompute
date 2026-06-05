@@ -43,15 +43,24 @@ sealed interface ShaderData {
      * StorageBuffer<FloatArray>(2).data(existing).asOutput()
      * ```
      *
-     * @param index the binding index in the shader — must be non-negative
+     * @param T the GPU data type — must be [FloatArray], [IntArray], [DoubleArray], or [ByteArray]
+     * @property index the binding index in the shader — must be non-negative
+     * @property type the [KClass] of [T], used to determine GPU buffer layout and data transfer
      */
     class StorageBuffer<T : Any>(
         val index: Int,
         val type: KClass<T>,
     ) : ShaderData,
-        OutputCapable<T> {
+    OutputCapable<T> {
+        /**
+         * Input data to upload to the GPU, or null if not set.
+         */
         var data: T? = null
             private set
+
+        /**
+         * Number of elements to allocate for an output-only buffer, or null if not set.
+         */
         var size: Int? = null
             private set
         override var isOutput: Boolean = false
@@ -112,12 +121,12 @@ sealed interface ShaderData {
             requireConfiguration(
                 data != null || size != null,
             ) { "Either data or size must be provided for StorageBuffer" }
-            if (data != null) {
+            data?.let {
                 requireConfiguration(size == null) {
                     "Size should not be combined together with data"
                 }
             }
-            if (size != null) {
+            size?.let {
                 requireConfiguration(isOutput) {
                     "Sized StorageBuffer must be marked as output"
                 }
@@ -135,6 +144,12 @@ sealed interface ShaderData {
                     ByteArray::class,
                 )
 
+            /**
+             * Validates that no two storage buffers share the same binding index.
+             *
+             * @param storageBuffers the list of buffers to cross-validate
+             * @throws KomputeConfigurationException if duplicate indices are found
+             */
             fun crossValidate(storageBuffers: List<StorageBuffer<*>>) {
                 val duplicates =
                     storageBuffers
@@ -146,7 +161,11 @@ sealed interface ShaderData {
             }
 
             /**
-             * Convinience methode to create a [StorageBuffer] from Java using the [Class] type.
+             * Convenience method to create a [StorageBuffer] from Java using the [Class] type.
+             *
+             * @param index the binding index in the shader
+             * @param type the Java [Class] of the buffer data type
+             * @return a new [StorageBuffer] with the given index and type
              */
             @JvmStatic
             fun <T : Any> newStorageBuffer(
@@ -159,12 +178,19 @@ sealed interface ShaderData {
     /**
      * Describes the capability of a [ShaderData] to act as output data.
      * Use this object itself as key to retrieve result data from [ShaderResult].
+     *
+     * @param T
      */
     interface OutputCapable<T : Any> {
-        /** Determines whether this [ShaderData] is used as output data or not. */
+        /**
+         * Determines whether this [ShaderData] is used as output data or not.
+         */
         val isOutput: Boolean
     }
 }
 
+/**
+ * @param index
+ */
 @Suppress("FunctionNaming")
 inline fun <reified T : Any> StorageBuffer(index: Int) = StorageBuffer(index, T::class)

@@ -1,7 +1,7 @@
 plugins {
     kotlin("jvm")
+    id("com.saveourtool.diktat")
     id("io.gitlab.arturbosch.detekt")
-    id("org.jlleitschuh.gradle.ktlint")
     id("jacoco")
 }
 
@@ -62,9 +62,10 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
     }
 }
 
-ktlint {
-    version.set("1.4.1")
-    filter {
+diktat {
+    inputs {
+        include("src/**/*.kt")
         exclude("**/generated/**")
     }
 }
+

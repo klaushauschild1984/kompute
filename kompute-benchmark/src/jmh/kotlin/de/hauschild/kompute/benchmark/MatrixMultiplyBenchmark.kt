@@ -15,11 +15,20 @@ import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.Warmup
 import java.util.concurrent.TimeUnit
 
+/**
+ * Benchmark for matrix multiplication.
+ */
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3)
 @Measurement(iterations = 5)
 open class MatrixMultiplyBenchmark {
+    /**
+     * Kotlin benchmark.
+     *
+     * @param matrix
+     * @param cpu
+     */
     @Benchmark
     fun kotlin(
         matrix: MatrixState,
@@ -37,31 +46,61 @@ open class MatrixMultiplyBenchmark {
         }
     }
 
+    /**
+     * OpenGL benchmark.
+     *
+     * @param matrix
+     * @param openGLBackend
+     */
     @Benchmark
     fun openGL(
         matrix: MatrixState,
         openGLBackend: OpenGLBackendState,
-    ) = openGLBackend.backend
-        .shader(
-            Stream(
-                MatrixMultiplyBenchmark::class.java
-                    .getResourceAsStream("matrix-multiply.glsl")!!,
-            ),
-        ).data(
-            StorageBuffer<FloatArray>(0).data(matrix.a),
-            StorageBuffer<FloatArray>(1).data(matrix.b),
-            StorageBuffer<FloatArray>(2).size(matrix.size * matrix.size).asOutput(),
-        ).dispatch(matrix.size / 8, matrix.size / 8)
-        .execute()
+    ) {
+        openGLBackend.backend
+            .shader(
+                Stream(
+                    MatrixMultiplyBenchmark::class.java
+                        .getResourceAsStream("matrix-multiply.glsl")!!,
+                ),
+            )
+            .data(
+                StorageBuffer<FloatArray>(0).data(matrix.a),
+                StorageBuffer<FloatArray>(1).data(matrix.b),
+                StorageBuffer<FloatArray>(2).size(matrix.size * matrix.size).asOutput(),
+            )
+            .dispatch(matrix.size / 8, matrix.size / 8)
+            .execute()
+    }
 
+    /**
+     * Benchmark state for matrix multiplication.
+     */
     @State(Scope.Benchmark)
     open class MatrixState {
-        @Param("128", "512", "1024")
+        /**
+         * Matrix size.
+         */
+        @Param(
+            "128",
+            "512",
+            "1024"
+        )
         var size: Int = 0
 
+        /**
+         * Matrix A.
+         */
         lateinit var a: FloatArray
+
+        /**
+         * Matrix B.
+         */
         lateinit var b: FloatArray
 
+        /**
+         * Set up the state.
+         */
         @Setup(Level.Trial)
         fun setup() {
             a = FloatArray(size * size) { it.toFloat() }

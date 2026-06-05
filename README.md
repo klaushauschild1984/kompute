@@ -164,7 +164,7 @@ Results are retrieved via the buffer object after execution:
 val data: FloatArray = result[output]
 ```
 
-## Uniform Buffer Objects *(planned — v0.3.0)*
+## Uniform Buffer Objects *(planned — v0.4.0)*
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
 dimensions, zoom levels, or transformation matrices. Unlike storage buffers, UBOs cannot be written
@@ -178,7 +178,7 @@ UniformBuffer(0).data(floatArrayOf(centerX, centerY, zoom))
 > **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
 > padding in the data array. A typed builder to handle alignment automatically is under consideration.
 
-## Scalar Uniforms *(planned — v0.4.0)*
+## Scalar Uniforms *(planned — v0.5.0)*
 
 Scalar uniforms pass individual values by name directly to the shader — no binding index required.
 
@@ -188,7 +188,7 @@ uniform("zoom", 1.5f)
 uniform("maxIterations", 256)
 ```
 
-## Atomic Counters *(planned — v0.4.0)*
+## Atomic Counters *(planned — v0.5.0)*
 
 Atomic counters allow threads to increment a shared counter safely across parallel invocations —
 useful for algorithms like Monte-Carlo sampling where multiple threads accumulate a result.
@@ -198,7 +198,7 @@ useful for algorithms like Monte-Carlo sampling where multiple threads accumulat
 AtomicCounter(0).asOutput()
 ```
 
-## Image2D *(planned — v0.5.0)*
+## Image2D *(planned — v0.6.0)*
 
 `image2D` allows compute shaders to write directly to a 2D texture — enabling GPU-side image
 generation without transferring intermediate data back to the CPU.
@@ -277,11 +277,12 @@ A collection of topics I want to address in the future enhancing the library.
 |----------------------------------------------------------------------------|-------|
 | [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
 | [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation) |
-| `v0.3.0`                                                                   | UBO support |
-| `v0.4.0`                                                                   | Scalar uniform + atomic counter support |
-| `v0.5.0`                                                                   | `image2D` support |
-| `v0.6.0`                                                                   | Windows support |
-| `v0.7.0`                                                                   | Vulkan backend |
+| `v0.3.0`                                                                   | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray` |
+| `v0.4.0`                                                                   | UBO support |
+| `v0.5.0`                                                                   | Scalar uniform + atomic counter support |
+| `v0.6.0`                                                                   | `image2D` support |
+| `v0.7.0`                                                                   | Windows support |
+| `v0.8.0`                                                                   | Vulkan backend |
 | `v1.0.0`                                                                   | Stable, complete API |
 
 ## Contributing

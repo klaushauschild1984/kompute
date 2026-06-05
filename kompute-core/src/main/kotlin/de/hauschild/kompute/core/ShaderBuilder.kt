@@ -8,6 +8,9 @@ import de.hauschild.kompute.core.ShaderData.StorageBuffer
  *
  * Each [ShaderData] is self-validated before being accepted. Proceed to [DispatchBuilder]
  * after configuring all data.
+ *
+ * @param context
+ * @param executor
  */
 class ShaderBuilder(
     private val context: ExecutionContext,
@@ -46,7 +49,7 @@ class ShaderBuilder(
             .forEach { (_, items) ->
                 when (items.first()) {
                     is StorageBuffer<*> -> {
-                        val storageBuffers = items.filterIsInstance<StorageBuffer<*>>()
+                        val storageBuffers : List<StorageBuffer<*>> = items.filterIsInstance<StorageBuffer<*>>()
                         StorageBuffer.crossValidate(storageBuffers)
                     }
                 }

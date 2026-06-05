@@ -25,10 +25,12 @@ class OpenGLBackendTest {
                         OpenGLBackendTest::class.java
                             .getResourceAsStream("copy.glsl")!!,
                     ),
-                ).data(
+                )
+                .data(
                     StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f)),
                     output,
-                ).dispatch(3)
+                )
+                .dispatch(3)
                 .execute()[output]
 
         assertArrayEquals(floatArrayOf(1f, 2f, 3f), result)

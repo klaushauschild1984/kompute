@@ -8,6 +8,9 @@ package de.hauschild.kompute.core
  * local workgroup size declared in the shader source (`local_size_x/y/z`).
  *
  * For 1D computations use only x. For 2D use x and y. For 3D specify all three.
+ *
+ * @param context
+ * @param executor
  */
 class DispatchBuilder(
     private val context: ExecutionContext,

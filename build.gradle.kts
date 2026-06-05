@@ -1,6 +1,7 @@
 plugins {
     base
     jacoco
+    id("com.saveourtool.diktat")
 }
 
 allprojects {

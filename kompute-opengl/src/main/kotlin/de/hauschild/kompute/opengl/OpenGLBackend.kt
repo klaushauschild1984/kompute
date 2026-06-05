@@ -15,17 +15,18 @@ import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil.NULL
 
+/**
+ * OpenGL compute backend implementation using LWJGL.
+ *
+ * Initializes an offscreen OpenGL 4.3 context via GLFW, compiles and links compute shaders,
+ * and manages storage buffer transfer between host and GPU.
+ */
 class OpenGLBackend : AbstractBackend() {
     private var windowHandle: Long = NULL
     private var maxShaderStorageBufferBindings: Int = 0
     private var maxComputeWorkGroupCountX: Int = 0
     private var maxComputeWorkGroupCountY: Int = 0
     private var maxComputeWorkGroupCountZ: Int = 0
-
-    companion object {
-        private const val OPENGL_VERSION_MAJOR = 4
-        private const val OPENGL_VERSION_MINOR = 3
-    }
 
     @InternalApi
     override fun type(): Type = Type.OpenGL
@@ -112,8 +113,15 @@ class OpenGLBackend : AbstractBackend() {
 
     override fun close() {
         logger.debug { "Closing OpenGL Backend" }
-        if (windowHandle == NULL) return
+        if (windowHandle == NULL) {
+            return
+        }
         GLFW.glfwDestroyWindow(windowHandle)
         GLFW.glfwTerminate()
+    }
+
+    companion object {
+        private const val OPENGL_VERSION_MAJOR = 4
+        private const val OPENGL_VERSION_MINOR = 3
     }
 }
