@@ -13,7 +13,7 @@ class StorageBufferTest {
     @MethodSource
     @Suppress("UnusedParameter")
     fun `local validation`(
-        buffer: StorageBuffer,
+        buffer: StorageBuffer<*>,
         validExpected: Boolean,
         description: String,
     ) {
@@ -30,8 +30,8 @@ class StorageBufferTest {
             assertFailsWith<KomputeConfigurationException> {
                 StorageBuffer.crossValidate(
                     listOf(
-                        StorageBuffer(0),
-                        StorageBuffer(0),
+                        StorageBuffer<FloatArray>(0),
+                        StorageBuffer<FloatArray>(0),
                     ),
                 )
             }
@@ -43,37 +43,42 @@ class StorageBufferTest {
         fun `local validation`() =
             listOf(
                 Arguments.of(
-                    StorageBuffer(0).data(floatArrayOf(1.0f, 2.0f, 3.0f)),
+                    StorageBuffer<FloatArray>(0).data(floatArrayOf(1.0f, 2.0f, 3.0f)),
                     true,
                     "data only, input",
                 ),
                 Arguments.of(
-                    StorageBuffer(0).size(4).asOutput("output"),
+                    StorageBuffer<FloatArray>(0).size(4).asOutput(),
                     true,
                     "size only, output",
                 ),
                 Arguments.of(
-                    StorageBuffer(0).data(floatArrayOf(1.0f, 2.0f, 3.0f)).asOutput("output"),
+                    StorageBuffer<FloatArray>(0).data(floatArrayOf(1.0f, 2.0f, 3.0f)).asOutput(),
                     true,
                     "data + name, input/output",
                 ),
                 Arguments.of(
-                    StorageBuffer(-1),
+                    StorageBuffer<Any>(-1),
+                    false,
+                    "unsupported data type",
+                ),
+                Arguments.of(
+                    StorageBuffer<FloatArray>(-1),
                     false,
                     "index less than 0",
                 ),
                 Arguments.of(
-                    StorageBuffer(0),
+                    StorageBuffer<FloatArray>(0),
                     false,
                     "data and size missing",
                 ),
                 Arguments.of(
-                    StorageBuffer(0).size(4),
+                    StorageBuffer<FloatArray>(0).size(4),
                     false,
                     "output name missing",
                 ),
                 Arguments.of(
-                    StorageBuffer(0).data(floatArrayOf(1.0f, 2.0f, 3.0f)).size(4),
+                    StorageBuffer<FloatArray>(0).data(floatArrayOf(1.0f, 2.0f, 3.0f)).size(4),
                     false,
                     "data and size",
                 ),

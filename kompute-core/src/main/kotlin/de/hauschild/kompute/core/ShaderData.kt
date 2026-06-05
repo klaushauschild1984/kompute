@@ -1,5 +1,6 @@
 package de.hauschild.kompute.core
 
+import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import kotlin.reflect.KClass
 
 /**
@@ -8,7 +9,7 @@ import kotlin.reflect.KClass
  * Defines the different types of shader data (storage buffers, etc.) that can be attached to
  * a shader computation. Each implementation validates its own configuration before execution.
  *
- * @see ShaderData.StorageBuffer
+ * @see StorageBuffer
  */
 sealed interface ShaderData {
     /**
@@ -28,7 +29,7 @@ sealed interface ShaderData {
      * - Exactly one of [data] or [size] must be provided
      * - If [data] is provided, the buffer is initialized with the given input data
      * - If [size] is provided, an empty buffer of that size is allocated (output only)
-     * - A size-only buffer must have [asOutput] called to name the result
+     * - A size-only buffer must have [asOutput] called to mark it as output
      *
      * Example:
      * ```
@@ -36,24 +37,24 @@ sealed interface ShaderData {
      * StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))
      *
      * // Output buffer
-     * StorageBuffer<FloatArray>(1).size(128).asOutput("result")
+     * StorageBuffer<FloatArray>(1).size(128).asOutput()
      *
      * // Read-write buffer
-     * StorageBuffer<FloatArray>(2).data(existing).asOutput("updated")
+     * StorageBuffer<FloatArray>(2).data(existing).asOutput()
      * ```
      *
      * @param index the binding index in the shader — must be non-negative
      */
-    class StorageBuffer<T: Any>(
+    class StorageBuffer<T : Any>(
         val index: Int,
         val type: KClass<T>,
     ) : ShaderData,
-        OutputCapable {
+        OutputCapable<T> {
         var data: T? = null
             private set
         var size: Int? = null
             private set
-        override var outputName: String? = null
+        override var isOutput: Boolean = false
             private set
 
         /**
@@ -84,15 +85,14 @@ sealed interface ShaderData {
         }
 
         /**
-         * Marks this buffer as an output retrievable by the given name.
+         * Marks this buffer as an output.
          *
          * Required when [size] is used.
          *
-         * @param name a unique name to identify this output in [ShaderResult]
          * @return this [StorageBuffer] for chaining
          */
-        fun asOutput(name: String): StorageBuffer<T> {
-            this.outputName = name
+        fun asOutput(): StorageBuffer<T> {
+            this.isOutput = true
             return this
         }
 
@@ -100,22 +100,41 @@ sealed interface ShaderData {
          * Validates the buffer configuration.
          *
          * @throws KomputeConfigurationException if the index is negative, neither [data] nor [size]
-         * is provided, both are provided, or [size] is provided without an output name
+         * is provided, both are provided, or [size] is provided without calling [asOutput]
          */
         override fun validate() {
-            requireConfiguration(index >= 0) { "Index must be non-negative for StorageBuffer" }
+            requireConfiguration(type in SUPPORTED_TYPES) {
+                "Unsupported StorageBuffer type: ${type.simpleName}"
+            }
+            requireConfiguration(index >= 0) {
+                "Index must be non-negative for StorageBuffer"
+            }
             requireConfiguration(
                 data != null || size != null,
             ) { "Either data or size must be provided for StorageBuffer" }
             if (data != null) {
-                requireConfiguration(size == null) { "Size should not be combined together with data" }
+                requireConfiguration(size == null) {
+                    "Size should not be combined together with data"
+                }
             }
             if (size != null) {
-                requireConfiguration(outputName != null) { "Output name must be provided for StorageBuffer with size" }
+                requireConfiguration(isOutput) {
+                    "Sized StorageBuffer must be marked as output"
+                }
             }
         }
 
+        override fun toString(): String = "StorageBuffer<${type.simpleName}>(index=$index)"
+
         companion object {
+            private val SUPPORTED_TYPES =
+                setOf(
+                    FloatArray::class,
+                    IntArray::class,
+                    DoubleArray::class,
+                    ByteArray::class,
+                )
+
             fun crossValidate(storageBuffers: List<StorageBuffer<*>>) {
                 val duplicates =
                     storageBuffers
@@ -125,19 +144,26 @@ sealed interface ShaderData {
                         .keys
                 requireConfiguration(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
             }
+
+            /**
+             * Convinience methode to create a [StorageBuffer] from Java using the [Class] type.
+             */
+            @JvmStatic
+            fun <T : Any> newStorageBuffer(
+                index: Int,
+                type: Class<T>,
+            ) = StorageBuffer(index, type.kotlin)
         }
     }
 
     /**
-     * Describes the capability of a [ShaderData] to act as output data.
+     * Describes the capability of a [ShaderData] to act as output data. Use this object itself as key to retrieve result data from [ShaderResult].
      */
-    interface OutputCapable {
-        /** Optional output name */
-        val outputName: String?
-
+    interface OutputCapable<T : Any> {
         /** Determines whether this [ShaderData] is used as output data or not. */
-        fun isOutput(): Boolean = outputName != null
+        val isOutput: Boolean
     }
 }
 
-inline fun <reified T : Any> StorageBuffer(index: Int) = ShaderData.StorageBuffer(index, T::class)
+@Suppress("FunctionNaming")
+inline fun <reified T : Any> StorageBuffer(index: Int) = StorageBuffer(index, T::class)

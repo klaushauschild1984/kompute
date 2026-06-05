@@ -82,21 +82,22 @@ dependencies {
 
 ## Usage
 
-Select a backend, attach a compute shader, configure storage buffers, dispatch and read results.
+Select a backend, attach a compute shader, configure storage buffers, dispatch, and read results.
 
 ### Kotlin
 
 ```kotlin
 Kompute.openGL().use { openGL ->
+    val output = ShaderData.StorageBuffer<FloatArray>(1).size(128).asOutput()
     val result = openGL
         .shader(ShaderSource.Code(glslCode))
         .data(
-            StorageBuffer(0).data(input),
-            StorageBuffer(1).size(128).asOutput("result"),
+            ShaderData.StorageBuffer<FloatArray>(0).data(input),
+            output,
         )
         .dispatch(x = 64)
         .execute()
-    println(result.storageBuffer("result").contentToString())
+    println(result[output].contentToString())
 }
 ```
 
@@ -104,15 +105,16 @@ Kompute.openGL().use { openGL ->
 
 ```java
 try (Backend backend = Kompute.openGL()) {
-    float[] result = backend
+    var output = ShaderData.StorageBuffer.newStorageBuffer(1, float[].class).size(128).asOutput();
+    var result = backend
         .shader(new ShaderSource.Code(glslCode))
         .data(
-            new ShaderData.StorageBuffer(0).data(input),
-            new ShaderData.StorageBuffer(1).size(128).asOutput("result")
+            ShaderData.StorageBuffer.newStorageBuffer(0, float[].class).data(input),
+            output
         )
         .dispatch(64)
-        .execute()
-        .storageBuffer("result");
+        .execute();
+    float[] data = result.get(output);
 }
 ```
 
@@ -137,32 +139,29 @@ Storage buffers are the primary data exchange mechanism between CPU and GPU.
 
 ### Capabilities
 
-| Data type                  | Input | Output |
-|----------------------------|-------|--------|
-| `float` / `vec*` / `mat*` | ✓     | ✓      |
-| `int` / `uint` / `double` | ✗     | ✗      |
-| Structs                    | ✗     | ✗      |
+`StorageBuffer<T>` is generic — the type parameter maps GLSL types to their Kotlin equivalents:
 
-> Currently only `FloatArray` is supported for input and output. Support for additional
-> types is planned for a future release.
+| GLSL                        | Kotlin        |
+|-----------------------------|---------------|
+| `float` / `vec*` / `mat*`  | `FloatArray`  |
+| `int` / `ivec*` / `uint` / `uvec*` | `IntArray` |
+| `double` / `dvec*`         | `DoubleArray` |
+| Struct                      | `ByteArray`   |
 
 ### Usage
 
 ```kotlin
-// Input: provide data to the shader
-StorageBuffer(0).data(floatArrayOf(1f, 2f, 3f))
+val input  = StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))
+val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
 
-// Output: shader writes results here — size is the number of float elements
-StorageBuffer(1).size(128).asOutput("result")
-
-// Read-write: initialized with data, result readable afterwards
-StorageBuffer(2).data(existing).asOutput("updated")
+// read-write: initialized with data, result readable afterwards
+val inout  = StorageBuffer<FloatArray>(2).data(existing).asOutput()
 ```
 
-Results are retrieved by name after execution:
+Results are retrieved via the buffer object after execution:
 
 ```kotlin
-val output: FloatArray = result.storageBuffer("result")
+val data: FloatArray = result[output]
 ```
 
 ## Uniform Buffer Objects *(planned — v0.3.0)*
@@ -196,7 +195,7 @@ useful for algorithms like Monte-Carlo sampling where multiple threads accumulat
 
 ```kotlin
 // Not yet supported
-AtomicCounter(0).asOutput("hits")
+AtomicCounter(0).asOutput()
 ```
 
 ## Image2D *(planned — v0.5.0)*
@@ -206,7 +205,7 @@ generation without transferring intermediate data back to the CPU.
 
 ```kotlin
 // Not yet supported
-Image2D(0, width = 1024, height = 1024).asOutput("frame")
+Image2D(0, width = 1024, height = 1024).asOutput()
 ```
 
 ## Performance
@@ -214,7 +213,7 @@ Image2D(0, width = 1024, height = 1024).asOutput("frame")
 Benchmarks are implemented using [JMH](https://github.com/openjdk/jmh) in the `kompute-benchmark` module.
 Each benchmark compares a naive Kotlin CPU implementation against the OpenGL compute shader backend.
 Backend initialization and shader compilation are excluded from the measurement — only buffer transfer,
-dispatch and readback are measured.
+dispatch, and readback are measured.
 
 ### Matrix multiplication
 
@@ -262,6 +261,7 @@ A collection of topics I want to address in the future enhancing the library.
 
 * [ ] Core
   * [ ] basic binding index verification against shader source
+  * [ ] `kompute-serialization` module — Jackson-style annotation-based struct serialization (`@GpuStruct`, `@GpuField`) with automatic std430/std140 alignment handling
 * [ ] OpenGL
   * [ ] internal optimizations
     * [ ] shader caching

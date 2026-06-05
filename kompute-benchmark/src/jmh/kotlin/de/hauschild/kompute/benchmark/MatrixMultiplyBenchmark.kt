@@ -1,7 +1,7 @@
 package de.hauschild.kompute.benchmark
 
-import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import de.hauschild.kompute.core.ShaderSource.Stream
+import de.hauschild.kompute.core.StorageBuffer
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Level
@@ -24,7 +24,7 @@ open class MatrixMultiplyBenchmark {
     fun kotlin(
         matrix: MatrixState,
         cpu: CpuState,
-    ): FloatArray {
+    ) {
         val result = FloatArray(matrix.size * matrix.size)
         for (i in 0 until matrix.size) {
             for (j in 0 until matrix.size) {
@@ -35,27 +35,24 @@ open class MatrixMultiplyBenchmark {
                 result[i * matrix.size + j] = sum
             }
         }
-        return result
     }
 
     @Benchmark
     fun openGL(
         matrix: MatrixState,
         openGLBackend: OpenGLBackendState,
-    ): FloatArray =
-        openGLBackend.backend
-            .shader(
-                Stream(
-                    MatrixMultiplyBenchmark::class.java
-                        .getResourceAsStream("matrix-multiply.glsl")!!,
-                ),
-            ).data(
-                StorageBuffer(0).data(matrix.a),
-                StorageBuffer(1).data(matrix.b),
-                StorageBuffer(2).size(matrix.size * matrix.size).asOutput("c"),
-            ).dispatch(matrix.size / 8, matrix.size / 8)
-            .execute()
-            .storageBuffer("c")
+    ) = openGLBackend.backend
+        .shader(
+            Stream(
+                MatrixMultiplyBenchmark::class.java
+                    .getResourceAsStream("matrix-multiply.glsl")!!,
+            ),
+        ).data(
+            StorageBuffer<FloatArray>(0).data(matrix.a),
+            StorageBuffer<FloatArray>(1).data(matrix.b),
+            StorageBuffer<FloatArray>(2).size(matrix.size * matrix.size).asOutput(),
+        ).dispatch(matrix.size / 8, matrix.size / 8)
+        .execute()
 
     @State(Scope.Benchmark)
     open class MatrixState {
