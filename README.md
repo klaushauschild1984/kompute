@@ -133,15 +133,80 @@ ShaderSource.Stream(MyClass::class.java.getResourceAsStream("shader.glsl")!!)
 
 ## Storage Buffers
 
+Storage buffers are the primary data exchange mechanism between CPU and GPU.
+
+### Capabilities
+
+| Data type                  | Input | Output |
+|----------------------------|-------|--------|
+| `float` / `vec*` / `mat*` | ✓     | ✓      |
+| `int` / `uint` / `double` | ✗     | ✗      |
+| Structs                    | ✗     | ✗      |
+
+> Currently only `FloatArray` is supported for input and output. Support for additional
+> types is planned for a future release.
+
+### Usage
+
 ```kotlin
 // Input: provide data to the shader
 StorageBuffer(0).data(floatArrayOf(1f, 2f, 3f))
 
-// Output: shader writes results here
+// Output: shader writes results here — size is the number of float elements
 StorageBuffer(1).size(128).asOutput("result")
 
 // Read-write: initialized with data, result readable afterwards
 StorageBuffer(2).data(existing).asOutput("updated")
+```
+
+Results are retrieved by name after execution:
+
+```kotlin
+val output: FloatArray = result.storageBuffer("result")
+```
+
+## Uniform Buffer Objects *(planned — v0.3.0)*
+
+UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
+dimensions, zoom levels, or transformation matrices. Unlike storage buffers, UBOs cannot be written
+by the shader.
+
+```kotlin
+// Not yet supported
+UniformBuffer(0).data(floatArrayOf(centerX, centerY, zoom))
+```
+
+> **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
+> padding in the data array. A typed builder to handle alignment automatically is under consideration.
+
+## Scalar Uniforms *(planned — v0.4.0)*
+
+Scalar uniforms pass individual values by name directly to the shader — no binding index required.
+
+```kotlin
+// Not yet supported
+uniform("zoom", 1.5f)
+uniform("maxIterations", 256)
+```
+
+## Atomic Counters *(planned — v0.4.0)*
+
+Atomic counters allow threads to increment a shared counter safely across parallel invocations —
+useful for algorithms like Monte-Carlo sampling where multiple threads accumulate a result.
+
+```kotlin
+// Not yet supported
+AtomicCounter(0).asOutput("hits")
+```
+
+## Image2D *(planned — v0.5.0)*
+
+`image2D` allows compute shaders to write directly to a 2D texture — enabling GPU-side image
+generation without transferring intermediate data back to the CPU.
+
+```kotlin
+// Not yet supported
+Image2D(0, width = 1024, height = 1024).asOutput("frame")
 ```
 
 ## Performance
@@ -187,42 +252,29 @@ xvfb-run ./gradlew build
 
 A collection of topics I want to address in the future enhancing the library.
 
-* [ ] API
-  * [x] specific exception handling
-  * [ ] generalize buffer setup
-    * [x] API overhaul
-    * [ ] UBO support
-    * [ ] scalar uniform support
-    * [ ] atomic counter support
-    * [ ] image2D support
-  * [ ] binding validation
-    * [x] index collisions
-    * [x] name collisions
-    * [ ] basic binding index verification against shader source
+* [ ] Core
+  * [ ] basic binding index verification against shader source
 * [ ] OpenGL
-  * [x] backend-specific binding validation
-  * [ ] optimization
+  * [ ] internal optimizations
     * [ ] shader caching
     * [ ] pre-compilation
     * [ ] multi-dispatch
-* [ ] Vulkan
-  * [ ] general implementation
 * [ ] Showcasing
   * [ ] Mandelbrot-Set (plus visualization)
   * [ ] Monte-Carlo Pi calculation
 
 ## Milestones
 
-| Version                                                                        | Focus |
-|--------------------------------------------------------------------------------|-------|
-| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0)  | OpenGL Storage Buffer — initial release |
-| [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0)  | Stability (exception handling, binding validation) |
-| `v0.3.0`                                                                       | UBO + scalar uniform support |
-| `v0.4.0`                                                                       | Windows support |
-| `v0.5.0`                                                                       | `image2D` support |
-| `v0.6.0`                                                                       | OpenGL optimizations (shader caching, pre-compilation, multi-dispatch) |
-| `v0.7.0`                                                                       | Vulkan backend |
-| `v1.0.0`                                                                       | Stable, complete API |
+| Version                                                                    | Focus |
+|----------------------------------------------------------------------------|-------|
+| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
+| [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation) |
+| `v0.3.0`                                                                   | UBO support |
+| `v0.4.0`                                                                   | Scalar uniform + atomic counter support |
+| `v0.5.0`                                                                   | `image2D` support |
+| `v0.6.0`                                                                   | Windows support |
+| `v0.7.0`                                                                   | Vulkan backend |
+| `v1.0.0`                                                                   | Stable, complete API |
 
 ## Contributing
 
