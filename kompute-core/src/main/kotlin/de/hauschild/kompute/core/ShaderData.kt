@@ -157,7 +157,8 @@ sealed interface ShaderData {
     }
 
     /**
-     * Describes the capability of a [ShaderData] to act as output data. Use this object itself as key to retrieve result data from [ShaderResult].
+     * Describes the capability of a [ShaderData] to act as output data.
+     * Use this object itself as key to retrieve result data from [ShaderResult].
      */
     interface OutputCapable<T : Any> {
         /** Determines whether this [ShaderData] is used as output data or not. */
