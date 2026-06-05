@@ -273,17 +273,17 @@ A collection of topics I want to address in the future enhancing the library.
 
 ## Milestones
 
-| Version                                                                    | Focus |
-|----------------------------------------------------------------------------|-------|
+| Version                                                                       | Focus |
+|-------------------------------------------------------------------------------|-------|
 | [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
 | [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation) |
-| `v0.3.0`                                                                   | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray` |
-| `v0.4.0`                                                                   | UBO support |
-| `v0.5.0`                                                                   | Scalar uniform + atomic counter support |
-| `v0.6.0`                                                                   | `image2D` support |
-| `v0.7.0`                                                                   | Windows support |
-| `v0.8.0`                                                                   | Vulkan backend |
-| `v1.0.0`                                                                   | Stable, complete API |
+| [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray` |
+| `v0.4.0`                                                                      | UBO support |
+| `v0.5.0`                                                                      | Scalar uniform + atomic counter support |
+| `v0.6.0`                                                                      | `image2D` support |
+| `v0.7.0`                                                                      | Windows support |
+| `v0.8.0`                                                                      | Vulkan backend |
+| `v1.0.0`                                                                      | Stable, complete API |
 
 ## Contributing
 
