@@ -1,5 +1,7 @@
 package de.hauschild.kompute.core
 
+import kotlin.reflect.KClass
+
 /**
  * Represents data passed to or received from a compute shader.
  *
@@ -12,7 +14,7 @@ sealed interface ShaderData {
     /**
      * Validates this shader data configuration.
      *
-     * @throws IllegalArgumentException if the configuration is invalid
+     * @throws KomputeConfigurationException if the configuration is invalid
      */
     fun validate()
 
@@ -31,22 +33,23 @@ sealed interface ShaderData {
      * Example:
      * ```
      * // Input buffer
-     * StorageBuffer(0).data(floatArrayOf(1f, 2f, 3f))
+     * StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))
      *
      * // Output buffer
-     * StorageBuffer(1).size(128).asOutput("result")
+     * StorageBuffer<FloatArray>(1).size(128).asOutput("result")
      *
      * // Read-write buffer
-     * StorageBuffer(2).data(existing).asOutput("updated")
+     * StorageBuffer<FloatArray>(2).data(existing).asOutput("updated")
      * ```
      *
      * @param index the binding index in the shader — must be non-negative
      */
-    class StorageBuffer(
+    class StorageBuffer<T: Any>(
         val index: Int,
+        val type: KClass<T>,
     ) : ShaderData,
         OutputCapable {
-        var data: FloatArray? = null
+        var data: T? = null
             private set
         var size: Int? = null
             private set
@@ -58,10 +61,10 @@ sealed interface ShaderData {
          *
          * Cannot be combined with [size].
          *
-         * @param data the float data to upload to the GPU
+         * @param data the data to upload to the GPU
          * @return this [StorageBuffer] for chaining
          */
-        fun data(data: FloatArray): StorageBuffer {
+        fun data(data: T): StorageBuffer<T> {
             this.data = data
             return this
         }
@@ -72,10 +75,10 @@ sealed interface ShaderData {
          * An empty buffer of this size is allocated on the GPU. The shader writes results here.
          * Must be combined with [asOutput]. Cannot be combined with [data].
          *
-         * @param size the number of float elements to allocate
+         * @param size the number of elements to allocate
          * @return this [StorageBuffer] for chaining
          */
-        fun size(size: Int): StorageBuffer {
+        fun size(size: Int): StorageBuffer<T> {
             this.size = size
             return this
         }
@@ -83,13 +86,12 @@ sealed interface ShaderData {
         /**
          * Marks this buffer as an output retrievable by the given name.
          *
-         * Required when [size] is used. Allows retrieving computed results via
-         * [ShaderResult.storageBuffer].
+         * Required when [size] is used.
          *
          * @param name a unique name to identify this output in [ShaderResult]
          * @return this [StorageBuffer] for chaining
          */
-        fun asOutput(name: String): StorageBuffer {
+        fun asOutput(name: String): StorageBuffer<T> {
             this.outputName = name
             return this
         }
@@ -97,7 +99,7 @@ sealed interface ShaderData {
         /**
          * Validates the buffer configuration.
          *
-         * @throws IllegalArgumentException if the index is negative, neither [data] nor [size]
+         * @throws KomputeConfigurationException if the index is negative, neither [data] nor [size]
          * is provided, both are provided, or [size] is provided without an output name
          */
         override fun validate() {
@@ -114,7 +116,7 @@ sealed interface ShaderData {
         }
 
         companion object {
-            fun crossValidate(storageBuffers: List<StorageBuffer>) {
+            fun crossValidate(storageBuffers: List<StorageBuffer<*>>) {
                 val duplicates =
                     storageBuffers
                         .map { it.index }
@@ -133,7 +135,9 @@ sealed interface ShaderData {
         /** Optional output name */
         val outputName: String?
 
-        /** Determines whether this [ShaderData] is utilized as output data or not. */
+        /** Determines whether this [ShaderData] is used as output data or not. */
         fun isOutput(): Boolean = outputName != null
     }
 }
+
+inline fun <reified T : Any> StorageBuffer(index: Int) = ShaderData.StorageBuffer(index, T::class)

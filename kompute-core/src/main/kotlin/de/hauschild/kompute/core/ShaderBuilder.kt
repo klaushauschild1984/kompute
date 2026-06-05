@@ -46,8 +46,8 @@ class ShaderBuilder(
             .groupBy { it::class }
             .forEach { (_, items) ->
                 when (items.first()) {
-                    is StorageBuffer -> {
-                        val storageBuffers = items.filterIsInstance<StorageBuffer>()
+                    is StorageBuffer<*> -> {
+                        val storageBuffers = items.filterIsInstance<StorageBuffer<*>>()
                         StorageBuffer.crossValidate(storageBuffers)
                     }
                 }
