@@ -1,6 +1,6 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.ShaderData.UniformBuffer
+import de.hauschild.kompute.core.data.UniformBuffer
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 

@@ -1,5 +1,8 @@
 package de.hauschild.kompute.core
 
+import de.hauschild.kompute.core.execution.ShaderBuilder
+import de.hauschild.kompute.core.execution.ShaderSource
+
 /**
  * Represents a compute backend capable of executing GPU shaders.
  *

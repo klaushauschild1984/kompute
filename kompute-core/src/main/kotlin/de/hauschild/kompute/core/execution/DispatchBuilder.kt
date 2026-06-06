@@ -1,4 +1,6 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.execution
+
+import de.hauschild.kompute.core.exception.requireConfiguration
 
 /**
  * Configures the dispatch dimensions for the compute shader execution.

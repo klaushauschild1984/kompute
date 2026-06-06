@@ -1,15 +1,15 @@
 package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.AbstractBackend
-import de.hauschild.kompute.core.ExecutionContext
+import de.hauschild.kompute.core.execution.ExecutionContext
 import de.hauschild.kompute.core.InternalApi
-import de.hauschild.kompute.core.ShaderData.OutputCapable
-import de.hauschild.kompute.core.ShaderData.StorageBuffer
-import de.hauschild.kompute.core.ShaderData.UniformBuffer
-import de.hauschild.kompute.core.ShaderResult
+import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.data.UniformBuffer
+import de.hauschild.kompute.core.execution.ShaderResult
 import de.hauschild.kompute.core.Type
-import de.hauschild.kompute.core.requireBackendInitialization
-import de.hauschild.kompute.core.requireConfiguration
+import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.exception.requireConfiguration
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11

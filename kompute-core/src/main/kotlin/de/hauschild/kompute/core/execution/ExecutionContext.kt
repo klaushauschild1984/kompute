@@ -1,4 +1,6 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.execution
+
+import de.hauschild.kompute.core.data.ShaderData
 
 /**
  * Holds the mutable configuration state for a compute shader execution.

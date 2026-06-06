@@ -1,8 +1,8 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.KomputeConfigurationException
-import de.hauschild.kompute.core.ShaderData.OutputCapable
-import de.hauschild.kompute.core.ShaderData.StorageBuffer
+import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.data.StorageBuffer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil

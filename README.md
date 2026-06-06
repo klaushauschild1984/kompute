@@ -119,11 +119,11 @@ Select a backend, attach a compute shader, configure storage buffers, dispatch, 
 
 ```kotlin
 Kompute.openGL().use { openGL ->
-    val output = ShaderData.StorageBuffer<FloatArray>(1).size(128).asOutput()
+    val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
     val result = openGL
         .shader(ShaderSource.Code(glslCode))
         .data(
-            ShaderData.StorageBuffer<FloatArray>(0).data(input),
+            StorageBuffer<FloatArray>(0).data(input),
             output,
         )
         .dispatch(x = 64)
@@ -136,11 +136,11 @@ Kompute.openGL().use { openGL ->
 
 ```java
 try (Backend backend = Kompute.openGL()) {
-    var output = ShaderData.StorageBuffer.newStorageBuffer(1, float[].class).size(128).asOutput();
+    var output = StorageBuffer.newStorageBuffer(1, float[].class).size(128).asOutput();
     var result = backend
         .shader(new ShaderSource.Code(glslCode))
         .data(
-            ShaderData.StorageBuffer.newStorageBuffer(0, float[].class).data(input),
+            StorageBuffer.newStorageBuffer(0, float[].class).data(input),
             output
         )
         .dispatch(64)

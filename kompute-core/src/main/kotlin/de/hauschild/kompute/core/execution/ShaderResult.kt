@@ -1,6 +1,7 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.execution
 
-import de.hauschild.kompute.core.ShaderData.OutputCapable
+import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.exception.KomputeConfigurationException
 
 /**
  * Holds the output data from a compute shader execution.

@@ -1,16 +1,13 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.ShaderData.UniformBuffer
-import de.hauschild.kompute.core.ShaderSource.Code
-import de.hauschild.kompute.core.StorageBuffer
+import de.hauschild.kompute.core.execution.ShaderSource.Code
+import de.hauschild.kompute.core.data.StorageBuffer
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.extension.ExtendWith
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)
-class UniformBufferTest {
+class OpenGLStorageBufferTest {
     @Test
     fun `float array`(backend: OpenGLBackend) {
         val output = StorageBuffer<FloatArray>(1).size(3).asOutput()
@@ -21,32 +18,26 @@ class UniformBufferTest {
 #version 430 core
 layout (local_size_x = 1) in;
 
-layout (std140, binding = 0) uniform Params {
-    float value;
-} params;
+layout (std430, binding = 0) readonly buffer InputBuffer {
+    float values[];
+} source;
 
 layout (std430, binding = 1) writeonly buffer OutputBuffer {
     float values[];
-} outputBuffer;
+} result;
 
 void main() {
-    outputBuffer.values[gl_GlobalInvocationID.x] = params.value;
+    result.values[gl_GlobalInvocationID.x] = source.values[gl_GlobalInvocationID.x];
 }
                     """.trimIndent()),
                 )
                 .data(
-                    UniformBuffer(0).data(
-                        ByteBuffer
-                            .allocate(Float.SIZE_BYTES)
-                            .order(ByteOrder.nativeOrder())
-                            .putFloat(42f)
-                            .array()
-                    ),
+                    StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f)),
                     output,
                 )
                 .dispatch(3)
                 .execute()[output]
 
-        assertArrayEquals(floatArrayOf(42f, 42f, 42f), result)
+        assertArrayEquals(floatArrayOf(1f, 2f, 3f), result)
     }
 }
