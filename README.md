@@ -7,26 +7,39 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 ## CI Status
 
-| Branch | Status                                                                                                                                                            |
+| Status |                                                                                                                                                                   |
 |--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | main   | [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) |
 
 
-| Module         | Coverage                                             |
+| Coverage       |                                                      |
 |----------------|------------------------------------------------------|
 | Core           | ![Coverage Core](.github/badges/jacoco-core.svg)     |
 | OpenGL Backend | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) |
 
+| Repository  |                                                                                      |
+|-------------|--------------------------------------------------------------------------------------|
+| Last Commit | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) |
+| Open Issues | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute)           |
+| Repo Size   | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute)     |
+
 ## Requirements
 
-- JDK 21+
-- OpenGL 4.3+ capable GPU
-- Linux or Windows
+| Requirement | Version                                                                                  |
+|-------------|------------------------------------------------------------------------------------------|
+| JDK         | ![JDK](https://img.shields.io/badge/JDK-21+-orange)                                      |
+| Kotlin      | ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple?logo=kotlin&logoColor=white) |
+| OpenGL      | ![OpenGL](https://img.shields.io/badge/OpenGL-4.3+-blue)                                 |
+| OS          | ![OS](https://img.shields.io/badge/OS-Linux%20%7C%20Windows-lightgrey)                   |
 
 > **macOS:** OpenGL support on macOS is limited to 4.1 — compute shaders require 4.3 and are therefore not supported.
 > macOS support depends on the upcoming Vulkan backend.
 
 ## Getting Started
+
+| JitPack                                                                                                           | License                                                                         |
+|-------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| [![Release](https://jitpack.io/v/klaushauschild1984/kompute.svg)](https://jitpack.io/#klaushauschild1984/kompute) | [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE) |
 
 Add the JitPack repository and the dependency to your build.
 
@@ -149,12 +162,12 @@ Storage buffers are the primary data exchange mechanism between CPU and GPU.
 
 `StorageBuffer<T>` is generic — the type parameter maps GLSL types to their Kotlin equivalents:
 
-| GLSL                        | Kotlin        |
-|-----------------------------|---------------|
-| `float` / `vec*` / `mat*`  | `FloatArray`  |
-| `int` / `ivec*` / `uint` / `uvec*` | `IntArray` |
-| `double` / `dvec*`         | `DoubleArray` |
-| Struct                      | `ByteArray`   |
+| GLSL                               | Kotlin        |
+|------------------------------------|---------------|
+| `float` / `vec*` / `mat*`          | `FloatArray`  |
+| `int` / `ivec*` / `uint` / `uvec*` | `IntArray`    |
+| `double` / `dvec*`                 | `DoubleArray` |
+| Struct                             | `ByteArray`   |
 
 ### Usage
 
@@ -284,18 +297,18 @@ xvfb-run ./gradlew build
 
 ## Milestones
 
-| Version                                                                       | Focus |
-|-------------------------------------------------------------------------------|-------|
-| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release |
-| [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation) |
-| [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray` |
-| `v0.4.0`                                                                      | UBO support |
-| `v0.5.0`                                                                      | Scalar uniform + atomic counter support |
-| `v0.6.0`                                                                      | `image2D` support |
+| Version                                                                       | Focus                                                                                                         |
+|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release                                                                       |
+| [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation)                                                            |
+| [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray`           |
+| `v0.4.0`                                                                      | UBO support                                                                                                   |
+| `v0.5.0`                                                                      | Scalar uniform + atomic counter support                                                                       |
+| `v0.6.0`                                                                      | `image2D` support                                                                                             |
 | `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
-| `v0.8.0`                                                                      | Windows support |
-| `v0.9.0`                                                                      | Vulkan backend |
-| `v1.0.0`                                                                      | Stable, complete API |
+| `v0.8.0`                                                                      | Windows support                                                                                               |
+| `v0.9.0`                                                                      | Vulkan backend                                                                                                |
+| `v1.0.0`                                                                      | Stable, complete API                                                                                          |
 
 ## Contributing
 
