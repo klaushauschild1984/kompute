@@ -53,6 +53,7 @@ tasks.jacocoTestReport {
 
 detekt {
     buildUponDefaultConfig = true
+    config.setFrom(rootProject.file("detekt.yml"))
 }
 
 tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
@@ -63,6 +64,9 @@ tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
 }
 
 diktat {
+    reporters {
+        sarif()
+    }
     inputs {
         include("src/**/*.kt")
         exclude("**/generated/**")

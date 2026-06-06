@@ -7,7 +7,8 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml)
 
-![Coverage](.github/badges/jacoco.svg)
+![Coverage Core](.github/badges/jacoco-core.svg)
+![Coverage OpenGL](.github/badges/jacoco-opengl.svg)
 
 ## Requirements
 

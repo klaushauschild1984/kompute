@@ -48,6 +48,20 @@ jobs:
                     sarif_file: kompute-opengl/build/reports/detekt/detekt.sarif
                     category: detekt-opengl
 
+            -   name: Upload Diktat results (core)
+                uses: github/codeql-action/upload-sarif@v4
+                if: always()
+                with:
+                    sarif_file: kompute-core/build/reports/diktat/diktat.sarif
+                    category: diktat-core
+
+            -   name: Upload Diktat results (opengl)
+                uses: github/codeql-action/upload-sarif@v4
+                if: always()
+                with:
+                    sarif_file: kompute-opengl/build/reports/diktat/diktat.sarif
+                    category: diktat-opengl
+
             -   name: Test Report
                 uses: dorny/test-reporter@v1
                 if: always()
@@ -56,13 +70,20 @@ jobs:
                     path: '**/build/test-results/test/*.xml'
                     reporter: java-junit
 
-            -   name: Generate Coverage Badge
+            -   name: Generate Coverage Badge (core)
                 uses: cicirello/jacoco-badge-generator@v2
                 with:
-                    jacoco-csv-file: build/reports/jacoco/jacocoAggregatedReport/jacocoAggregatedReport.csv
+                    jacoco-csv-file: build/reports/jacoco/jacocoCoreReport/jacocoCoreReport.csv
+                    coverage-badge-filename: jacoco-core.svg
 
-            -   name: Commit Badge
+            -   name: Generate Coverage Badge (opengl)
+                uses: cicirello/jacoco-badge-generator@v2
+                with:
+                    jacoco-csv-file: kompute-opengl/build/reports/jacoco/test/jacocoTestReport.csv
+                    coverage-badge-filename: jacoco-opengl.svg
+
+            -   name: Commit Badges
                 uses: stefanzweifel/git-auto-commit-action@v5
                 with:
-                    commit_message: "Update coverage badge"
+                    commit_message: "Update coverage badges"
                     file_pattern: ".github/badges/*.svg"

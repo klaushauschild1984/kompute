@@ -1,0 +1,4 @@
+style:
+  ForbiddenComment:
+    # TODOs are intentional and tracked in code — do not flag them as violations
+    active: false
