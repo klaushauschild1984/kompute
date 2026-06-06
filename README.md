@@ -168,16 +168,31 @@ val data: FloatArray = result[output]
 ## Uniform Buffer Objects *(planned — v0.4.0)*
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
-dimensions, zoom levels, or transformation matrices. Unlike storage buffers, UBOs cannot be written
-by the shader.
+dimensions, zoom levels, or transformation matrices. Unlike storage buffers, the shader cannot write UBOs.
 
+Shader:
+```glsl
+layout(std140, binding = 0) uniform Params {
+   vec3  center;   // 12 bytes — but std140 pads vec3 to 16 bytes
+   float zoom;     // starts at offset 16, not 12
+};
+```
+
+Kotlin:
 ```kotlin
-// Not yet supported
-UniformBuffer(0).data(floatArrayOf(centerX, centerY, zoom))
+val data = ByteBuffer.allocate(Float.SIZE_BYTES * 4 + Float.SIZE_BYTES)
+    .order(ByteOrder.nativeOrder())
+    .putFloat(centerX)
+    .putFloat(centerY)
+    .putFloat(centerZ)
+    .putFloat(0f)       // padding — vec3 occupies 16 bytes in std140
+    .putFloat(zoom)
+    .array()
+UniformBuffer(0).data(data)
 ```
 
 > **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
-> padding in the data array. A typed builder to handle alignment automatically is under consideration.
+> padding in the data array. A typed builder to handle alignment automatically is planned for v0.7.0.
 
 ## Scalar Uniforms *(planned — v0.5.0)*
 

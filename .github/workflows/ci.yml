@@ -36,28 +36,28 @@ jobs:
 
             -   name: Upload Detekt results (core)
                 uses: github/codeql-action/upload-sarif@v4
-                if: always()
+                if: always() && hashFiles('kompute-core/build/reports/detekt/detekt.sarif') != ''
                 with:
                     sarif_file: kompute-core/build/reports/detekt/detekt.sarif
                     category: detekt-core
 
             -   name: Upload Detekt results (opengl)
                 uses: github/codeql-action/upload-sarif@v4
-                if: always()
+                if: always() && hashFiles('kompute-opengl/build/reports/detekt/detekt.sarif') != ''
                 with:
                     sarif_file: kompute-opengl/build/reports/detekt/detekt.sarif
                     category: detekt-opengl
 
             -   name: Upload Diktat results (core)
                 uses: github/codeql-action/upload-sarif@v4
-                if: always()
+                if: always() && hashFiles('kompute-core/build/reports/diktat/diktat.sarif') != ''
                 with:
                     sarif_file: kompute-core/build/reports/diktat/diktat.sarif
                     category: diktat-core
 
             -   name: Upload Diktat results (opengl)
                 uses: github/codeql-action/upload-sarif@v4
-                if: always()
+                if: always() && hashFiles('kompute-opengl/build/reports/diktat/diktat.sarif') != ''
                 with:
                     sarif_file: kompute-opengl/build/reports/diktat/diktat.sarif
                     category: diktat-opengl
