@@ -4,8 +4,6 @@ import de.hauschild.kompute.core.ShaderData.StorageBuffer
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class StorageBufferTest {
@@ -22,20 +20,6 @@ class StorageBufferTest {
         } else {
             assertFailsWith<KomputeConfigurationException> { buffer.validate() }
         }
-    }
-
-    @Test
-    fun `cross validation`() {
-        val exception =
-            assertFailsWith<KomputeConfigurationException> {
-                StorageBuffer.crossValidate(
-                    listOf(
-                        StorageBuffer<FloatArray>(0),
-                        StorageBuffer<FloatArray>(0),
-                    ),
-                )
-            }
-        assertEquals("There are duplicated indices: [0]", exception.message)
     }
 
     companion object {

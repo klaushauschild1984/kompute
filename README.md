@@ -7,7 +7,8 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml)
 
-![Coverage](.github/badges/jacoco.svg)
+![Coverage Core](.github/badges/jacoco-core.svg)
+![Coverage OpenGL](.github/badges/jacoco-opengl.svg)
 
 ## Requirements
 
@@ -167,16 +168,31 @@ val data: FloatArray = result[output]
 ## Uniform Buffer Objects *(planned — v0.4.0)*
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
-dimensions, zoom levels, or transformation matrices. Unlike storage buffers, UBOs cannot be written
-by the shader.
+dimensions, zoom levels, or transformation matrices. Unlike storage buffers, the shader cannot write UBOs.
 
+Shader:
+```glsl
+layout(std140, binding = 0) uniform Params {
+   vec3  center;   // 12 bytes — but std140 pads vec3 to 16 bytes
+   float zoom;     // starts at offset 16, not 12
+};
+```
+
+Kotlin:
 ```kotlin
-// Not yet supported
-UniformBuffer(0).data(floatArrayOf(centerX, centerY, zoom))
+val data = ByteBuffer.allocate(Float.SIZE_BYTES * 4 + Float.SIZE_BYTES)
+    .order(ByteOrder.nativeOrder())
+    .putFloat(centerX)
+    .putFloat(centerY)
+    .putFloat(centerZ)
+    .putFloat(0f)       // padding — vec3 occupies 16 bytes in std140
+    .putFloat(zoom)
+    .array()
+UniformBuffer(0).data(data)
 ```
 
 > **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
-> padding in the data array. A typed builder to handle alignment automatically is under consideration.
+> padding in the data array. A typed builder to handle alignment automatically is planned for v0.7.0.
 
 ## Scalar Uniforms *(planned — v0.5.0)*
 
@@ -255,21 +271,9 @@ Tests require a display server and OpenGL-capable GPU. On headless systems use:
 xvfb-run ./gradlew build
 ```
 
-## TODOs
+## Showcases
 
-A collection of topics I want to address in the future enhancing the library.
-
-* [ ] Core
-  * [ ] basic binding index verification against shader source
-  * [ ] `kompute-serialization` module — Jackson-style annotation-based struct serialization (`@GpuStruct`, `@GpuField`) with automatic std430/std140 alignment handling
-* [ ] OpenGL
-  * [ ] internal optimizations
-    * [ ] shader caching
-    * [ ] pre-compilation
-    * [ ] multi-dispatch
-* [ ] Showcasing
-  * [ ] Mandelbrot-Set (plus visualization)
-  * [ ] Monte-Carlo Pi calculation
+*Coming soon: Mandelbrot set, Monte-Carlo sampling*
 
 ## Milestones
 
@@ -281,8 +285,9 @@ A collection of topics I want to address in the future enhancing the library.
 | `v0.4.0`                                                                      | UBO support |
 | `v0.5.0`                                                                      | Scalar uniform + atomic counter support |
 | `v0.6.0`                                                                      | `image2D` support |
-| `v0.7.0`                                                                      | Windows support |
-| `v0.8.0`                                                                      | Vulkan backend |
+| `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
+| `v0.8.0`                                                                      | Windows support |
+| `v0.9.0`                                                                      | Vulkan backend |
 | `v1.0.0`                                                                      | Stable, complete API |
 
 ## Contributing

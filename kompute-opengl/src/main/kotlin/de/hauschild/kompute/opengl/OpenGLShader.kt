@@ -45,6 +45,8 @@ class OpenGLShader(
                     source.inputStream.use { it.reader().readText() }
                 }
             }
+        // TODO: cache compiled shader handles by source hash to avoid redundant recompilation
+        // TODO: support pre-compilation (glProgramBinary / GL_ARB_get_program_binary) for faster startup
         glHandle = GL43.glCreateShader(GL43.GL_COMPUTE_SHADER)
         GL43.glShaderSource(glHandle, glsl)
         logger.debug { "Compiling shader" }

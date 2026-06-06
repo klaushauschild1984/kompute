@@ -48,9 +48,10 @@ sealed interface ShaderData {
      * @property type the [KClass] of [T], used to determine GPU buffer layout and data transfer
      */
     class StorageBuffer<T : Any>(
-        val index: Int,
+        override val index: Int,
         val type: KClass<T>,
     ) : ShaderData,
+    IndexBinding,
     OutputCapable<T> {
         /**
          * Input data to upload to the GPU, or null if not set.
@@ -112,15 +113,13 @@ sealed interface ShaderData {
          * is provided, both are provided, or [size] is provided without calling [asOutput]
          */
         override fun validate() {
+            super.validate()
             requireConfiguration(type in SUPPORTED_TYPES) {
                 "Unsupported StorageBuffer type: ${type.simpleName}"
             }
-            requireConfiguration(index >= 0) {
-                "Index must be non-negative for StorageBuffer"
-            }
             requireConfiguration(
                 data != null || size != null,
-            ) { "Either data or size must be provided for StorageBuffer" }
+            ) { "Either data or size must be provided" }
             data?.let {
                 requireConfiguration(size == null) {
                     "Size should not be combined together with data"
@@ -145,22 +144,6 @@ sealed interface ShaderData {
                 )
 
             /**
-             * Validates that no two storage buffers share the same binding index.
-             *
-             * @param storageBuffers the list of buffers to cross-validate
-             * @throws KomputeConfigurationException if duplicate indices are found
-             */
-            fun crossValidate(storageBuffers: List<StorageBuffer<*>>) {
-                val duplicates =
-                    storageBuffers
-                        .map { it.index }
-                        .groupBy { it }
-                        .filter { (_, occurrences) -> occurrences.size > 1 }
-                        .keys
-                requireConfiguration(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
-            }
-
-            /**
              * Convenience method to create a [StorageBuffer] from Java using the [Class] type.
              *
              * @param index the binding index in the shader
@@ -176,10 +159,52 @@ sealed interface ShaderData {
     }
 
     /**
+     * Describes a binding index for shader data.
+     */
+    interface IndexBinding {
+        /**
+         * The binding index in the shader.
+         */
+        val index: Int
+
+        /**
+         * Validates the binding index.
+         *
+         * @throws KomputeConfigurationException if the index is negative
+         */
+        fun validate() {
+            requireConfiguration(index >= 0) {
+                "Index must be non-negative"
+            }
+        }
+
+        /**
+         * Validates that no two index bindings share the same binding index.
+         *
+         * @param indexBindings the list of index bindings to cross-validate
+         * @throws KomputeConfigurationException if duplicate indices are found
+         */
+        companion object {
+            /**
+             * @param indexBindings
+             */
+            fun crossValidate(indexBindings: List<IndexBinding>) {
+                val duplicates =
+                    indexBindings
+                        .map { it.index }
+                        .groupBy { it }
+                        .filter { (_, occurrences) -> occurrences.size > 1 }
+                        .keys
+                requireConfiguration(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
+            }
+        }
+    }
+
+    /**
      * Describes the capability of a [ShaderData] to act as output data.
      * Use this object itself as key to retrieve result data from [ShaderResult].
      *
-     * @param T
+     * @param T the data type returned after execution — matches the type parameter of the buffer
      */
     interface OutputCapable<T : Any> {
         /**
@@ -187,10 +212,55 @@ sealed interface ShaderData {
          */
         val isOutput: Boolean
     }
+
+    /**
+     * A uniform buffer that passes read-only configuration data from the CPU to the compute shader.
+     *
+     * UBOs are bound to a binding index declared in the shader source and follow the std140 memory
+     * layout — `vec3` fields are aligned to 16 bytes and require manual padding in the data array.
+     * Unlike [StorageBuffer], a uniform buffer cannot be written by the shader.
+     *
+     * @property index the binding index in the shader — must be non-negative
+     */
+    class UniformBuffer(override val index: Int) : ShaderData, IndexBinding {
+        /**
+         * Input data to upload to the GPU, or null if not set.
+         */
+        var data: ByteArray? = null
+            private set
+
+        /**
+         * Sets the input data for this buffer.
+         *
+         * @param data the data to upload to the GPU
+         * @return this [UniformBuffer] for chaining
+         */
+        fun data(data: ByteArray): UniformBuffer {
+            this.data = data
+            return this
+        }
+
+        /**
+         * Validates the buffer configuration.
+         *
+         * @throws KomputeConfigurationException if the index is negative, [data] not provided
+         */
+        override fun validate() {
+            super.validate()
+            requireConfiguration(data != null) {
+                "Data must be provided"
+            }
+        }
+
+        override fun toString(): String = "UniformBuffer(index=$index)"
+    }
 }
 
 /**
- * @param index
+ * Creates a [ShaderData.StorageBuffer] with a reified type parameter.
+ *
+ * @param index the binding index in the shader — must be non-negative
+ * @return a new [ShaderData.StorageBuffer] with the inferred type [T]
  */
 @Suppress("FunctionNaming")
 inline fun <reified T : Any> StorageBuffer(index: Int) = StorageBuffer(index, T::class)

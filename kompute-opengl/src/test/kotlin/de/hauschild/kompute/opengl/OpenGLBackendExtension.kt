@@ -1,6 +1,5 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.Backend
 import de.hauschild.kompute.core.Kompute
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
@@ -24,18 +23,18 @@ class OpenGLBackendExtension :
     }
 
     override fun afterAll(context: ExtensionContext?) {
-        requireNotNull(context).getStore(NAMESPACE).get(BACKEND, Backend::class.java).close()
+        requireNotNull(context).getStore(NAMESPACE).get(BACKEND, OpenGLBackend::class.java).close()
     }
 
     override fun supportsParameter(
         parameterContext: ParameterContext?,
         extensionContext: ExtensionContext?,
-    ): Boolean = requireNotNull(parameterContext).parameter.type == Backend::class.java
+    ): Boolean = requireNotNull(parameterContext).parameter.type == OpenGLBackend::class.java
 
     override fun resolveParameter(
         parameterContext: ParameterContext?,
         extensionContext: ExtensionContext?,
-    ): Any? = requireNotNull(extensionContext).getStore(NAMESPACE).get(BACKEND, Backend::class.java)
+    ): Any? = requireNotNull(extensionContext).getStore(NAMESPACE).get(BACKEND, OpenGLBackend::class.java)
 
     companion object {
         const val BACKEND = "backend"
