@@ -5,9 +5,22 @@ import de.hauschild.kompute.core.exception.requireConfiguration
 /**
  * A uniform buffer that passes read-only configuration data from the CPU to the compute shader.
  *
- * UBOs are bound to a binding index declared in the shader source and follow the std140 memory
- * layout — `vec3` fields are aligned to 16 bytes and require manual padding in the data array.
- * Unlike [StorageBuffer], a uniform buffer cannot be written by the shader.
+ * UBOs are ideal for shader parameters like viewport dimensions, zoom levels, or transformation
+ * matrices. Unlike [StorageBuffer], the shader cannot write to a uniform buffer. Each buffer is
+ * bound to a binding index declared in the shader source with `layout(std140, binding = N)`.
+ *
+ * UBOs follow the std140 memory layout — `vec3` fields are aligned to 16 bytes and require
+ * manual padding in the [ByteArray]. A typed builder with automatic alignment is planned for v0.7.0.
+ *
+ * ```kotlin
+ * val data = ByteBuffer.allocate(Float.SIZE_BYTES * 4 + Float.SIZE_BYTES)
+ *     .order(ByteOrder.nativeOrder())
+ *     .putFloat(centerX).putFloat(centerY).putFloat(centerZ)
+ *     .putFloat(0f)    // std140 padding: vec3 occupies 16 bytes
+ *     .putFloat(zoom)
+ *     .array()
+ * UniformBuffer(0).data(data)
+ * ```
  *
  * @property index the binding index in the shader — must be non-negative
  */

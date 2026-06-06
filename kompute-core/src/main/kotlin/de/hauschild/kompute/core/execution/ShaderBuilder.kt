@@ -1,6 +1,8 @@
 package de.hauschild.kompute.core.execution
 
+import de.hauschild.kompute.core.data.Binding
 import de.hauschild.kompute.core.data.IndexedBinding
+import de.hauschild.kompute.core.data.NamedBinding
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.exception.requireConfiguration
@@ -47,9 +49,14 @@ class ShaderBuilder(
         requireConfiguration(duplicates.isEmpty()) { "There are duplicated outputs: $duplicates" }
 
         data
-            .filterIsInstance<IndexedBinding>()
+            .filterIsInstance<Binding>()
             .groupBy { it::class }
-            .forEach { (_, items) -> IndexedBinding.crossValidate(items) }
+            .forEach { (_, items) ->
+                when (items.first()) {
+                    is IndexedBinding -> IndexedBinding.crossValidate(items.filterIsInstance<IndexedBinding>())
+                    is NamedBinding -> NamedBinding.crossValidate(items.filterIsInstance<NamedBinding>())
+                }
+            }
 
         // TODO: verify binding indices declared in context.source against the provided data bindings
 

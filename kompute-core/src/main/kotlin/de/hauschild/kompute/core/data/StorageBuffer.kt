@@ -4,32 +4,28 @@ import de.hauschild.kompute.core.exception.requireConfiguration
 import kotlin.reflect.KClass
 
 /**
- * A storage buffer that can be read and/or written by the compute shader.
+ * A storage buffer that exchanges data between CPU and compute shader via a binding index.
  *
- * Storage buffers are the primary data exchange mechanism between host and GPU.
- * Each buffer is bound to a binding index declared in the shader source.
+ * Storage buffers are the primary data exchange mechanism between host and GPU. They can be
+ * used as input (initialized with [data]), output (sized with [size] and marked via [asOutput]),
+ * or read-write (both [data] and [asOutput] combined). Each buffer is bound to a binding index
+ * declared in the shader source with `layout(std430, binding = N)`.
  *
- * Configuration rules:
- * - Exactly one of [data] or [size] must be provided
- * - If [data] is provided, the buffer is initialized with the given input data
- * - If [size] is provided, an empty buffer of that size is allocated (output only)
- * - A size-only buffer must have [asOutput] called to mark it as output
+ * Supported types and their GLSL equivalents:
+ * - [FloatArray] → `float` / `vec*` / `mat*`
+ * - [IntArray] → `int` / `ivec*` / `uint` / `uvec*`
+ * - [DoubleArray] → `double` / `dvec*`
+ * - [ByteArray] → struct (manual layout)
  *
- * Example:
- * ```
- * // Input buffer
- * StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))
- *
- * // Output buffer
- * StorageBuffer<FloatArray>(1).size(128).asOutput()
- *
- * // Read-write buffer
- * StorageBuffer<FloatArray>(2).data(existing).asOutput()
+ * ```kotlin
+ * StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))   // input
+ * StorageBuffer<FloatArray>(1).size(128).asOutput()              // output
+ * StorageBuffer<FloatArray>(2).data(existing).asOutput()         // read-write
  * ```
  *
- * @param T the GPU data type — must be [FloatArray], [IntArray], [DoubleArray], or [ByteArray]
+ * @param T the GPU data type — must be one of the supported types listed above
  * @property index the binding index in the shader — must be non-negative
- * @property type the [kotlin.reflect.KClass] of [T], used to determine GPU buffer layout and data transfer
+ * @property type the [KClass] of [T], used to determine GPU buffer layout and data transfer
  */
 class StorageBuffer<T : Any>(
     override val index: Int,
