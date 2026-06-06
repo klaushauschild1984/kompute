@@ -55,9 +55,10 @@ repositories {
 dependencies {
     implementation("com.github.klaushauschild1984.kompute:kompute-opengl:v0.3.0")
 
-    runtimeOnly("org.lwjgl:lwjgl:3.3.4:natives-linux")
-    runtimeOnly("org.lwjgl:lwjgl-glfw:3.3.4:natives-linux")
-    runtimeOnly("org.lwjgl:lwjgl-opengl:3.3.4:natives-linux")
+    implementation(platform("org.lwjgl:lwjgl-bom:3.3.4"))
+    runtimeOnly("org.lwjgl:lwjgl::natives-linux")
+    runtimeOnly("org.lwjgl:lwjgl-glfw::natives-linux")
+    runtimeOnly("org.lwjgl:lwjgl-opengl::natives-linux")
 }
 ```
 
@@ -71,6 +72,18 @@ dependencies {
     </repository>
 </repositories>
 
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>org.lwjgl</groupId>
+            <artifactId>lwjgl-bom</artifactId>
+            <version>3.3.4</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+
 <dependencies>
     <dependency>
         <groupId>com.github.klaushauschild1984.kompute</groupId>
@@ -80,21 +93,18 @@ dependencies {
     <dependency>
         <groupId>org.lwjgl</groupId>
         <artifactId>lwjgl</artifactId>
-        <version>3.3.4</version>
         <classifier>natives-linux</classifier>
         <scope>runtime</scope>
     </dependency>
     <dependency>
         <groupId>org.lwjgl</groupId>
         <artifactId>lwjgl-glfw</artifactId>
-        <version>3.3.4</version>
         <classifier>natives-linux</classifier>
         <scope>runtime</scope>
     </dependency>
     <dependency>
         <groupId>org.lwjgl</groupId>
         <artifactId>lwjgl-opengl</artifactId>
-        <version>3.3.4</version>
         <classifier>natives-linux</classifier>
         <scope>runtime</scope>
     </dependency>
