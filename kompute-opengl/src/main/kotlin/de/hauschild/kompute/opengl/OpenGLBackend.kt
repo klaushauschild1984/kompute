@@ -5,7 +5,7 @@ import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.Type
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
-import de.hauschild.kompute.core.data.UniformBuffer
+import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import de.hauschild.kompute.core.exception.requireConfiguration
 import de.hauschild.kompute.core.execution.ExecutionContext
@@ -89,7 +89,7 @@ class OpenGLBackend : AbstractBackend() {
         val results = mutableMapOf<OutputCapable<*>, Any>()
 
         val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
-        val uniformBuffers = mutableListOf<OpenGLUniformBuffer>()
+        val uniformBuffers = mutableListOf<OpenGLUniformBufferObject>()
         context.data.forEach { shaderData ->
             when (shaderData) {
                 is StorageBuffer<*> -> {
@@ -97,10 +97,10 @@ class OpenGLBackend : AbstractBackend() {
                     openGLStorageBuffer.validate(maxShaderStorageBufferBindings)
                     storageBuffer.add(openGLStorageBuffer)
                 }
-                is UniformBuffer -> {
-                    val openGLUniformBuffer = OpenGLUniformBuffer(shaderData)
-                    openGLUniformBuffer.validate(maxUniformBufferBindings)
-                    uniformBuffers.add(openGLUniformBuffer)
+                is UniformBufferObject -> {
+                    val openGLUniformBufferObject = OpenGLUniformBufferObject(shaderData)
+                    openGLUniformBufferObject.validate(maxUniformBufferBindings)
+                    uniformBuffers.add(openGLUniformBufferObject)
                 }
             }
         }

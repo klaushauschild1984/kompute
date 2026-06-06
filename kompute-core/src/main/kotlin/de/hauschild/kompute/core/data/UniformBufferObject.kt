@@ -3,10 +3,10 @@ package de.hauschild.kompute.core.data
 import de.hauschild.kompute.core.exception.requireConfiguration
 
 /**
- * A uniform buffer that passes read-only configuration data from the CPU to the compute shader.
+ * A uniform buffer object that passes read-only configuration data from the CPU to the compute shader.
  *
  * UBOs are ideal for shader parameters like viewport dimensions, zoom levels, or transformation
- * matrices. Unlike [StorageBuffer], the shader cannot write to a uniform buffer. Each buffer is
+ * matrices. Unlike [StorageBuffer], the shader cannot write to a uniform buffer object. Each buffer is
  * bound to a binding index declared in the shader source with `layout(std140, binding = N)`.
  *
  * UBOs follow the std140 memory layout — `vec3` fields are aligned to 16 bytes and require
@@ -19,12 +19,12 @@ import de.hauschild.kompute.core.exception.requireConfiguration
  *     .putFloat(0f)    // std140 padding: vec3 occupies 16 bytes
  *     .putFloat(zoom)
  *     .array()
- * UniformBuffer(0).data(data)
+ * UniformBufferObject(0).data(data)
  * ```
  *
  * @property index the binding index in the shader — must be non-negative
  */
-class UniformBuffer(override val index: Int) : ShaderData, IndexedBinding {
+class UniformBufferObject(override val index: Int) : ShaderData, IndexedBinding {
     /**
      * Input data to upload to the GPU, or null if not set.
      */
@@ -35,9 +35,9 @@ class UniformBuffer(override val index: Int) : ShaderData, IndexedBinding {
      * Sets the input data for this buffer.
      *
      * @param data the data to upload to the GPU
-     * @return this [UniformBuffer] for chaining
+     * @return this [UniformBufferObject] for chaining
      */
-    fun data(data: ByteArray): UniformBuffer {
+    fun data(data: ByteArray): UniformBufferObject {
         this.data = data
         return this
     }
@@ -54,5 +54,5 @@ class UniformBuffer(override val index: Int) : ShaderData, IndexedBinding {
         }
     }
 
-    override fun toString(): String = "UniformBuffer(index=$index)"
+    override fun toString(): String = "UniformBufferObject(index=$index)"
 }

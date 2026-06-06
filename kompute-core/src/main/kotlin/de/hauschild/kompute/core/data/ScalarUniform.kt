@@ -6,7 +6,7 @@ import kotlin.reflect.KClass
 /**
  * A scalar uniform that passes a single read-only value by name from the CPU to the compute shader.
  *
- * Unlike [StorageBuffer] and [UniformBuffer], scalar uniforms are identified by name rather than
+ * Unlike [StorageBuffer] and [UniformBufferObject], scalar uniforms are identified by name rather than
  * binding index and do not require a `layout(binding = ...)` declaration in the shader source.
  *
  * Supported types and their GLSL equivalents:

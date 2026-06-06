@@ -164,29 +164,22 @@ ShaderSource.File(Path.of("shaders/multiply.glsl"))
 ShaderSource.Stream(MyClass::class.java.getResourceAsStream("shader.glsl")!!)
 ```
 
-## Storage Buffers
+## Storage Buffer
 
-Storage buffers are the primary data exchange mechanism between CPU and GPU.
+Storage buffers are the primary data exchange mechanism between CPU and GPU. They can be used
+as input, output, or read-write and are bound via `layout(std430, binding = N)` in the shader.
 
-### Capabilities
-
-`StorageBuffer<T>` is generic — the type parameter maps GLSL types to their Kotlin equivalents:
-
-| GLSL                               | Kotlin        |
-|------------------------------------|---------------|
-| `float` / `vec*` / `mat*`          | `FloatArray`  |
-| `int` / `ivec*` / `uint` / `uvec*` | `IntArray`    |
-| `double` / `dvec*`                 | `DoubleArray` |
-| Struct                             | `ByteArray`   |
-
-### Usage
+| Kotlin        | GLSL                               |
+|---------------|------------------------------------|
+| `FloatArray`  | `float` / `vec*` / `mat*`          |
+| `IntArray`    | `int` / `ivec*` / `uint` / `uvec*` |
+| `DoubleArray` | `double` / `dvec*`                 |
+| `ByteArray`   | struct (manual layout)             |
 
 ```kotlin
-val input  = StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))
-val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
-
-// read-write: initialized with data, result readable afterwards
-val inout  = StorageBuffer<FloatArray>(2).data(existing).asOutput()
+val input  = StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))  // input
+val output = StorageBuffer<FloatArray>(1).size(128).asOutput()             // output
+val inout  = StorageBuffer<FloatArray>(2).data(existing).asOutput()        // read-write
 ```
 
 Results are retrieved via the buffer object after execution:
@@ -195,10 +188,15 @@ Results are retrieved via the buffer object after execution:
 val data: FloatArray = result[output]
 ```
 
-## Uniform Buffer Objects
+## Uniform Buffer Object
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
 dimensions, zoom levels, or transformation matrices. Unlike storage buffers, the shader cannot write UBOs.
+They are bound via `layout(std140, binding = N)` in the shader.
+
+| Kotlin      | GLSL                          |
+|-------------|-------------------------------|
+| `ByteArray` | struct (std140 memory layout) |
 
 Shader:
 ```glsl
@@ -218,23 +216,43 @@ val data = ByteBuffer.allocate(Float.SIZE_BYTES * 4 + Float.SIZE_BYTES)
     .putFloat(0f)       // padding — vec3 occupies 16 bytes in std140
     .putFloat(zoom)
     .array()
-UniformBuffer(0).data(data)
+UniformBufferObject(0).data(data)
 ```
 
 > **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
 > padding in the data array. A typed builder to handle alignment automatically is planned for v0.7.0.
 
-## Scalar Uniforms *(planned — v0.5.0)*
+## Scalar Uniform
 
-Scalar uniforms pass individual values by name directly to the shader — no binding index required.
+Scalar uniforms pass individual typed values by name directly to the shader — no binding index required.
+Unlike UBOs, they are declared as plain `uniform` variables in the shader source.
 
-```kotlin
-// Not yet supported
-uniform("zoom", 1.5f)
-uniform("maxIterations", 256)
+Shader:
+```glsl
+uniform float zoom;
+uniform int maxIterations;
+uniform bool highQuality;
 ```
 
-## Atomic Counters *(planned — v0.5.0)*
+Kotlin:
+```kotlin
+ScalarUniform<Float>("zoom").value(1.5f)
+ScalarUniform<Int>("maxIterations").value(256)
+ScalarUniform<Boolean>("highQuality").value(true)
+
+// unsigned int in the shader
+ScalarUniform<Int>("flags").value(0xFF).unsigned()
+```
+
+| Kotlin               | GLSL     |
+|----------------------|----------|
+| `Int`                | `int`    |
+| `Int` + `unsigned()` | `uint`   |
+| `Float`              | `float`  |
+| `Double`             | `double` |
+| `Boolean`            | `bool`   |
+
+## Atomic Counter *(planned — v0.5.0)*
 
 Atomic counters allow threads to increment a shared counter safely across parallel invocations —
 useful for algorithms like Monte-Carlo sampling where multiple threads accumulate a result.
