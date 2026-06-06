@@ -222,35 +222,84 @@ UniformBufferObject(0).data(data)
 > **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
 > padding in the data array. A typed builder to handle alignment automatically is planned for v0.7.0.
 
-## Scalar Uniform
+## Named Uniform
 
-Scalar uniforms pass individual typed values by name directly to the shader — no binding index required.
+Named uniforms pass typed values by name directly to the shader — no binding index required.
 Unlike UBOs, they are declared as plain `uniform` variables in the shader source.
+
+### Scalars
 
 Shader:
 ```glsl
 uniform float zoom;
 uniform int maxIterations;
 uniform bool highQuality;
+uniform uint flags;
 ```
 
 Kotlin:
 ```kotlin
-ScalarUniform<Float>("zoom").value(1.5f)
-ScalarUniform<Int>("maxIterations").value(256)
-ScalarUniform<Boolean>("highQuality").value(true)
-
-// unsigned int in the shader
-ScalarUniform<Int>("flags").value(0xFF).unsigned()
+NamedUniform<Float>("zoom").value(1.5f)
+NamedUniform<Int>("maxIterations").value(256)
+NamedUniform<Boolean>("highQuality").value(true)
+NamedUniform<Int>("flags").value(0xFF).unsigned()
 ```
 
-| Kotlin               | GLSL     |
-|----------------------|----------|
-| `Int`                | `int`    |
-| `Int` + `unsigned()` | `uint`   |
-| `Float`              | `float`  |
-| `Double`             | `double` |
-| `Boolean`            | `bool`   |
+| Kotlin               | GLSL      |
+|----------------------|-----------|
+| `Int`                | `int`     |
+| `Int` + `unsigned()` | `uint`    |
+| `Float`              | `float`   |
+| `Double`             | `double`  |
+| `Boolean`            | `bool`    |
+
+### Vectors
+
+Shader:
+```glsl
+uniform vec3 center;
+uniform ivec2 offset;
+uniform dvec4 color;
+```
+
+Kotlin:
+```kotlin
+NamedUniform<FloatArray>("center").value(floatArrayOf(0f, 0f, 1f))
+NamedUniform<IntArray>("offset").value(intArrayOf(10, 20))
+NamedUniform<DoubleArray>("color").value(doubleArrayOf(1.0, 0.5, 0.0, 1.0))
+```
+
+| Kotlin                          | GLSL               |
+|---------------------------------|--------------------|
+| `FloatArray` (size 2–4)         | `vec2` / `vec3` / `vec4`   |
+| `IntArray` (size 2–4)           | `ivec2` / `ivec3` / `ivec4` |
+| `IntArray` + `unsigned()` (size 2–4) | `uvec2` / `uvec3` / `uvec4` |
+| `DoubleArray` (size 2–4)        | `dvec2` / `dvec3` / `dvec4` |
+
+### Matrices
+
+Shader:
+```glsl
+uniform mat4 transform;
+uniform mat3x2 projection;
+uniform dmat3 rotation;
+```
+
+Kotlin:
+```kotlin
+NamedUniform<FloatArray>("transform").value(floatArrayOf(...)).asMatrix(4, 4)
+NamedUniform<FloatArray>("projection").value(floatArrayOf(...)).asMatrix(3, 2)
+NamedUniform<DoubleArray>("rotation").value(doubleArrayOf(...)).asMatrix(3, 3)
+```
+
+| Kotlin                                    | GLSL                        |
+|-------------------------------------------|-----------------------------|
+| `FloatArray` + `asMatrix(N, N)`           | `mat2` / `mat3` / `mat4`   |
+| `FloatArray` + `asMatrix(rows, cols)`     | `mat{cols}x{rows}`          |
+| `DoubleArray` + `asMatrix(N, N)`          | `dmat2` / `dmat3` / `dmat4` |
+| `DoubleArray` + `asMatrix(rows, cols)`    | `dmat{cols}x{rows}`         |
+
+> **Note:** Matrices are stored in column-major order, matching OpenGL's default convention.
 
 ## Atomic Counter *(planned — v0.5.0)*
 
@@ -331,7 +380,7 @@ xvfb-run ./gradlew build
 | [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation)                                                            |
 | [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray`           |
 | [`v0.4.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.4.0) | UBO support                                                                                                   |
-| `v0.5.0`                                                                      | Scalar uniform + atomic counter support                                                                       |
+| `v0.5.0`                                                                      | Named uniforms + atomic counter support                                                                       |
 | `v0.6.0`                                                                      | `image2D` support                                                                                             |
 | `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
 | `v0.8.0`                                                                      | Windows support                                                                                               |

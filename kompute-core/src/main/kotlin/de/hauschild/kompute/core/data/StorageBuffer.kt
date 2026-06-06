@@ -112,7 +112,8 @@ OutputCapable<T> {
         }
     }
 
-    override fun toString(): String = "StorageBuffer<${type.simpleName}>(index=$index)"
+    override fun toString(): String = "StorageBuffer<${type.simpleName}>(index=$index)" +
+            if (isOutput) "(as output)" else ""
 
     companion object {
         private val SUPPORTED_TYPES =

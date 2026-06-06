@@ -5,7 +5,7 @@ import de.hauschild.kompute.core.exception.requireConfiguration
 /**
  * Describes a binding identified by name for shader data.
  *
- * Implemented by shader data types that are bound by name rather than index, such as scalar uniforms.
+ * Implemented by shader data types that are bound by name rather than index, such as named uniforms.
  */
 interface NamedBinding : Binding {
     /**
