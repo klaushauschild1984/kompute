@@ -195,7 +195,7 @@ Results are retrieved via the buffer object after execution:
 val data: FloatArray = result[output]
 ```
 
-## Uniform Buffer Objects *(planned — v0.4.0)*
+## Uniform Buffer Objects
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
 dimensions, zoom levels, or transformation matrices. Unlike storage buffers, the shader cannot write UBOs.
@@ -312,7 +312,7 @@ xvfb-run ./gradlew build
 | [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release                                                                       |
 | [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation)                                                            |
 | [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray`           |
-| `v0.4.0`                                                                      | UBO support                                                                                                   |
+| [`v0.4.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.4.0) | UBO support                                                                                                   |
 | `v0.5.0`                                                                      | Scalar uniform + atomic counter support                                                                       |
 | `v0.6.0`                                                                      | `image2D` support                                                                                             |
 | `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
