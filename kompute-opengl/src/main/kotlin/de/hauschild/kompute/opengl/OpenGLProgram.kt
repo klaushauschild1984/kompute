@@ -16,7 +16,8 @@ import org.lwjgl.opengl.GL43
 class OpenGLProgram(
     private val shader: OpenGLShader,
 ) : AutoCloseable {
-    private var glHandle: Int = 0
+    var glHandle: Int = 0
+        private set
 
     /**
      * Links the attached shader into an executable OpenGL compute program.

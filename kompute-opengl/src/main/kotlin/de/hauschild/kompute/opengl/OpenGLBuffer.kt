@@ -13,7 +13,7 @@ import org.lwjgl.opengl.GL43
  */
 abstract class OpenGLBuffer<T>(
     val source: T
-): AutoCloseable
+): Bindable
 where T : ShaderData, T : IndexedBinding{
     /**
      * The OpenGL buffer object handle.
@@ -31,11 +31,6 @@ where T : ShaderData, T : IndexedBinding{
             "Buffer index ${source.index} exceeds maximum binding index ${maxBindings - 1}"
         }
     }
-
-    /**
-     * Allocates the GPU buffer and uploads input data or reserves output memory.
-     */
-    abstract fun bind()
 
     override fun close() {
         if (glHandle == 0) {

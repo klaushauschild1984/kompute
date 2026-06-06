@@ -4,6 +4,7 @@ import de.hauschild.kompute.core.AbstractBackend
 import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.Type
 import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.data.NamedUniform
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.requireBackendInitialization
@@ -70,12 +71,12 @@ class OpenGLBackend : AbstractBackend() {
                 program.link()
                 program.activate()
 
-                return ShaderResult(dispatchBuffers(context))
+                return ShaderResult(dispatchBuffers(context, program))
             }
         }
     }
 
-    private fun dispatchBuffers(context: ExecutionContext): Map<OutputCapable<*>, Any> {
+    private fun dispatchBuffers(context: ExecutionContext, program: OpenGLProgram): Map<OutputCapable<*>, Any> {
         requireConfiguration(context.x <= maxComputeWorkGroupCountX) {
             "Work group count x must not exceed physical limit $maxComputeWorkGroupCountX"
         }
@@ -86,10 +87,9 @@ class OpenGLBackend : AbstractBackend() {
             "Work group count z must not exceed physical limit $maxComputeWorkGroupCountZ"
         }
 
-        val results = mutableMapOf<OutputCapable<*>, Any>()
-
         val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
-        val uniformBuffers = mutableListOf<OpenGLUniformBufferObject>()
+        val uniformBufferObjects = mutableListOf<OpenGLUniformBufferObject>()
+        val namedUniforms = mutableListOf<OpenGLNamedUniform<*>>()
         context.data.forEach { shaderData ->
             when (shaderData) {
                 is StorageBuffer<*> -> {
@@ -100,12 +100,17 @@ class OpenGLBackend : AbstractBackend() {
                 is UniformBufferObject -> {
                     val openGLUniformBufferObject = OpenGLUniformBufferObject(shaderData)
                     openGLUniformBufferObject.validate(maxUniformBufferBindings)
-                    uniformBuffers.add(openGLUniformBufferObject)
+                    uniformBufferObjects.add(openGLUniformBufferObject)
+                }
+                is NamedUniform<*> -> {
+                    val openGLNamedUniform = OpenGLNamedUniform(program, shaderData)
+                    namedUniforms.add(openGLNamedUniform)
                 }
             }
         }
-        val buffers = storageBuffer + uniformBuffers
+        val buffers = storageBuffer + uniformBufferObjects + namedUniforms
 
+        val results = mutableMapOf<OutputCapable<*>, Any>()
         try {
             buffers.forEach { buffer -> buffer.bind() }
 
