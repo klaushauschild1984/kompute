@@ -3,8 +3,8 @@ package de.hauschild.kompute.opengl
 import de.hauschild.kompute.core.AbstractBackend
 import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.Type
-import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.NamedUniform
+import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.requireBackendInitialization

@@ -69,7 +69,7 @@ class NamedUniform<T: Any>(
      *
      * @param rows
      * @param columns
-     * @return
+     * @return this [NamedUniform] for chaining
      */
     fun asMatrix(rows: Int, columns: Int): NamedUniform<T> {
         this.matrixDimension = MatrixDimension(rows, columns)
@@ -98,6 +98,10 @@ class NamedUniform<T: Any>(
         requireConfiguration(value != null) {
             "A value must be provided"
         }
+        validateMatrix()
+    }
+
+    private fun validateMatrix() {
         matrixDimension?.let { dim ->
             requireConfiguration(type == FloatArray::class || type == DoubleArray::class) {
                 "Matrix uniforms only support FloatArray and DoubleArray"
@@ -117,8 +121,7 @@ class NamedUniform<T: Any>(
             }
         }
 
-        if (matrixDimension == null && (type == FloatArray::class || type == IntArray::class ||
-                type == DoubleArray::class)) {
+        if (matrixDimension == null && type in SUPPORTED_ARRAY_TYPES) {
             val actualSize = when (val v = value) {
                 is FloatArray -> v.size
                 is IntArray -> v.size
@@ -130,6 +133,7 @@ class NamedUniform<T: Any>(
             }
         }
     }
+
     override fun toString(): String = "NamedUniform<${type.simpleName}>(name=$name)" +
             (if (unsigned) "(unsigned)" else "") +
             "${matrixDimension?.let { "(as ${it.rows}x${it.columns} matrix)" } ?: ""}}"
@@ -140,16 +144,19 @@ class NamedUniform<T: Any>(
      */
     data class MatrixDimension(val rows: Int, val columns: Int)
     companion object {
+        private val SUPPORTED_ARRAY_TYPES : Set<KClass<*>> =
+            setOf(
+                IntArray::class,
+                FloatArray::class,
+                DoubleArray::class,
+            )
         private val SUPPORTED_TYPES : Set<KClass<*>> =
             setOf(
                 Int::class,
                 Float::class,
                 Double::class,
                 Boolean::class,
-                IntArray::class,
-                FloatArray::class,
-                DoubleArray::class,
-            )
+            ) + SUPPORTED_ARRAY_TYPES
 
         /**
          * Creates a [NamedUniform] with a reified type parameter for idiomatic Kotlin usage.
