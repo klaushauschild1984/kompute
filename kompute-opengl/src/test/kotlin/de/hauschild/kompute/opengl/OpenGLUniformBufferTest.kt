@@ -1,12 +1,14 @@
 package de.hauschild.kompute.opengl
 
+import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBuffer
 import de.hauschild.kompute.core.execution.ShaderSource.Code
-import de.hauschild.kompute.core.data.StorageBuffer
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.extension.ExtendWith
+
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+
 import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)

@@ -1,9 +1,10 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.execution.ShaderSource.Code
 import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.execution.ShaderSource.Code
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.extension.ExtendWith
+
 import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)

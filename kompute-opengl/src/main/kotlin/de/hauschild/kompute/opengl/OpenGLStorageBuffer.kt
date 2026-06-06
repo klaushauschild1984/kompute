@@ -1,11 +1,12 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
+
 import java.nio.ByteBuffer
 
 /**

@@ -1,7 +1,7 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.data.IndexedBinding
+import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.exception.requireConfiguration
 import org.lwjgl.opengl.GL43
 
