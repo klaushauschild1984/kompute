@@ -7,21 +7,9 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 ## CI Status
 
-| Status |                                                                                                                                                                   |
-|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| main   | [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) |
-
-
-| Coverage       |                                                      |
-|----------------|------------------------------------------------------|
-| Core           | ![Coverage Core](.github/badges/jacoco-core.svg)     |
-| OpenGL Backend | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) |
-
-| Repository  |                                                                                      |
-|-------------|--------------------------------------------------------------------------------------|
-| Last Commit | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) |
-| Open Issues | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute)           |
-| Repo Size   | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute)     |
+|                                                                               Build                                                                               |                  Core Coverage                   |                   OpenGL Coverage                    |                                     Last Commit                                      |                                Open Issues                                 |                                    Repo Size                                     |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------:|:----------------------------------------------------:|:------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
+| [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) | ![Coverage Core](.github/badges/jacoco-core.svg) | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute) | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute) |
 
 ## Requirements
 
