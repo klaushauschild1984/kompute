@@ -286,12 +286,12 @@ NamedUniform<FloatArray>("projection").value(floatArrayOf(...)).asMatrix(3, 2)
 NamedUniform<DoubleArray>("rotation").value(doubleArrayOf(...)).asMatrix(3, 3)
 ```
 
-| Kotlin                                    | GLSL                        |
-|-------------------------------------------|-----------------------------|
-| `FloatArray` + `asMatrix(N, N)`           | `mat2` / `mat3` / `mat4`   |
-| `FloatArray` + `asMatrix(rows, cols)`     | `mat{cols}x{rows}`          |
-| `DoubleArray` + `asMatrix(N, N)`          | `dmat2` / `dmat3` / `dmat4` |
-| `DoubleArray` + `asMatrix(rows, cols)`    | `dmat{cols}x{rows}`         |
+| Kotlin                                 | GLSL                        |
+|----------------------------------------|-----------------------------|
+| `FloatArray` + `asMatrix(N, N)`        | `mat2` / `mat3` / `mat4`    |
+| `FloatArray` + `asMatrix(rows, cols)`  | `mat{cols}x{rows}`          |
+| `DoubleArray` + `asMatrix(N, N)`       | `dmat2` / `dmat3` / `dmat4` |
+| `DoubleArray` + `asMatrix(rows, cols)` | `dmat{cols}x{rows}`         |
 
 > **Note:** Matrices are stored in column-major order, matching OpenGL's default convention.
 
@@ -391,7 +391,7 @@ xvfb-run ./gradlew build
 | [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation)                                                            |
 | [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray`           |
 | [`v0.4.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.4.0) | UBO support                                                                                                   |
-| `v0.5.0`                                                                      | Named uniforms + atomic counter support                                                                       |
+| [`v0.5.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.5.0) | Named uniforms + atomic counter support                                                                       |
 | `v0.6.0`                                                                      | `image2D` support                                                                                             |
 | `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
 | `v0.8.0`                                                                      | Windows support                                                                                               |
