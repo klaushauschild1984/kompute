@@ -47,6 +47,12 @@ OutputCapable<T> {
     override var isOutput: Boolean = false
         private set
 
+    val mode: Mode<T> get() = when {
+        isOutput && data != null -> Mode.ReadWrite(data!!)
+        isOutput -> Mode.Output(size!!)
+        else -> Mode.Input(data!!)
+    }
+
     /**
      * Sets the input data for this buffer.
      *
@@ -89,41 +95,77 @@ OutputCapable<T> {
     /**
      * Validates the buffer configuration.
      *
-     * @throws [KomputeConfigurationException] if the index is negative, neither [data] nor [size]
-     * is provided, both are provided, or [size] is provided without calling [asOutput]
+     * Valid modes after validation:
+     * - [Mode.Input]: [data] set, no [size], [asOutput] not called
+     * - [Mode.Output]: [size] set, no [data], [asOutput] called
+     * - [Mode.ReadWrite]: [data] set, no [size], [asOutput] called
+     *
+     * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if the index is negative,
+     * the type is unsupported,
+     * neither [data] nor [size] is provided, both are provided, or [size] is used without [asOutput]
      */
     override fun validate() {
         super.validate()
         requireConfiguration(type in SUPPORTED_TYPES) {
             "Unsupported StorageBuffer type: ${type.simpleName}"
         }
-        requireConfiguration(
-            data != null || size != null,
-        ) { "Either data or size must be provided" }
-        data?.let {
-            requireConfiguration(size == null) {
-                "Size should not be combined together with data"
-            }
+        requireConfiguration(data != null || size != null) {
+            "Either data or size must be provided"
         }
-        size?.let {
-            requireConfiguration(isOutput) {
-                "Sized StorageBuffer must be marked as output"
-            }
+        requireConfiguration(data == null || size == null) {
+            "Size must not be combined with data"
+        }
+        requireConfiguration(size == null || isOutput) {
+            "Sized StorageBuffer must be marked as output"
         }
     }
 
     override fun toString(): String {
-        val dataInfo = data?.let { d ->
-            val count = when (d) {
-                is FloatArray -> d.size
-                is IntArray -> d.size
-                is DoubleArray -> d.size
-                is ByteArray -> d.size
-                else -> "?"
-            }
-            "(data: $count)"
-        } ?: size?.let { "(size: $it)" } ?: ""
-        return "StorageBuffer<${type.simpleName}>(index=$index)$dataInfo${if (isOutput) "(as output)" else ""}"
+        val info = when (val m = mode) {
+            is Mode.Input -> "(data: ${m.data.elementCount()})"
+            is Mode.Output -> "(size: ${m.size})(as output)"
+            is Mode.ReadWrite -> "(data: ${m.data.elementCount()})(as output)"
+        }
+        return "StorageBuffer<${type.simpleName}>(index=$index)$info"
+    }
+
+    private fun Any.elementCount(): Int = when (this) {
+        is IntArray -> size
+        is FloatArray -> size
+        is DoubleArray -> size
+        is ByteArray -> size
+        else -> -1
+    }
+
+    /**
+     * The different modes a [StorageBuffer] can be in.
+     *
+     * @param T
+     */
+    sealed class Mode<out T> {
+        /**
+         * Input data to upload to the GPU.
+         *
+         * @param T
+         * @property data
+         */
+        data class Input<T>(val data: T) : Mode<T>()
+
+        /**
+         * Output buffer that is allocated on the GPU.
+         *
+         * @param T
+         * @property size
+         */
+        data class Output<T>(val size: Int) : Mode<T>()
+
+        /**
+         * Read-write buffer that is allocated on the GPU.
+         *
+         * @param T
+         * @property data
+         */
+        data class ReadWrite<T>(val data: T) : Mode<T>()
     }
 
     companion object {
