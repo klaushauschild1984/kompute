@@ -1,7 +1,11 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.execution
 
-import de.hauschild.kompute.core.ShaderData.IndexBinding
-import de.hauschild.kompute.core.ShaderData.OutputCapable
+import de.hauschild.kompute.core.data.Binding
+import de.hauschild.kompute.core.data.IndexedBinding
+import de.hauschild.kompute.core.data.NamedBinding
+import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.data.ShaderData
+import de.hauschild.kompute.core.exception.requireConfiguration
 
 /**
  * Attaches input and output data to a compute shader.
@@ -23,7 +27,7 @@ class ShaderBuilder(
      *
      * @param data the shader data to attach (storage buffers, etc.)
      * @return a [DispatchBuilder] to configure the compute grid dimensions
-     * @throws KomputeConfigurationException if any item fails validation
+     * @throws [KomputeConfigurationException] if any item fails validation
      */
     fun data(vararg data: ShaderData): DispatchBuilder {
         requireConfiguration(data.isNotEmpty()) {
@@ -45,9 +49,14 @@ class ShaderBuilder(
         requireConfiguration(duplicates.isEmpty()) { "There are duplicated outputs: $duplicates" }
 
         data
-            .filterIsInstance<IndexBinding>()
+            .filterIsInstance<Binding>()
             .groupBy { it::class }
-            .forEach { (_, items) -> IndexBinding.crossValidate(items) }
+            .forEach { (_, items) ->
+                when (items.first()) {
+                    is IndexedBinding -> IndexedBinding.crossValidate(items.filterIsInstance<IndexedBinding>())
+                    is NamedBinding -> NamedBinding.crossValidate(items.filterIsInstance<NamedBinding>())
+                }
+            }
 
         // TODO: verify binding indices declared in context.source against the provided data bindings
 

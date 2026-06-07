@@ -1,8 +1,8 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.ShaderData
-import de.hauschild.kompute.core.ShaderData.IndexBinding
-import de.hauschild.kompute.core.requireConfiguration
+import de.hauschild.kompute.core.data.IndexedBinding
+import de.hauschild.kompute.core.data.ShaderData
+import de.hauschild.kompute.core.exception.requireConfiguration
 import org.lwjgl.opengl.GL43
 
 /**
@@ -13,8 +13,8 @@ import org.lwjgl.opengl.GL43
  */
 abstract class OpenGLBuffer<T>(
     val source: T
-): AutoCloseable
-where T : ShaderData, T : IndexBinding{
+): Bindable
+where T : ShaderData, T : IndexedBinding{
     /**
      * The OpenGL buffer object handle.
      */
@@ -24,18 +24,13 @@ where T : ShaderData, T : IndexBinding{
      * Validates that the buffer's binding index is within the GPU's supported range.
      *
      * @param maxBindings the maximum number of buffer bindings supported by the GPU
-     * @throws de.hauschild.kompute.core.KomputeConfigurationException if the index exceeds the limit
+     * @throws [KomputeConfigurationException] if the index exceeds the limit
      */
     fun validate(maxBindings: Int) {
         requireConfiguration(source.index < maxBindings) {
-            "StorageBuffer index ${source.index} exceeds maximum binding index ${maxBindings - 1}"
+            "Buffer index ${source.index} exceeds maximum binding index ${maxBindings - 1}"
         }
     }
-
-    /**
-     * Allocates the GPU buffer and uploads input data or reserves output memory.
-     */
-    abstract fun bind()
 
     override fun close() {
         if (glHandle == 0) {

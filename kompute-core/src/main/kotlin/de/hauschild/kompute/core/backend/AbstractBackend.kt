@@ -1,5 +1,13 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.backend
 
+import de.hauschild.kompute.core.BuildInfo
+import de.hauschild.kompute.core.exception.KomputeBackendDispatchException
+import de.hauschild.kompute.core.exception.KomputeException
+import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.execution.ExecutionContext
+import de.hauschild.kompute.core.execution.ShaderBuilder
+import de.hauschild.kompute.core.execution.ShaderResult
+import de.hauschild.kompute.core.execution.ShaderSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
@@ -24,7 +32,7 @@ abstract class AbstractBackend : Backend {
      *
      * Delegates to [doInitialize] for backend-specific setup.
      *
-     * @throws KomputeBackendInitializationException if called more than once
+     * @throws [KomputeBackendInitializationException] if called more than once
      */
     @InternalApi
     override fun initialize() {
@@ -40,7 +48,7 @@ abstract class AbstractBackend : Backend {
      * Called once by [initialize]. Implementations should validate GPU capabilities
      * and set up required resources.
      *
-     * @throws KomputeBackendInitializationException if GPU resources are unavailable or initialization fails
+     * @throws [KomputeBackendInitializationException] if GPU resources are unavailable or initialization fails
      */
     abstract fun doInitialize()
 

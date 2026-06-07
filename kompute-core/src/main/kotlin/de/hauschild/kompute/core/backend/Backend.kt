@@ -1,13 +1,17 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.backend
+
+import de.hauschild.kompute.core.execution.ShaderBuilder
+import de.hauschild.kompute.core.execution.ShaderSource
 
 /**
  * Represents a compute backend capable of executing GPU shaders.
  *
- * Backends are obtained via [Kompute] and should be used with [use] to ensure proper resource cleanup.
+ * Backends are obtained via [de.hauschild.kompute.core.Kompute] andshould be used with [use]
+ * to ensure proper resource cleanup.
  */
 interface Backend : AutoCloseable {
     /**
-     * Will be used by [Kompute] to determine the type of the backend.
+     * Will be used by [de.hauschild.kompute.core.Kompute] to determine the type of the backend.
      *
      * @return the [Type] of the backend
      */

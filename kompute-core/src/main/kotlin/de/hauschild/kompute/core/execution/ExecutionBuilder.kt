@@ -1,4 +1,4 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.execution
 
 /**
  * Triggers the execution of the configured compute shader on the GPU.
@@ -17,7 +17,7 @@ class ExecutionBuilder(
      * Executes the compute shader synchronously and returns the results.
      *
      * Blocks until GPU computation is complete. All storage buffers marked via
-     * [ShaderData.StorageBuffer.asOutput] are available in the returned [ShaderResult].
+     * [StorageBuffer.asOutput] are available in the returned [ShaderResult].
      *
      * @return a [ShaderResult] containing all output storage buffers
      */

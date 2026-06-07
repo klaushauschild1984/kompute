@@ -73,3 +73,10 @@ diktat {
     }
 }
 
+tasks.withType<com.saveourtool.diktat.plugin.gradle.tasks.DiktatCheckTask> {
+    outputs.upToDateWhen { false }
+}
+tasks.withType<com.saveourtool.diktat.plugin.gradle.tasks.DiktatFixTask> {
+    outputs.upToDateWhen { false }
+}
+

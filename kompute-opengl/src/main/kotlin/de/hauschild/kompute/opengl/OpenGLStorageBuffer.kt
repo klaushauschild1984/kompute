@@ -1,80 +1,82 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.KomputeConfigurationException
-import de.hauschild.kompute.core.ShaderData.OutputCapable
-import de.hauschild.kompute.core.ShaderData.StorageBuffer
-import io.github.oshai.kotlinlogging.KotlinLogging
+import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
+
 import java.nio.ByteBuffer
 
 /**
  * Wraps an OpenGL shader storage buffer object (SSBO) for a [StorageBuffer].
  *
- * @param T the data type — must be [FloatArray], [IntArray], [DoubleArray], or [ByteArray]
+ * @param T the data type — must be [IntArray], [FloatArray], [DoubleArray], or [ByteArray]
  * @param source the [StorageBuffer] configuration this buffer is based on
  */
 class OpenGLStorageBuffer<T : Any>(
     source: StorageBuffer<T>,
 ) : OpenGLBuffer<StorageBuffer<T>>(source),
-OutputCapable<T> by source {
+OutputCapable<T> by source,
+OpenGLReadable<T>{
+    override val barrierBit: Int = GL43.GL_SHADER_STORAGE_BARRIER_BIT
+
     override fun bind() {
-        val kind = if (isOutput) "output" else "input"
-        logger.debug {
-            "Binding $kind buffer ${source.index}"
-        }
         glHandle = GL43.glGenBuffers()
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
-        if (isOutput) {
-            val sizeInBytes = source.size!! * elementSizeInBytes()
-            GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, sizeInBytes.toLong(), GL43.GL_DYNAMIC_READ)
-        } else {
-            when (val data = source.data!!) {
-                is FloatArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
-                is IntArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
-                is DoubleArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
-                is ByteArray ->
-                    GL43.glBufferData(
-                        GL43.GL_SHADER_STORAGE_BUFFER,
-                        ByteBuffer.wrap(data),
-                        GL43.GL_STATIC_DRAW,
-                    )
-                else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
-            }
+        when (val mode = source.mode()) {
+            is StorageBuffer.Mode.Input -> uploadData(mode.data, GL43.GL_STATIC_DRAW)
+            is StorageBuffer.Mode.Output -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,
+                (mode.size * elementSizeInBytes()).toLong(), GL43.GL_DYNAMIC_READ)
+            is StorageBuffer.Mode.ReadWrite -> uploadData(mode.data, GL43.GL_DYNAMIC_COPY)
         }
         GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, source.index, glHandle)
     }
 
+    private fun uploadData(data: T, usage: Int) {
+        when (data) {
+            is IntArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
+            is FloatArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
+            is DoubleArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
+            is ByteArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, ByteBuffer.wrap(data), usage)
+            else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
+        }
+    }
+
     private fun elementSizeInBytes(): Int =
         when (source.type) {
-            FloatArray::class -> Float.SIZE_BYTES
             IntArray::class -> Int.SIZE_BYTES
+            FloatArray::class -> Float.SIZE_BYTES
             DoubleArray::class -> Double.SIZE_BYTES
             ByteArray::class -> 1
             else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
         }
 
-    /**
-     * Reads the buffer contents from the GPU back to host memory.
-     *
-     * @return the data read from the GPU buffer
-     * @throws KomputeConfigurationException if the data type is not supported
-     */
     @Suppress("UNCHECKED_CAST")
-    fun read(): T {
-        logger.debug { "Reading buffer ${source.index}" }
+    override fun read(): T {
+        val elementCount = when (val mode = source.mode()) {
+            is StorageBuffer.Mode.Output -> mode.size
+            is StorageBuffer.Mode.ReadWrite -> when (val d = mode.data) {
+                is IntArray -> d.size
+                is FloatArray -> d.size
+                is DoubleArray -> d.size
+                is ByteArray -> d.size
+                else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
+            }
+            is StorageBuffer.Mode.Input -> error("Cannot read an input-only buffer")
+        }
         val buffer: T =
             when (source.type) {
-                FloatArray::class -> FloatArray(source.size!!)
-                IntArray::class -> IntArray(source.size!!)
-                DoubleArray::class -> DoubleArray(source.size!!)
-                ByteArray::class -> ByteArray(source.size!!)
+                IntArray::class -> IntArray(elementCount)
+                FloatArray::class -> FloatArray(elementCount)
+                DoubleArray::class -> DoubleArray(elementCount)
+                ByteArray::class -> ByteArray(elementCount)
                 else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
             } as T
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (buffer) {
-            is FloatArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is IntArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
+            is FloatArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is DoubleArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is ByteArray -> {
                 val direct = MemoryUtil.memAlloc(buffer.size)
@@ -88,9 +90,5 @@ OutputCapable<T> by source {
             }
         }
         return buffer
-    }
-
-    companion object {
-        private val logger = KotlinLogging.logger {}
     }
 }

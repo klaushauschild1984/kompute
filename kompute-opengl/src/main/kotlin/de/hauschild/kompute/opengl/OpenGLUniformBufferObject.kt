@@ -1,17 +1,17 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.ShaderData.UniformBuffer
+import de.hauschild.kompute.core.data.UniformBufferObject
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 
 /**
- * Wraps an OpenGL uniform buffer object (UBO) for a [UniformBuffer].
+ * Wraps an OpenGL uniform buffer object (UBO) for a [UniformBufferObject].
  *
- * @param source the [UniformBuffer] configuration this buffer is based on
+ * @param source the [UniformBufferObject] configuration this buffer is based on
  */
-class OpenGLUniformBuffer(
-    source: UniformBuffer
-) : OpenGLBuffer<UniformBuffer>(source) {
+class OpenGLUniformBufferObject(
+    source: UniformBufferObject
+) : OpenGLBuffer<UniformBufferObject>(source) {
     override fun bind() {
         val data = source.data!!
         glHandle = GL43.glGenBuffers()

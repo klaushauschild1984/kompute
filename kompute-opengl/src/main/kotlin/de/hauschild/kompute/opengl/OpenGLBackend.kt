@@ -1,15 +1,17 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.AbstractBackend
-import de.hauschild.kompute.core.ExecutionContext
-import de.hauschild.kompute.core.InternalApi
-import de.hauschild.kompute.core.ShaderData.OutputCapable
-import de.hauschild.kompute.core.ShaderData.StorageBuffer
-import de.hauschild.kompute.core.ShaderData.UniformBuffer
-import de.hauschild.kompute.core.ShaderResult
-import de.hauschild.kompute.core.Type
-import de.hauschild.kompute.core.requireBackendInitialization
-import de.hauschild.kompute.core.requireConfiguration
+import de.hauschild.kompute.core.backend.AbstractBackend
+import de.hauschild.kompute.core.backend.InternalApi
+import de.hauschild.kompute.core.backend.Type
+import de.hauschild.kompute.core.data.AtomicCounter
+import de.hauschild.kompute.core.data.NamedUniform
+import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.data.UniformBufferObject
+import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.exception.requireConfiguration
+import de.hauschild.kompute.core.execution.ExecutionContext
+import de.hauschild.kompute.core.execution.ShaderResult
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
@@ -29,6 +31,7 @@ class OpenGLBackend : AbstractBackend() {
     private var maxComputeWorkGroupCountX: Int = 0
     private var maxComputeWorkGroupCountY: Int = 0
     private var maxComputeWorkGroupCountZ: Int = 0
+    private var maxAtomicCounterBindings: Int = 0
 
     @InternalApi
     override fun type(): Type = Type.OpenGL
@@ -55,6 +58,7 @@ class OpenGLBackend : AbstractBackend() {
         maxComputeWorkGroupCountX = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0)
         maxComputeWorkGroupCountY = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1)
         maxComputeWorkGroupCountZ = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2)
+        maxAtomicCounterBindings = GL11.glGetInteger(GL43.GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS)
 
         val renderer = GL11.glGetString(GL11.GL_RENDERER)
         val vendor = GL11.glGetString(GL11.GL_VENDOR)
@@ -70,12 +74,12 @@ class OpenGLBackend : AbstractBackend() {
                 program.link()
                 program.activate()
 
-                return ShaderResult(dispatchBuffers(context))
+                return ShaderResult(dispatchBuffers(context, program))
             }
         }
     }
 
-    private fun dispatchBuffers(context: ExecutionContext): Map<OutputCapable<*>, Any> {
+    private fun dispatchBuffers(context: ExecutionContext, program: OpenGLProgram): Map<OutputCapable<*>, Any> {
         requireConfiguration(context.x <= maxComputeWorkGroupCountX) {
             "Work group count x must not exceed physical limit $maxComputeWorkGroupCountX"
         }
@@ -86,10 +90,10 @@ class OpenGLBackend : AbstractBackend() {
             "Work group count z must not exceed physical limit $maxComputeWorkGroupCountZ"
         }
 
-        val results = mutableMapOf<OutputCapable<*>, Any>()
-
         val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
-        val uniformBuffers = mutableListOf<OpenGLUniformBuffer>()
+        val uniformBufferObjects = mutableListOf<OpenGLUniformBufferObject>()
+        val namedUniforms = mutableListOf<OpenGLNamedUniform<*>>()
+        val atomicCounters = mutableListOf<OpenGLAtomicCounter>()
         context.data.forEach { shaderData ->
             when (shaderData) {
                 is StorageBuffer<*> -> {
@@ -97,23 +101,38 @@ class OpenGLBackend : AbstractBackend() {
                     openGLStorageBuffer.validate(maxShaderStorageBufferBindings)
                     storageBuffer.add(openGLStorageBuffer)
                 }
-                is UniformBuffer -> {
-                    val openGLUniformBuffer = OpenGLUniformBuffer(shaderData)
-                    openGLUniformBuffer.validate(maxUniformBufferBindings)
-                    uniformBuffers.add(openGLUniformBuffer)
+                is UniformBufferObject -> {
+                    val openGLUniformBufferObject = OpenGLUniformBufferObject(shaderData)
+                    openGLUniformBufferObject.validate(maxUniformBufferBindings)
+                    uniformBufferObjects.add(openGLUniformBufferObject)
+                }
+                is NamedUniform<*> -> {
+                    val openGLNamedUniform = OpenGLNamedUniform(program, shaderData)
+                    namedUniforms.add(openGLNamedUniform)
+                }
+                is AtomicCounter -> {
+                    val openGLAtomicCounter = OpenGLAtomicCounter(shaderData)
+                    openGLAtomicCounter.validate(maxAtomicCounterBindings)
+                    atomicCounters.add(openGLAtomicCounter)
                 }
             }
         }
-        val buffers = storageBuffer + uniformBuffers
+        val buffers = storageBuffer + uniformBufferObjects + namedUniforms + atomicCounters
 
+        val results = mutableMapOf<OutputCapable<*>, Any>()
         try {
             buffers.forEach { buffer -> buffer.bind() }
 
             logger.debug { "Dispatching computation with (x: ${context.x}, y: ${context.y}, z: ${context.z})" }
             GL43.glDispatchCompute(context.x, context.y, context.z)
-            GL43.glMemoryBarrier(GL43.GL_SHADER_STORAGE_BARRIER_BIT)
-            storageBuffer
-                .filter { buffer -> buffer.isOutput }
+            GL43.glMemoryBarrier(
+                buffers.filterIsInstance<OpenGLReadable<*>>()
+                    .fold(0) { acc, readable -> acc or readable.barrierBit }
+            )
+
+            logger.debug { "Read back results from GPU" }
+            buffers.filterIsInstance<OpenGLReadable<*>>()
+                .filter { buffer -> buffer.source.isOutput }
                 .forEach { buffer -> results[buffer.source] = buffer.read() }
 
             return results

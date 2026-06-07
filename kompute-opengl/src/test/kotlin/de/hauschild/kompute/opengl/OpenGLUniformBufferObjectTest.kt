@@ -1,16 +1,18 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.ShaderData.UniformBuffer
-import de.hauschild.kompute.core.ShaderSource.Code
-import de.hauschild.kompute.core.StorageBuffer
+import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.data.UniformBufferObject
+import de.hauschild.kompute.core.execution.ShaderSource.Code
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.extension.ExtendWith
+
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+
 import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)
-class UniformBufferTest {
+class OpenGLUniformBufferObjectTest {
     @Test
     fun `float array`(backend: OpenGLBackend) {
         val output = StorageBuffer<FloatArray>(1).size(3).asOutput()
@@ -35,7 +37,7 @@ void main() {
                     """.trimIndent()),
                 )
                 .data(
-                    UniformBuffer(0).data(
+                    UniformBufferObject(0).data(
                         ByteBuffer
                             .allocate(Float.SIZE_BYTES)
                             .order(ByteOrder.nativeOrder())

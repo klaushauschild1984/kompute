@@ -1,11 +1,12 @@
 package de.hauschild.kompute.core
 
-import de.hauschild.kompute.core.ShaderData.IndexBinding
+import de.hauschild.kompute.core.data.IndexedBinding
+import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class IndexBindingTest {
+class IndexedBindingTest {
     @Test
     fun `index validation`() {
         val exception = assertFailsWith<KomputeConfigurationException> {
@@ -18,15 +19,15 @@ class IndexBindingTest {
     fun `cross validation`() {
         val exception =
             assertFailsWith<KomputeConfigurationException> {
-                IndexBinding.crossValidate(
+                IndexedBinding.crossValidate(
                     listOf(
                         Buffer(0),
                         Buffer(0),
                     ),
                 )
             }
-        assertEquals("There are duplicated indices: [0]", exception.message)
+        assertEquals("Duplicate index: 0", exception.message)
     }
 
-    private data class Buffer(override val index: Int) : ShaderData.IndexBinding
+    private data class Buffer(override val index: Int) : IndexedBinding
 }

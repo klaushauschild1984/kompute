@@ -1,6 +1,6 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.requireBackendInitialization
+import de.hauschild.kompute.core.exception.requireBackendInitialization
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
@@ -16,12 +16,16 @@ import org.lwjgl.opengl.GL43
 class OpenGLProgram(
     private val shader: OpenGLShader,
 ) : AutoCloseable {
-    private var glHandle: Int = 0
+    /**
+     * The OpenGL handle of the program.
+     */
+    var glHandle: Int = 0
+        private set
 
     /**
      * Links the attached shader into an executable OpenGL compute program.
      *
-     * @throws de.hauschild.kompute.core.KomputeBackendInitializationException if linking fails
+     * @throws [KomputeBackendInitializationException] if linking fails
      */
     fun link() {
         glHandle = GL43.glCreateProgram()

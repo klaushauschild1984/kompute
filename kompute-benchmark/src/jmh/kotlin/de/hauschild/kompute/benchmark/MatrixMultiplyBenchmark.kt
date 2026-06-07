@@ -1,7 +1,7 @@
 package de.hauschild.kompute.benchmark
 
-import de.hauschild.kompute.core.ShaderSource.Stream
-import de.hauschild.kompute.core.StorageBuffer
+import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.execution.ShaderSource.Stream
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Level
@@ -13,6 +13,7 @@ import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
 import org.openjdk.jmh.annotations.Warmup
+
 import java.util.concurrent.TimeUnit
 
 /**

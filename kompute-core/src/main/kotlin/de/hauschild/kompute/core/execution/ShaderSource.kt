@@ -1,4 +1,4 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.execution
 
 import java.io.InputStream
 import java.nio.file.Path

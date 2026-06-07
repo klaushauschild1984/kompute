@@ -1,7 +1,7 @@
 package de.hauschild.kompute.opengl
 
-import de.hauschild.kompute.core.ShaderSource
-import de.hauschild.kompute.core.requireBackendInitialization
+import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.execution.ShaderSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43
@@ -22,7 +22,7 @@ class OpenGLShader(
     /**
      * Compiles the shader source into an OpenGL compute shader.
      *
-     * @throws de.hauschild.kompute.core.KomputeBackendInitializationException if compilation fails
+     * @throws [KomputeBackendInitializationException] if compilation fails
      */
     fun compile() {
         val glsl =

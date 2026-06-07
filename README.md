@@ -119,11 +119,11 @@ Select a backend, attach a compute shader, configure storage buffers, dispatch, 
 
 ```kotlin
 Kompute.openGL().use { openGL ->
-    val output = ShaderData.StorageBuffer<FloatArray>(1).size(128).asOutput()
+    val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
     val result = openGL
         .shader(ShaderSource.Code(glslCode))
         .data(
-            ShaderData.StorageBuffer<FloatArray>(0).data(input),
+            StorageBuffer<FloatArray>(0).data(input),
             output,
         )
         .dispatch(x = 64)
@@ -136,11 +136,11 @@ Kompute.openGL().use { openGL ->
 
 ```java
 try (Backend backend = Kompute.openGL()) {
-    var output = ShaderData.StorageBuffer.newStorageBuffer(1, float[].class).size(128).asOutput();
+    var output = StorageBuffer.newStorageBuffer(1, float[].class).size(128).asOutput();
     var result = backend
         .shader(new ShaderSource.Code(glslCode))
         .data(
-            ShaderData.StorageBuffer.newStorageBuffer(0, float[].class).data(input),
+            StorageBuffer.newStorageBuffer(0, float[].class).data(input),
             output
         )
         .dispatch(64)
@@ -164,41 +164,33 @@ ShaderSource.File(Path.of("shaders/multiply.glsl"))
 ShaderSource.Stream(MyClass::class.java.getResourceAsStream("shader.glsl")!!)
 ```
 
-## Storage Buffers
+## Storage Buffer
 
-Storage buffers are the primary data exchange mechanism between CPU and GPU.
+Storage buffers are the primary data exchange mechanism between CPU and GPU. They can be used
+as input, output, or read-write and are bound via `layout(std430, binding = N)` in the shader.
 
-### Capabilities
-
-`StorageBuffer<T>` is generic — the type parameter maps GLSL types to their Kotlin equivalents:
-
-| GLSL                               | Kotlin        |
-|------------------------------------|---------------|
-| `float` / `vec*` / `mat*`          | `FloatArray`  |
-| `int` / `ivec*` / `uint` / `uvec*` | `IntArray`    |
-| `double` / `dvec*`                 | `DoubleArray` |
-| Struct                             | `ByteArray`   |
-
-### Usage
+| Kotlin        | GLSL                               |
+|---------------|------------------------------------|
+| `FloatArray`  | `float` / `vec*` / `mat*`          |
+| `IntArray`    | `int` / `ivec*` / `uint` / `uvec*` |
+| `DoubleArray` | `double` / `dvec*`                 |
+| `ByteArray`   | struct (manual layout)             |
 
 ```kotlin
-val input  = StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))
-val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
-
-// read-write: initialized with data, result readable afterwards
-val inout  = StorageBuffer<FloatArray>(2).data(existing).asOutput()
+val input  = StorageBuffer<FloatArray>(0).data(floatArrayOf(1f, 2f, 3f))  // input
+val output = StorageBuffer<FloatArray>(1).size(128).asOutput()             // output
+val inout  = StorageBuffer<FloatArray>(2).data(existing).asOutput()        // read-write
 ```
 
-Results are retrieved via the buffer object after execution:
-
-```kotlin
-val data: FloatArray = result[output]
-```
-
-## Uniform Buffer Objects
+## Uniform Buffer Object
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
 dimensions, zoom levels, or transformation matrices. Unlike storage buffers, the shader cannot write UBOs.
+They are bound via `layout(std140, binding = N)` in the shader.
+
+| Kotlin      | GLSL                          |
+|-------------|-------------------------------|
+| `ByteArray` | struct (std140 memory layout) |
 
 Shader:
 ```glsl
@@ -218,30 +210,116 @@ val data = ByteBuffer.allocate(Float.SIZE_BYTES * 4 + Float.SIZE_BYTES)
     .putFloat(0f)       // padding — vec3 occupies 16 bytes in std140
     .putFloat(zoom)
     .array()
-UniformBuffer(0).data(data)
+UniformBufferObject(0).data(data)
 ```
 
 > **Note:** UBOs use std140 memory layout. `vec3` is aligned to 16 bytes, which requires manual
 > padding in the data array. A typed builder to handle alignment automatically is planned for v0.7.0.
 
-## Scalar Uniforms *(planned — v0.5.0)*
+## Named Uniform
 
-Scalar uniforms pass individual values by name directly to the shader — no binding index required.
+Named uniforms pass typed values by name directly to the shader — no binding index required.
+Unlike UBOs, they are declared as plain `uniform` variables in the shader source.
 
-```kotlin
-// Not yet supported
-uniform("zoom", 1.5f)
-uniform("maxIterations", 256)
+### Scalars
+
+Shader:
+```glsl
+uniform float zoom;
+uniform int maxIterations;
+uniform bool highQuality;
+uniform uint flags;
 ```
 
-## Atomic Counters *(planned — v0.5.0)*
+Kotlin:
+```kotlin
+NamedUniform<Float>("zoom").value(1.5f)
+NamedUniform<Int>("maxIterations").value(256)
+NamedUniform<Boolean>("highQuality").value(true)
+NamedUniform<Int>("flags").value(0xFF).asUnsigned()
+```
+
+| Kotlin                 | GLSL      |
+|------------------------|-----------|
+| `Int`                  | `int`     |
+| `Int` + `asUnsigned()` | `uint`    |
+| `Float`                | `float`   |
+| `Double`               | `double`  |
+| `Boolean`              | `bool`    |
+
+### Vectors
+
+Shader:
+```glsl
+uniform vec3 center;
+uniform ivec2 offset;
+uniform dvec4 color;
+```
+
+Kotlin:
+```kotlin
+NamedUniform<FloatArray>("center").value(floatArrayOf(0f, 0f, 1f))
+NamedUniform<IntArray>("offset").value(intArrayOf(10, 20))
+NamedUniform<DoubleArray>("color").value(doubleArrayOf(1.0, 0.5, 0.0, 1.0))
+```
+
+| Kotlin                                 | GLSL                        |
+|----------------------------------------|-----------------------------|
+| `FloatArray` (size 2–4)                | `vec2` / `vec3` / `vec4`    |
+| `IntArray` (size 2–4)                  | `ivec2` / `ivec3` / `ivec4` |
+| `IntArray` + `asUnsigned()` (size 2–4) | `uvec2` / `uvec3` / `uvec4` |
+| `DoubleArray` (size 2–4)               | `dvec2` / `dvec3` / `dvec4` |
+
+### Matrices
+
+Shader:
+```glsl
+uniform mat4 transform;
+uniform mat3x2 projection;
+uniform dmat3 rotation;
+```
+
+Kotlin:
+```kotlin
+NamedUniform<FloatArray>("transform").value(floatArrayOf(...)).asMatrix(4, 4)
+NamedUniform<FloatArray>("projection").value(floatArrayOf(...)).asMatrix(3, 2)
+NamedUniform<DoubleArray>("rotation").value(doubleArrayOf(...)).asMatrix(3, 3)
+```
+
+| Kotlin                                    | GLSL                        |
+|-------------------------------------------|-----------------------------|
+| `FloatArray` + `asMatrix(N, N)`           | `mat2` / `mat3` / `mat4`   |
+| `FloatArray` + `asMatrix(rows, cols)`     | `mat{cols}x{rows}`          |
+| `DoubleArray` + `asMatrix(N, N)`          | `dmat2` / `dmat3` / `dmat4` |
+| `DoubleArray` + `asMatrix(rows, cols)`    | `dmat{cols}x{rows}`         |
+
+> **Note:** Matrices are stored in column-major order, matching OpenGL's default convention.
+
+## Atomic Counter
 
 Atomic counters allow threads to increment a shared counter safely across parallel invocations —
 useful for algorithms like Monte-Carlo sampling where multiple threads accumulate a result.
+They are declared in GLSL with `layout(binding = N) uniform atomic_uint` and always operate in
+read-write mode: an initial value is uploaded before dispatch and the result is read back afterwards.
+
+Shader:
+```glsl
+layout(binding = 0) uniform atomic_uint hits;
+```
+
+Kotlin:
+```kotlin
+val counter = AtomicCounter(0)           // starts at 0
+val counter = AtomicCounter(0).start(42) // starts at 42
+```
+
+## Reading Results
+
+After `execute()`, results are retrieved by passing the output object as a key:
 
 ```kotlin
-// Not yet supported
-AtomicCounter(0).asOutput()
+val data: FloatArray = result[output]    // StorageBuffer
+val count: Int       = result[counter]   // AtomicCounter
 ```
 
 ## Image2D *(planned — v0.6.0)*
@@ -313,7 +391,7 @@ xvfb-run ./gradlew build
 | [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation)                                                            |
 | [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray`           |
 | [`v0.4.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.4.0) | UBO support                                                                                                   |
-| `v0.5.0`                                                                      | Scalar uniform + atomic counter support                                                                       |
+| `v0.5.0`                                                                      | Named uniforms + atomic counter support                                                                       |
 | `v0.6.0`                                                                      | `image2D` support                                                                                             |
 | `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
 | `v0.8.0`                                                                      | Windows support                                                                                               |
