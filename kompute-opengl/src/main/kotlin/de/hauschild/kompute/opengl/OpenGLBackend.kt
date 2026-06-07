@@ -1,7 +1,7 @@
 package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.backend.AbstractBackend
-import de.hauschild.kompute.core.InternalApi
+import de.hauschild.kompute.core.backend.InternalApi
 import de.hauschild.kompute.core.backend.Type
 import de.hauschild.kompute.core.data.NamedUniform
 import de.hauschild.kompute.core.data.OutputCapable

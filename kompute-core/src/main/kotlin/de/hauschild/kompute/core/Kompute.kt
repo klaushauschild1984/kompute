@@ -1,6 +1,7 @@
 package de.hauschild.kompute.core
 
 import de.hauschild.kompute.core.backend.Backend
+import de.hauschild.kompute.core.backend.InternalApi
 import de.hauschild.kompute.core.backend.Type
 import de.hauschild.kompute.core.exception.KomputeBackendInitializationException
 import java.util.ServiceLoader
