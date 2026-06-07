@@ -3,7 +3,6 @@ package de.hauschild.kompute.opengl
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 
@@ -18,24 +17,18 @@ import java.nio.ByteBuffer
 class OpenGLStorageBuffer<T : Any>(
     source: StorageBuffer<T>,
 ) : OpenGLBuffer<StorageBuffer<T>>(source),
-OutputCapable<T> by source {
+OutputCapable<T> by source,
+OpenGLReadable<T>{
+    override val barrierBit: Int = GL43.GL_SHADER_STORAGE_BARRIER_BIT
+
     override fun bind() {
         glHandle = GL43.glGenBuffers()
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (val mode = source.mode()) {
-            is StorageBuffer.Mode.Input -> {
-                logger.debug { "Binding input buffer ${source.index}" }
-                uploadData(mode.data, GL43.GL_STATIC_DRAW)
-            }
-            is StorageBuffer.Mode.Output -> {
-                logger.debug { "Binding output buffer ${source.index}" }
-                GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,
-                    (mode.size * elementSizeInBytes()).toLong(), GL43.GL_DYNAMIC_READ)
-            }
-            is StorageBuffer.Mode.ReadWrite -> {
-                logger.debug { "Binding read-write buffer ${source.index}" }
-                uploadData(mode.data, GL43.GL_DYNAMIC_COPY)
-            }
+            is StorageBuffer.Mode.Input -> uploadData(mode.data, GL43.GL_STATIC_DRAW)
+            is StorageBuffer.Mode.Output -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,
+                (mode.size * elementSizeInBytes()).toLong(), GL43.GL_DYNAMIC_READ)
+            is StorageBuffer.Mode.ReadWrite -> uploadData(mode.data, GL43.GL_DYNAMIC_COPY)
         }
         GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, source.index, glHandle)
     }
@@ -59,15 +52,8 @@ OutputCapable<T> by source {
             else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
         }
 
-    /**
-     * Reads the buffer contents from the GPU back to host memory.
-     *
-     * @return the data read from the GPU buffer
-     * @throws KomputeConfigurationException if the data type is not supported
-     */
     @Suppress("UNCHECKED_CAST")
-    fun read(): T {
-        logger.debug { "Reading buffer ${source.index}" }
+    override fun read(): T {
         val elementCount = when (val mode = source.mode()) {
             is StorageBuffer.Mode.Output -> mode.size
             is StorageBuffer.Mode.ReadWrite -> when (val d = mode.data) {
@@ -104,9 +90,5 @@ OutputCapable<T> by source {
             }
         }
         return buffer
-    }
-
-    companion object {
-        private val logger = KotlinLogging.logger {}
     }
 }

@@ -182,12 +182,6 @@ val output = StorageBuffer<FloatArray>(1).size(128).asOutput()             // ou
 val inout  = StorageBuffer<FloatArray>(2).data(existing).asOutput()        // read-write
 ```
 
-Results are retrieved via the buffer object after execution:
-
-```kotlin
-val data: FloatArray = result[output]
-```
-
 ## Uniform Buffer Object
 
 UBOs pass read-only configuration data from CPU to shader — ideal for parameters like viewport
@@ -301,14 +295,31 @@ NamedUniform<DoubleArray>("rotation").value(doubleArrayOf(...)).asMatrix(3, 3)
 
 > **Note:** Matrices are stored in column-major order, matching OpenGL's default convention.
 
-## Atomic Counter *(planned — v0.5.0)*
+## Atomic Counter
 
 Atomic counters allow threads to increment a shared counter safely across parallel invocations —
 useful for algorithms like Monte-Carlo sampling where multiple threads accumulate a result.
+They are declared in GLSL with `layout(binding = N) uniform atomic_uint` and always operate in
+read-write mode: an initial value is uploaded before dispatch and the result is read back afterwards.
+
+Shader:
+```glsl
+layout(binding = 0) uniform atomic_uint hits;
+```
+
+Kotlin:
+```kotlin
+val counter = AtomicCounter(0)           // starts at 0
+val counter = AtomicCounter(0).start(42) // starts at 42
+```
+
+## Reading Results
+
+After `execute()`, results are retrieved by passing the output object as a key:
 
 ```kotlin
-// Not yet supported
-AtomicCounter(0).asOutput()
+val data: FloatArray = result[output]    // StorageBuffer
+val count: Int       = result[counter]   // AtomicCounter
 ```
 
 ## Image2D *(planned — v0.6.0)*
