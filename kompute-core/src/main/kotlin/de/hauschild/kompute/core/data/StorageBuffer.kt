@@ -118,8 +118,8 @@ OutputCapable<T> {
     companion object {
         private val SUPPORTED_TYPES =
             setOf(
-                FloatArray::class,
                 IntArray::class,
+                FloatArray::class,
                 DoubleArray::class,
                 ByteArray::class,
             )

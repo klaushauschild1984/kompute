@@ -31,8 +31,8 @@ OutputCapable<T> by source {
             GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, sizeInBytes.toLong(), GL43.GL_DYNAMIC_READ)
         } else {
             when (val data = source.data!!) {
-                is FloatArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
                 is IntArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
+                is FloatArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
                 is DoubleArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, GL43.GL_STATIC_DRAW)
                 is ByteArray ->
                     GL43.glBufferData(
@@ -48,8 +48,8 @@ OutputCapable<T> by source {
 
     private fun elementSizeInBytes(): Int =
         when (source.type) {
-            FloatArray::class -> Float.SIZE_BYTES
             IntArray::class -> Int.SIZE_BYTES
+            FloatArray::class -> Float.SIZE_BYTES
             DoubleArray::class -> Double.SIZE_BYTES
             ByteArray::class -> 1
             else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
@@ -66,16 +66,16 @@ OutputCapable<T> by source {
         logger.debug { "Reading buffer ${source.index}" }
         val buffer: T =
             when (source.type) {
-                FloatArray::class -> FloatArray(source.size!!)
                 IntArray::class -> IntArray(source.size!!)
+                FloatArray::class -> FloatArray(source.size!!)
                 DoubleArray::class -> DoubleArray(source.size!!)
                 ByteArray::class -> ByteArray(source.size!!)
                 else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
             } as T
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (buffer) {
-            is FloatArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is IntArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
+            is FloatArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is DoubleArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is ByteArray -> {
                 val direct = MemoryUtil.memAlloc(buffer.size)

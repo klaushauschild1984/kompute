@@ -12,7 +12,7 @@ import java.nio.ByteOrder
 import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)
-class OpenGLUniformBufferObjectObjectTest {
+class OpenGLUniformBufferObjectTest {
     @Test
     fun `float array`(backend: OpenGLBackend) {
         val output = StorageBuffer<FloatArray>(1).size(3).asOutput()
