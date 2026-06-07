@@ -26,7 +26,7 @@ class NamedBindingTest {
                     ),
                 )
             }
-        assertEquals("There are duplicated names: [name]", exception.message)
+        assertEquals("Duplicate name: name", exception.message)
     }
 
     private data class Buffer(override val name: String) : NamedBinding

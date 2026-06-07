@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
 /**
  * Wraps an OpenGL shader storage buffer object (SSBO) for a [StorageBuffer].
  *
- * @param T the data type — must be [FloatArray], [IntArray], [DoubleArray], or [ByteArray]
+ * @param T the data type — must be [IntArray], [FloatArray], [DoubleArray], or [ByteArray]
  * @param source the [StorageBuffer] configuration this buffer is based on
  */
 class OpenGLStorageBuffer<T : Any>(

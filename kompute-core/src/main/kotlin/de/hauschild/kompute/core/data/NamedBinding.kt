@@ -27,13 +27,7 @@ interface NamedBinding : Binding {
          * @throws [KomputeConfigurationException] if duplicate indices are found
          */
         fun crossValidate(namedBindings: List<NamedBinding>) {
-            val duplicates =
-                namedBindings
-                    .map { it.name }
-                    .groupBy { it }
-                    .filter { (_, occurrences) -> occurrences.size > 1 }
-                    .keys
-            requireConfiguration(duplicates.isEmpty()) { "There are duplicated names: $duplicates" }
+            namedBindings.crossValidate({it.name}, "name")
         }
     }
 }

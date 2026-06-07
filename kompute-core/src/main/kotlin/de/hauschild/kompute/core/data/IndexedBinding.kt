@@ -30,13 +30,7 @@ interface IndexedBinding : Binding {
          * @throws [KomputeConfigurationException] if duplicate indices are found
          */
         fun crossValidate(indexedBindings: List<IndexedBinding>) {
-            val duplicates =
-                indexedBindings
-                    .map { it.index }
-                    .groupBy { it }
-                    .filter { (_, occurrences) -> occurrences.size > 1 }
-                    .keys
-            requireConfiguration(duplicates.isEmpty()) { "There are duplicated indices: $duplicates" }
+            indexedBindings.crossValidate({it.index}, "index")
         }
     }
 }

@@ -89,14 +89,22 @@ class NamedUniform<T: Any>(
 
     /**
      * Convenience methods for `asMatrix(2, 2)`.
+     *
+     * @return
      */
     fun as2By2Matrix(): NamedUniform<T> = asMatrix(2, 2)
+
     /**
      * Convenience methods for `asMatrix(3, 3)`.
+     *
+     * @return
      */
     fun as3By3Matrix(): NamedUniform<T> = asMatrix(3, 3)
+
     /**
-     * Convenience methods for `asMatrix(3, 3)`.
+     * Convenience methods for `asMatrix(4, 4)`.
+     *
+     * @return
      */
     fun as4By4Matrix(): NamedUniform<T> = asMatrix(4, 4)
 
@@ -160,15 +168,15 @@ class NamedUniform<T: Any>(
 
     override fun toString(): String {
         val valueInfo = when (val v = value) {
-            is FloatArray  -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
-            is IntArray    -> "Vector(${v.size})"
+            is FloatArray -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
+            is IntArray -> "Vector(${v.size})"
             is DoubleArray -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
-            null           -> "no value"
-            else           -> "$v"
+            null -> "no value"
+            else -> v
         }
         return "NamedUniform<${type.simpleName}>(name=$name)" +
-            (if (unsigned) "(unsigned)" else "") +
-            "($valueInfo)"
+                (if (unsigned) "(unsigned)" else "") +
+                "($valueInfo)"
     }
 
     /**

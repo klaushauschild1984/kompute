@@ -26,7 +26,7 @@ class IndexedBindingTest {
                     ),
                 )
             }
-        assertEquals("There are duplicated indices: [0]", exception.message)
+        assertEquals("Duplicate index: 0", exception.message)
     }
 
     private data class Buffer(override val index: Int) : IndexedBinding
