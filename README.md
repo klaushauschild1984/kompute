@@ -53,7 +53,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.klaushauschild1984.kompute:kompute-opengl:v0.4.0")
+    implementation("com.github.klaushauschild1984.kompute:kompute-opengl:v0.5.0")
 
     implementation(platform("org.lwjgl:lwjgl-bom:3.3.4"))
     runtimeOnly("org.lwjgl:lwjgl::natives-linux")
@@ -88,7 +88,7 @@ dependencies {
     <dependency>
         <groupId>com.github.klaushauschild1984.kompute</groupId>
         <artifactId>kompute-opengl</artifactId>
-        <version>v0.4.0</version>
+        <version>v0.5.0</version>
     </dependency>
     <dependency>
         <groupId>org.lwjgl</groupId>
