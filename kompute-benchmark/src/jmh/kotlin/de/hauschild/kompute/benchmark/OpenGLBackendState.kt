@@ -1,6 +1,6 @@
 package de.hauschild.kompute.benchmark
 
-import de.hauschild.kompute.core.Backend
+import de.hauschild.kompute.core.backend.Backend
 import de.hauschild.kompute.core.Kompute
 import org.openjdk.jmh.annotations.Level
 import org.openjdk.jmh.annotations.Scope

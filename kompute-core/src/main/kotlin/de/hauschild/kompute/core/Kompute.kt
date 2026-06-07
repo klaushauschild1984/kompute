@@ -1,5 +1,7 @@
 package de.hauschild.kompute.core
 
+import de.hauschild.kompute.core.backend.Backend
+import de.hauschild.kompute.core.backend.Type
 import de.hauschild.kompute.core.exception.KomputeBackendInitializationException
 import java.util.ServiceLoader
 
@@ -7,7 +9,7 @@ import java.util.ServiceLoader
  * Main entry point for accessing GPU compute backends.
  *
  * Discovers and initializes GPU compute backends using Java's [ServiceLoader] mechanism.
- * Backends must implement [Backend] and be registered in `META-INF/services`.
+ * Backends must implement [de.hauschild.kompute.core.backend.Backend] and be registered in `META-INF/services`.
  *
  * Example usage:
  * ```
@@ -29,7 +31,7 @@ object Kompute {
     /**
      * Creates and initializes an OpenGL compute backend.
      *
-     * @return an initialized [Backend] for OpenGL compute operations
+     * @return an initialized [de.hauschild.kompute.core.backend.Backend] for OpenGL compute operations
      * @throws KomputeBackendInitializationException if no OpenGL backend is found or initialization fails
      */
     @JvmStatic

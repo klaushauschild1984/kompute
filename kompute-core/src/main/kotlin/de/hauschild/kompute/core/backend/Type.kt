@@ -1,9 +1,9 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.backend
 
 /**
  * Enumeration of available GPU compute backend types.
  *
- * Used by [Kompute] to identify and load specific backend implementations.
+ * Used by [de.hauschild.kompute.core.Kompute] to identify and load specific backend implementations.
  */
 sealed interface Type {
     /**
