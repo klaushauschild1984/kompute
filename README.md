@@ -242,16 +242,16 @@ Kotlin:
 NamedUniform<Float>("zoom").value(1.5f)
 NamedUniform<Int>("maxIterations").value(256)
 NamedUniform<Boolean>("highQuality").value(true)
-NamedUniform<Int>("flags").value(0xFF).unsigned()
+NamedUniform<Int>("flags").value(0xFF).asUnsigned()
 ```
 
-| Kotlin               | GLSL      |
-|----------------------|-----------|
-| `Int`                | `int`     |
-| `Int` + `unsigned()` | `uint`    |
-| `Float`              | `float`   |
-| `Double`             | `double`  |
-| `Boolean`            | `bool`    |
+| Kotlin                 | GLSL      |
+|------------------------|-----------|
+| `Int`                  | `int`     |
+| `Int` + `asUnsigned()` | `uint`    |
+| `Float`                | `float`   |
+| `Double`               | `double`  |
+| `Boolean`              | `bool`    |
 
 ### Vectors
 
@@ -269,12 +269,12 @@ NamedUniform<IntArray>("offset").value(intArrayOf(10, 20))
 NamedUniform<DoubleArray>("color").value(doubleArrayOf(1.0, 0.5, 0.0, 1.0))
 ```
 
-| Kotlin                          | GLSL               |
-|---------------------------------|--------------------|
-| `FloatArray` (size 2–4)         | `vec2` / `vec3` / `vec4`   |
-| `IntArray` (size 2–4)           | `ivec2` / `ivec3` / `ivec4` |
-| `IntArray` + `unsigned()` (size 2–4) | `uvec2` / `uvec3` / `uvec4` |
-| `DoubleArray` (size 2–4)        | `dvec2` / `dvec3` / `dvec4` |
+| Kotlin                                 | GLSL                        |
+|----------------------------------------|-----------------------------|
+| `FloatArray` (size 2–4)                | `vec2` / `vec3` / `vec4`    |
+| `IntArray` (size 2–4)                  | `ivec2` / `ivec3` / `ivec4` |
+| `IntArray` + `asUnsigned()` (size 2–4) | `uvec2` / `uvec3` / `uvec4` |
+| `DoubleArray` (size 2–4)               | `dvec2` / `dvec3` / `dvec4` |
 
 ### Matrices
 

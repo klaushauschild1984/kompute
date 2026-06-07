@@ -23,7 +23,8 @@ class OpenGLBackendExtension :
     }
 
     override fun afterAll(context: ExtensionContext?) {
-        requireNotNull(context).getStore(NAMESPACE).get(BACKEND, OpenGLBackend::class.java).close()
+        val backend = requireNotNull(context).getStore(NAMESPACE).get(BACKEND, OpenGLBackend::class.java)
+        backend?.close()
     }
 
     override fun supportsParameter(

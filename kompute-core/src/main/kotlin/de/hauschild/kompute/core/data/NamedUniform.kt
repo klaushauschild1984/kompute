@@ -10,10 +10,21 @@ import kotlin.reflect.KClass
  * binding index and do not require a `layout(binding = ...)` declaration in the shader source.
  *
  * Supported types and their GLSL equivalents:
- * - [Int] → `int` (or `uint` when [unsigned] is set)
+ *
+ * Scalars:
+ * - [Int] → `int` (or `uint` when [asUnsigned] is set)
  * - [Float] → `float`
  * - [Double] → `double`
  * - [Boolean] → `bool`
+ *
+ * Vectors (use [FloatArray], [IntArray] or [DoubleArray] with size 2–4):
+ * - [FloatArray] → `vec2` / `vec3` / `vec4`
+ * - [IntArray] → `ivec2` / `ivec3` / `ivec4` (or `uvec*` when [asUnsigned] is set)
+ * - [DoubleArray] → `dvec2` / `dvec3` / `dvec4`
+ *
+ * Matrices (use [FloatArray] or [DoubleArray] with [asMatrix]):
+ * - [FloatArray] + [asMatrix] → `mat2` / `mat3` / `mat4` / `mat{C}x{R}`
+ * - [DoubleArray] + [asMatrix] → `dmat2` / `dmat3` / `dmat4` / `dmat{C}x{R}`
  *
  * @param T the value type — must be one of the supported types listed above
  * @property name the uniform name as declared in the shader source — must not be blank
@@ -30,7 +41,7 @@ class NamedUniform<T: Any>(
         private set
 
     /**
-     * Whether this uniform should be passed as an unsigned integer. Only valid for [Int] uniforms.
+     * Whether this uniform should be passed as an unsigned integer. Only valid for [Int] and [IntArray] uniforms.
      */
     var unsigned: Boolean = false
         private set
@@ -53,11 +64,11 @@ class NamedUniform<T: Any>(
     }
 
     /**
-     * Marks this uniform as unsigned. Only valid for [Int] uniforms — validated in [validate].
+     * Marks this uniform as unsigned. Only valid for [Int] and [IntArray] uniforms — validated in [validate].
      *
      * @return this [NamedUniform] for chaining
      */
-    fun unsigned(): NamedUniform<T> {
+    fun asUnsigned(): NamedUniform<T> {
         this.unsigned = true
         return this
     }
@@ -77,10 +88,23 @@ class NamedUniform<T: Any>(
     }
 
     /**
+     * Convenience methods for `asMatrix(2, 2)`.
+     */
+    fun as2By2Matrix(): NamedUniform<T> = asMatrix(2, 2)
+    /**
+     * Convenience methods for `asMatrix(3, 3)`.
+     */
+    fun as3By3Matrix(): NamedUniform<T> = asMatrix(3, 3)
+    /**
+     * Convenience methods for `asMatrix(3, 3)`.
+     */
+    fun as4By4Matrix(): NamedUniform<T> = asMatrix(4, 4)
+
+    /**
      * Validates the uniform configuration.
      *
      * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if the name is blank, the type is
-     * unsupported, [unsigned] is set on a non-[Int] type, or no value has been provided
+     * unsupported, [asUnsigned] is set on a non-[Int] type, or no value has been provided
      */
     override fun validate() {
         super.validate()
@@ -88,8 +112,8 @@ class NamedUniform<T: Any>(
             "Unsupported NamedUniform type: ${type.simpleName}"
         }
         if (unsigned) {
-            requireConfiguration(type == Int::class) {
-                "Unsigned NamedUniforms must be of type Int"
+            requireConfiguration(type == Int::class || type == IntArray::class) {
+                "Unsigned NamedUniforms must be of type Int or IntArray"
             }
             requireConfiguration(matrixDimension == null) {
                 "Matrix uniforms cannot be unsigned"
@@ -134,9 +158,18 @@ class NamedUniform<T: Any>(
         }
     }
 
-    override fun toString(): String = "NamedUniform<${type.simpleName}>(name=$name)" +
+    override fun toString(): String {
+        val valueInfo = when (val v = value) {
+            is FloatArray  -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
+            is IntArray    -> "Vector(${v.size})"
+            is DoubleArray -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
+            null           -> "no value"
+            else           -> "$v"
+        }
+        return "NamedUniform<${type.simpleName}>(name=$name)" +
             (if (unsigned) "(unsigned)" else "") +
-            "${matrixDimension?.let { "(as ${it.rows}x${it.columns} matrix)" } ?: ""}}"
+            "($valueInfo)"
+    }
 
     /**
      * @property rows

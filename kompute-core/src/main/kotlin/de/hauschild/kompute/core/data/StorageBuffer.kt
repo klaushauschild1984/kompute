@@ -12,8 +12,8 @@ import kotlin.reflect.KClass
  * declared in the shader source with `layout(std430, binding = N)`.
  *
  * Supported types and their GLSL equivalents:
- * - [FloatArray] → `float` / `vec*` / `mat*`
  * - [IntArray] → `int` / `ivec*` / `uint` / `uvec*`
+ * - [FloatArray] → `float` / `vec*` / `mat*`
  * - [DoubleArray] → `double` / `dvec*`
  * - [ByteArray] → struct (manual layout)
  *
@@ -112,8 +112,19 @@ OutputCapable<T> {
         }
     }
 
-    override fun toString(): String = "StorageBuffer<${type.simpleName}>(index=$index)" +
-            if (isOutput) "(as output)" else ""
+    override fun toString(): String {
+        val dataInfo = data?.let { d ->
+            val count = when (d) {
+                is FloatArray -> d.size
+                is IntArray -> d.size
+                is DoubleArray -> d.size
+                is ByteArray -> d.size
+                else -> "?"
+            }
+            "(data: $count)"
+        } ?: size?.let { "(size: $it)" } ?: ""
+        return "StorageBuffer<${type.simpleName}>(index=$index)$dataInfo${if (isOutput) "(as output)" else ""}"
+    }
 
     companion object {
         private val SUPPORTED_TYPES =
