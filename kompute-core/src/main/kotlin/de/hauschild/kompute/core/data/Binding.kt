@@ -21,8 +21,8 @@ sealed interface Binding {
  * @param label
  */
 internal fun <T : Binding, K> List<T>.crossValidate(
-    keySelector: (T) -> K,
     label: String,
+    keySelector: (T) -> K,
 ) {
     groupBy(keySelector)
         .filter { it.value.size > 1 }

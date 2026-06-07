@@ -47,7 +47,14 @@ OutputCapable<T> {
     override var isOutput: Boolean = false
         private set
 
-    val mode: Mode<T> get() = when {
+    /**
+     * Returns the resolved [Mode] of this buffer based on the current configuration.
+     *
+     * Must only be called after [validate].
+     *
+     * @return [Mode] the [StorageBuffer] operates in
+     */
+    fun mode(): Mode<T> = when {
         isOutput && data != null -> Mode.ReadWrite(data!!)
         isOutput -> Mode.Output(size!!)
         else -> Mode.Input(data!!)
@@ -121,10 +128,10 @@ OutputCapable<T> {
     }
 
     override fun toString(): String {
-        val info = when (val m = mode) {
-            is Mode.Input -> "(data: ${m.data.elementCount()})"
-            is Mode.Output -> "(size: ${m.size})(as output)"
-            is Mode.ReadWrite -> "(data: ${m.data.elementCount()})(as output)"
+        val info = when (val bufferMode = mode()) {
+            is Mode.Input -> "(data: ${bufferMode.data.elementCount()})"
+            is Mode.Output -> "(size: ${bufferMode.size})(as output)"
+            is Mode.ReadWrite -> "(data: ${bufferMode.data.elementCount()})(as output)"
         }
         return "StorageBuffer<${type.simpleName}>(index=$index)$info"
     }

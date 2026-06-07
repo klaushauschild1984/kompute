@@ -88,23 +88,23 @@ class NamedUniform<T: Any>(
     }
 
     /**
-     * Convenience methods for `asMatrix(2, 2)`.
+     * Convenience method for `asMatrix(2, 2)`.
      *
-     * @return
+     * @return this [NamedUniform] for chaining
      */
     fun as2By2Matrix(): NamedUniform<T> = asMatrix(2, 2)
 
     /**
-     * Convenience methods for `asMatrix(3, 3)`.
+     * Convenience method for `asMatrix(3, 3)`.
      *
-     * @return
+     * @return this [NamedUniform] for chaining
      */
     fun as3By3Matrix(): NamedUniform<T> = asMatrix(3, 3)
 
     /**
-     * Convenience methods for `asMatrix(4, 4)`.
+     * Convenience method for `asMatrix(4, 4)`.
      *
-     * @return
+     * @return this [NamedUniform] for chaining
      */
     fun as4By4Matrix(): NamedUniform<T> = asMatrix(4, 4)
 

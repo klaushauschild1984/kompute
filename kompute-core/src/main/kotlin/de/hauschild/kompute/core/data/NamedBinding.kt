@@ -27,7 +27,7 @@ interface NamedBinding : Binding {
          * @throws [KomputeConfigurationException] if duplicate indices are found
          */
         fun crossValidate(namedBindings: List<NamedBinding>) {
-            namedBindings.crossValidate({it.name}, "name")
+            namedBindings.crossValidate("name") { it.name }
         }
     }
 }

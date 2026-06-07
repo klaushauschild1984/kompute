@@ -30,7 +30,7 @@ interface IndexedBinding : Binding {
          * @throws [KomputeConfigurationException] if duplicate indices are found
          */
         fun crossValidate(indexedBindings: List<IndexedBinding>) {
-            indexedBindings.crossValidate({it.index}, "index")
+            indexedBindings.crossValidate("index") { it.index }
         }
     }
 }

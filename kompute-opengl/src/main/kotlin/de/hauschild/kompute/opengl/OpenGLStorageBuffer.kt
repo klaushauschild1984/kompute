@@ -22,19 +22,19 @@ OutputCapable<T> by source {
     override fun bind() {
         glHandle = GL43.glGenBuffers()
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
-        when (val mode = source.mode) {
+        when (val mode = source.mode()) {
             is StorageBuffer.Mode.Input -> {
                 logger.debug { "Binding input buffer ${source.index}" }
-                uploadData(m.data, GL43.GL_STATIC_DRAW)
+                uploadData(mode.data, GL43.GL_STATIC_DRAW)
             }
             is StorageBuffer.Mode.Output -> {
                 logger.debug { "Binding output buffer ${source.index}" }
                 GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER,
-                    (m.size * elementSizeInBytes()).toLong(), GL43.GL_DYNAMIC_READ)
+                    (mode.size * elementSizeInBytes()).toLong(), GL43.GL_DYNAMIC_READ)
             }
             is StorageBuffer.Mode.ReadWrite -> {
                 logger.debug { "Binding read-write buffer ${source.index}" }
-                uploadData(m.data, GL43.GL_DYNAMIC_COPY)
+                uploadData(mode.data, GL43.GL_DYNAMIC_COPY)
             }
         }
         GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, source.index, glHandle)
@@ -68,7 +68,7 @@ OutputCapable<T> by source {
     @Suppress("UNCHECKED_CAST")
     fun read(): T {
         logger.debug { "Reading buffer ${source.index}" }
-        val elementCount = when (val mode = source.mode) {
+        val elementCount = when (val mode = source.mode()) {
             is StorageBuffer.Mode.Output -> mode.size
             is StorageBuffer.Mode.ReadWrite -> when (val d = mode.data) {
                 is IntArray -> d.size
