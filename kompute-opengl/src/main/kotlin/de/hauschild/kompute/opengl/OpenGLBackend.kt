@@ -97,6 +97,14 @@ class OpenGLBackend : AbstractBackend() {
             "Work group count z must not exceed physical limit $maxComputeWorkGroupCountZ"
         }
 
+        val buffers = bindBuffers(context, program)
+        return readBack(buffers, context)
+    }
+
+    private fun bindBuffers(
+        context: ExecutionContext,
+        program: OpenGLProgram
+    ): List<Bindable> {
         val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
         val uniformBufferObjects = mutableListOf<OpenGLUniformBufferObject>()
         val namedUniforms = mutableListOf<OpenGLNamedUniform<*>>()
@@ -109,20 +117,24 @@ class OpenGLBackend : AbstractBackend() {
                     openGLStorageBuffer.validate(maxShaderStorageBufferBindings)
                     storageBuffer.add(openGLStorageBuffer)
                 }
+
                 is UniformBufferObject -> {
                     val openGLUniformBufferObject = OpenGLUniformBufferObject(shaderData)
                     openGLUniformBufferObject.validate(maxUniformBufferBindings)
                     uniformBufferObjects.add(openGLUniformBufferObject)
                 }
+
                 is NamedUniform<*> -> {
                     val openGLNamedUniform = OpenGLNamedUniform(program, shaderData)
                     namedUniforms.add(openGLNamedUniform)
                 }
+
                 is AtomicCounter -> {
                     val openGLAtomicCounter = OpenGLAtomicCounter(shaderData)
                     openGLAtomicCounter.validate(maxAtomicCounterBindings)
                     atomicCounters.add(openGLAtomicCounter)
                 }
+
                 is Image2D -> {
                     val openGLImage2D = OpenGLImage2D(shaderData)
                     openGLImage2D.validate(maxImageUnits)
@@ -132,7 +144,13 @@ class OpenGLBackend : AbstractBackend() {
             }
         }
         val buffers = storageBuffer + uniformBufferObjects + namedUniforms + atomicCounters + image2Ds
+        return buffers
+    }
 
+    private fun readBack(
+        buffers: List<Bindable>,
+        context: ExecutionContext
+    ): MutableMap<OutputCapable<*>, Any> {
         val results = mutableMapOf<OutputCapable<*>, Any>()
         try {
             buffers.forEach { buffer -> buffer.bind() }
