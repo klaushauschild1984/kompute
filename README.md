@@ -406,9 +406,44 @@ Tests require a display server and OpenGL-capable GPU. On headless systems use:
 xvfb-run ./gradlew build
 ```
 
-## Showcases
+## Showcase
 
-*Coming soon: Mandelbrot set, Monte-Carlo sampling*
+Ready-to-run examples in the `kompute-showcase` module that demonstrate Kompute's API
+against real compute problems.
+
+### Monte Carlo π Approximation
+
+Each GPU thread generates a random point (x, y) in the unit square [0, 1] × [0, 1] and
+checks whether it falls inside the unit circle (x² + y² ≤ 1). The ratio of hits to total
+samples converges to π/4 — so π ≈ 4 × hits / samples. An [AtomicCounter] counts the hits
+safely across thousands of parallel threads.
+
+```kotlin
+MonteCarloPiApproximation(samples = 1_000_000).use { monteCarlo ->
+  val pi = monteCarlo.approximate()
+  println("π ≈ $pi")
+}
+```
+
+Shader (GLSL):
+```glsl
+layout(local_size_x = 64) in;
+layout(binding = 0) uniform atomic_uint hits;
+
+void main() {
+  uint id = gl_GlobalInvocationID.x;
+  float x = float(pcg(id))                / float(0xFFFFFFFFu);
+  float y = float(pcg(id + 0x9e3779b9u)) / float(0xFFFFFFFFu);
+  if (x * x + y * y <= 1.0) {
+      atomicCounterIncrement(hits);
+  }
+}
+```
+
+The GPU advantage is visible in parallelism, not precision — Monte Carlo converges with
+O(1/√N), delivering roughly one additional correct decimal place per 100× more samples.
+The same algorithm on a single CPU thread runs sequentially; the GPU evaluates all samples
+in parallel.
 
 ## Milestones
 
