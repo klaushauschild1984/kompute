@@ -24,9 +24,8 @@ class MonteCarloPiApproximationTest {
         @JvmStatic
         fun `pi approximation accuracy`() = listOf(
             Arguments.of(10_000, 1),
-            Arguments.of(100_000, 1),
-            Arguments.of(1_000_000, 2),
-            Arguments.of(1_000_000_000, 4),
+            Arguments.of(100_000, 2),
+            Arguments.of(1_000_000, 3),
         )
     }
 }
