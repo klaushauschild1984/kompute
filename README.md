@@ -481,20 +481,16 @@ O(1/√N), delivering roughly one additional correct decimal place per 100× mor
 The same algorithm on a single CPU thread runs sequentially; the GPU evaluates all samples
 in parallel.
 
-## Milestones
+## Roadmap
 
-| Version                                                                       | Focus                                                                                                         |
-|-------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
-| [`v0.1.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.1.0) | OpenGL Storage Buffer — initial release                                                                       |
-| [`v0.2.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.2.0) | Stability (exception handling, binding validation)                                                            |
-| [`v0.3.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.3.0) | Typed storage buffers — `StorageBuffer<T>` for `FloatArray`, `IntArray`, `DoubleArray`, `ByteArray`           |
-| [`v0.4.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.4.0) | UBO support                                                                                                   |
-| [`v0.5.0`](https://github.com/klaushauschild1984/kompute/releases/tag/v0.5.0) | Named uniforms + atomic counter support                                                                       |
-| `v0.6.0`                                                                      | `image2D` support                                                                                             |
-| `v0.7.0`                                                                      | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
-| `v0.8.0`                                                                      | Windows support                                                                                               |
-| `v0.9.0`                                                                      | Vulkan backend                                                                                                |
-| `v1.0.0`                                                                      | Stable, complete API                                                                                          |
+| Version  | Focus                                                                                                         |
+|----------|---------------------------------------------------------------------------------------------------------------|
+| `v0.7.0` | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
+| `v0.8.0` | Windows support                                                                                               |
+| `v0.9.0` | Vulkan backend                                                                                                |
+| `v1.0.0` | Stable, complete API                                                                                          |
+
+The full version history is documented in [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 
