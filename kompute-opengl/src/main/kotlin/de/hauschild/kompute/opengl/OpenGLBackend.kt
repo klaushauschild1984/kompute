@@ -4,6 +4,7 @@ import de.hauschild.kompute.core.backend.AbstractBackend
 import de.hauschild.kompute.core.backend.InternalApi
 import de.hauschild.kompute.core.backend.Type
 import de.hauschild.kompute.core.data.AtomicCounter
+import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.NamedUniform
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
@@ -15,6 +16,8 @@ import de.hauschild.kompute.core.execution.ShaderResult
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
+import org.lwjgl.opengl.GL31
+import org.lwjgl.opengl.GL42
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil.NULL
 
@@ -32,6 +35,8 @@ class OpenGLBackend : AbstractBackend() {
     private var maxComputeWorkGroupCountY: Int = 0
     private var maxComputeWorkGroupCountZ: Int = 0
     private var maxAtomicCounterBindings: Int = 0
+    private var maxMaxImageUnits: Int = 0
+    private var maxTextureSize: Int = 0
 
     @InternalApi
     override fun type(): Type = Type.OpenGL
@@ -54,11 +59,13 @@ class OpenGLBackend : AbstractBackend() {
         GL.createCapabilities()
 
         maxShaderStorageBufferBindings = GL11.glGetInteger(GL43.GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS)
-        maxUniformBufferBindings = GL11.glGetInteger(GL43.GL_MAX_UNIFORM_BUFFER_BINDINGS)
+        maxUniformBufferBindings = GL11.glGetInteger(GL31.GL_MAX_UNIFORM_BUFFER_BINDINGS)
         maxComputeWorkGroupCountX = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 0)
         maxComputeWorkGroupCountY = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1)
         maxComputeWorkGroupCountZ = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2)
-        maxAtomicCounterBindings = GL11.glGetInteger(GL43.GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS)
+        maxAtomicCounterBindings = GL11.glGetInteger(GL42.GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS)
+        maxMaxImageUnits = GL11.glGetInteger(GL42.GL_MAX_IMAGE_UNITS)
+        maxTextureSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)
 
         val renderer = GL11.glGetString(GL11.GL_RENDERER)
         val vendor = GL11.glGetString(GL11.GL_VENDOR)
@@ -94,6 +101,7 @@ class OpenGLBackend : AbstractBackend() {
         val uniformBufferObjects = mutableListOf<OpenGLUniformBufferObject>()
         val namedUniforms = mutableListOf<OpenGLNamedUniform<*>>()
         val atomicCounters = mutableListOf<OpenGLAtomicCounter>()
+        val image2Ds = mutableListOf<OpenGLImage2D>()
         context.data.forEach { shaderData ->
             when (shaderData) {
                 is StorageBuffer<*> -> {
@@ -115,9 +123,15 @@ class OpenGLBackend : AbstractBackend() {
                     openGLAtomicCounter.validate(maxAtomicCounterBindings)
                     atomicCounters.add(openGLAtomicCounter)
                 }
+                is Image2D -> {
+                    val openGLImage2D = OpenGLImage2D(shaderData)
+                    openGLImage2D.validate(maxMaxImageUnits)
+                    openGLImage2D.validateTextureSize(maxTextureSize)
+                    image2Ds.add(openGLImage2D)
+                }
             }
         }
-        val buffers = storageBuffer + uniformBufferObjects + namedUniforms + atomicCounters
+        val buffers = storageBuffer + uniformBufferObjects + namedUniforms + atomicCounters + image2Ds
 
         val results = mutableMapOf<OutputCapable<*>, Any>()
         try {

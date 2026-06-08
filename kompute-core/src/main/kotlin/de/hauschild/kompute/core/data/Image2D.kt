@@ -129,11 +129,12 @@ OutputCapable<Image2DResult>{
      * layout(binding = 0, r8)    uniform writeonly image2D img;  // Format.R8
      * ```
      *
+     * @property bytesPerPixel the number of bytes per pixel in the image data
      * @property bufferedImageType the [BufferedImage] `TYPE_*` constant for this format,
      * or `null` if conversion to [BufferedImage] is not supported
      */
-    sealed class Format(val bufferedImageType: Int?) {
-        object RGBA8 : Format(BufferedImage.TYPE_INT_ARGB)
-        object R8 : Format(BufferedImage.TYPE_BYTE_GRAY)
+    sealed class Format(val bytesPerPixel: Int, val bufferedImageType: Int?) {
+        object RGBA8 : Format(4,BufferedImage.TYPE_INT_ARGB)
+        object R8 : Format(1,BufferedImage.TYPE_BYTE_GRAY)
     }
 }
