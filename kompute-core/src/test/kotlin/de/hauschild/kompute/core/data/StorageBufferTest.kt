@@ -1,6 +1,5 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.data
 
-import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource

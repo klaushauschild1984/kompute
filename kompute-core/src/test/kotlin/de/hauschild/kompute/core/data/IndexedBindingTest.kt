@@ -1,6 +1,5 @@
-package de.hauschild.kompute.core
+package de.hauschild.kompute.core.data
 
-import de.hauschild.kompute.core.data.IndexedBinding
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import kotlin.test.Test
 import kotlin.test.assertEquals
