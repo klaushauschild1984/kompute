@@ -20,8 +20,6 @@ tasks, such as machine learning inference, physics simulations, and data process
 | OpenGL      | ![OpenGL](https://img.shields.io/badge/OpenGL-4.3+-blue)                                 |
 | OS          | ![OS](https://img.shields.io/badge/OS-Linux%20%7C%20Windows-lightgrey)                   |
 
-> **macOS:** OpenGL support on macOS is limited to 4.1 — compute shaders require 4.3 and are therefore not supported.
-> macOS support depends on the upcoming Vulkan backend.
 
 ## Getting Started
 
@@ -301,24 +299,62 @@ val counter = AtomicCounter(0)           // starts at 0
 val counter = AtomicCounter(0).start(42) // starts at 42
 ```
 
+## Image2D
+
+`image2D` allows compute shaders to write directly to a 2D texture — enabling GPU-side image
+generation without transferring intermediate data back to the CPU. The shader writes pixel data
+via `imageStore`; after dispatch the raw bytes are read back as an `Image2DResult`.
+
+Shader:
+```glsl
+layout(binding = 0, rgba8) uniform writeonly image2D outputImage;
+
+void main() {
+    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);
+    imageStore(outputImage, pos, vec4(1.0, 0.0, 0.0, 1.0)); // red pixel
+}
+```
+
+Kotlin:
+```kotlin
+val image = Image2D(0).dimension(1024, 768)                            // RGBA8 by default
+val image = Image2D(0).dimension(1024, 768).format(Image2D.Format.R8)  // grayscale
+```
+
+The result always contains the raw pixel bytes. For supported formats it can be converted
+to a `BufferedImage`:
+
+```kotlin
+val result: Image2DResult = result[image]
+val bytes: ByteArray      = result.data                  // raw bytes, always available
+val img: BufferedImage?   = result.toBufferedImage()     // null if format is not supported
+```
+
+### Formats
+
+| Format            | GLSL qualifier | Bytes/pixel | `toBufferedImage()` |
+|-------------------|----------------|-------------|---------------------|
+| `RGBA8` (default) | `rgba8`        | 4           | `TYPE_INT_ARGB`     |
+| `R8`              | `r8`           | 1           | `TYPE_BYTE_GRAY`    |
+
+The GLSL format qualifier in the `layout` declaration must match the Kotlin `Format`.
+
 ## Reading Results
 
 After `execute()`, results are retrieved by passing the output object as a key:
 
 ```kotlin
-val data: FloatArray = result[output]    // StorageBuffer
-val count: Int       = result[counter]   // AtomicCounter
+val data: FloatArray       = result[output]    // StorageBuffer
+val count: Int             = result[counter]   // AtomicCounter
+val image: Image2DResult   = result[image2D]   // Image2D
 ```
 
-## Image2D *(planned — v0.6.0)*
+## Limitations
 
-`image2D` allows compute shaders to write directly to a 2D texture — enabling GPU-side image
-generation without transferring intermediate data back to the CPU.
-
-```kotlin
-// Not yet supported
-Image2D(0, width = 1024, height = 1024).asOutput()
-```
+| Limitation                      | Details                                                                                                                                                                                                   |
+|---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **macOS**                       | OpenGL support on macOS is limited to 4.1 — compute shaders require 4.3 and are therefore not supported. macOS support depends on the upcoming Vulkan backend.                                            |
+| **`Image2D.toBufferedImage()`** | Depends on `java.awt` (`java.desktop` module). Not available on minimal JRE distributions built with `jlink` without that module. The raw `Image2DResult.data` bytes are always accessible as a fallback. |
 
 ## Showcase
 
