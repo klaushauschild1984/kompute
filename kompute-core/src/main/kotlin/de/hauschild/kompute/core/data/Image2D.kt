@@ -114,12 +114,15 @@ OutputCapable<Image2DResult>{
             format.bufferedImageType ?: return null
             val image = BufferedImage(width, height, format.bufferedImageType)
             when (format) {
-                is Format.RGBA8 -> for (i in 0 until width * height) {
-                    val r = data[i * 4 + 0].toInt() and 0xFF
-                    val g = data[i * 4 + 1].toInt() and 0xFF
-                    val b = data[i * 4 + 2].toInt() and 0xFF
-                    val a = data[i * 4 + 3].toInt() and 0xFF
-                    image.setRGB(i % width, i / width, (a shl 24) or (r shl 16) or (g shl 8) or b)
+                is Format.RGBA8 -> {
+                    val pixels = IntArray(width * height) { i ->
+                        val r = data[i * 4 + 0].toInt() and 0xFF
+                        val g = data[i * 4 + 1].toInt() and 0xFF
+                        val b = data[i * 4 + 2].toInt() and 0xFF
+                        val a = data[i * 4 + 3].toInt() and 0xFF
+                        (a shl 24) or (r shl 16) or (g shl 8) or b
+                    }
+                    image.raster.setDataElements(0, 0, width, height, pixels)
                 }
                 is Format.R8 -> image.raster.setDataElements(0, 0, width, height, data)
             }

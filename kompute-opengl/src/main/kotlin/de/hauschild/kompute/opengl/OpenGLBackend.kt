@@ -35,7 +35,7 @@ class OpenGLBackend : AbstractBackend() {
     private var maxComputeWorkGroupCountY: Int = 0
     private var maxComputeWorkGroupCountZ: Int = 0
     private var maxAtomicCounterBindings: Int = 0
-    private var maxMaxImageUnits: Int = 0
+    private var maxImageUnits: Int = 0
     private var maxTextureSize: Int = 0
 
     @InternalApi
@@ -64,7 +64,7 @@ class OpenGLBackend : AbstractBackend() {
         maxComputeWorkGroupCountY = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 1)
         maxComputeWorkGroupCountZ = GL43.glGetIntegeri(GL43.GL_MAX_COMPUTE_WORK_GROUP_COUNT, 2)
         maxAtomicCounterBindings = GL11.glGetInteger(GL42.GL_MAX_ATOMIC_COUNTER_BUFFER_BINDINGS)
-        maxMaxImageUnits = GL11.glGetInteger(GL42.GL_MAX_IMAGE_UNITS)
+        maxImageUnits = GL11.glGetInteger(GL42.GL_MAX_IMAGE_UNITS)
         maxTextureSize = GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE)
 
         val renderer = GL11.glGetString(GL11.GL_RENDERER)
@@ -125,7 +125,7 @@ class OpenGLBackend : AbstractBackend() {
                 }
                 is Image2D -> {
                     val openGLImage2D = OpenGLImage2D(shaderData)
-                    openGLImage2D.validate(maxMaxImageUnits)
+                    openGLImage2D.validate(maxImageUnits)
                     openGLImage2D.validateTextureSize(maxTextureSize)
                     image2Ds.add(openGLImage2D)
                 }

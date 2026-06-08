@@ -4,7 +4,7 @@ import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.Image2D.Format
 import de.hauschild.kompute.core.data.Image2D.Image2DResult
 import de.hauschild.kompute.core.data.OutputCapable
-import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.exception.requireConfiguration
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30
 import org.lwjgl.opengl.GL42
@@ -22,7 +22,7 @@ class OpenGLImage2D(
 ) : OpenGLBuffer<Image2D>(source),
 OutputCapable<Image2DResult> by source,
 OpenGLReadable<Image2DResult>{
-    override val barrierBit: Int = GL43.GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+    override val barrierBit: Int = GL43.GL_TEXTURE_UPDATE_BARRIER_BIT
     private val openGLFormat = OpenGLFormat(source.format)
 
     /**
@@ -31,7 +31,7 @@ OpenGLReadable<Image2DResult>{
      * @param maxTextureSize maximum texture size
      */
     fun validateTextureSize(maxTextureSize: Int) {
-        requireBackendInitialization(source.width!! <= maxTextureSize&&
+        requireConfiguration(source.width!! <= maxTextureSize&&
                 source.height!! <= maxTextureSize){
             "Image2D size (${source.width}x${source.height}) exceeds maximum texture size ($maxTextureSize)"
         }

@@ -24,7 +24,7 @@ class Image2DResultTest {
         if (isRGB) {
             assertEquals(
                 "0x${expectedColor.toString(16).uppercase()}",
-                "0x${(image.getRGB(0, 0).toLong() and 0xFFFFFFFFL)
+                "0x${(image.getRGB(0, 0).toLong() and 0xFF_FF_FF_FFL)
                     .toString(16).padStart(8, '0').uppercase()}"
             )
         } else {

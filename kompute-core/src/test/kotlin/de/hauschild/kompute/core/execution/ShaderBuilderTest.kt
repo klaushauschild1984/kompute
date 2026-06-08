@@ -26,7 +26,7 @@ class ShaderBuilderTest {
         val exception =
             assertFailsWith<KomputeConfigurationException> {
                 builder.data(
-                    StorageBuffer.Companion<FloatArray>(0).data(floatArrayOf()),
+                    StorageBuffer<FloatArray>(0).data(floatArrayOf()),
                 )
             }
         assertEquals("At least one output is required", exception.message)
@@ -38,7 +38,7 @@ class ShaderBuilderTest {
             ShaderBuilder(ExecutionContext(ShaderSource.Code("glsl"))) {
                 ShaderResult(emptyMap())
             }
-        val output = StorageBuffer.Companion<FloatArray>(0).size(1).asOutput()
+        val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
         val exception =
             assertFailsWith<KomputeConfigurationException> {
                 builder.data(
@@ -55,6 +55,6 @@ class ShaderBuilderTest {
             ShaderBuilder(ExecutionContext(ShaderSource.Code("glsl"))) {
                 ShaderResult(emptyMap())
             }
-        builder.data(StorageBuffer.Companion<FloatArray>(0).size(128).asOutput())
+        builder.data(StorageBuffer<FloatArray>(0).size(128).asOutput())
     }
 }
