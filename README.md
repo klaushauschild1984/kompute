@@ -417,10 +417,10 @@ against real compute problems.
 
 ### Monte Carlo π Approximation
 
-Each GPU thread generates a random point (x, y) in the unit square [0, 1] × [0, 1] and
-checks whether it falls inside the unit circle (x² + y² ≤ 1). The ratio of hits to total
-samples converges to π/4 — so π ≈ 4 × hits / samples. An [AtomicCounter] counts the hits
-safely across thousands of parallel threads.
+Approximates π by sampling random points in the unit square and counting how many fall
+inside the unit circle (x² + y² ≤ 1). The ratio converges to π/4 — so π ≈ 4 × hits /
+samples. Each GPU thread evaluates one sample independently; an [AtomicCounter] accumulates
+hits safely across all parallel threads. See [Monte Carlo method](https://en.wikipedia.org/wiki/Monte_Carlo_method).
 
 ```kotlin
 MonteCarloPiApproximation(samples = 1_000_000).use { monteCarlo ->
@@ -429,25 +429,36 @@ MonteCarloPiApproximation(samples = 1_000_000).use { monteCarlo ->
 }
 ```
 
-Shader (GLSL):
-```glsl
-layout(local_size_x = 64) in;
-layout(binding = 0) uniform atomic_uint hits;
+Convergence is O(1/√N) — roughly one additional correct decimal place per 100× more
+samples. The GPU advantage lies in parallelism: all samples are evaluated simultaneously
+rather than sequentially.
 
-void main() {
-  uint id = gl_GlobalInvocationID.x;
-  float x = float(pcg(id))                / float(0xFFFFFFFFu);
-  float y = float(pcg(id + 0x9e3779b9u)) / float(0xFFFFFFFFu);
-  if (x * x + y * y <= 1.0) {
-      atomicCounterIncrement(hits);
-  }
+### Mandelbrot Renderer
+
+Renders the [Mandelbrot set](https://en.wikipedia.org/wiki/Mandelbrot_set) entirely on the
+GPU — one thread per pixel. Each thread iterates z = z² + c until |z| > 2 or the iteration
+limit is reached; points that never escape are part of the set (rendered black). Colors are
+computed via [smooth coloring](https://en.wikipedia.org/wiki/Plotting_algorithms_for_the_Mandelbrot_set#Continuous_(smooth)_coloring)
+— `iter - log₂(log₂(|z|))` — which eliminates visible iteration bands and produces
+continuous gradients across the boundary.
+
+![Mandelbrot](docs/mandelbrot.png)
+
+```kotlin
+MandelbrotRenderer().use { renderer ->
+    val image = renderer.render(MandelbrotRenderer.Config(
+        width = 800,
+        height = 600,
+        maxIterations = 256,
+        centerX = -0.5,
+        zoom = 1.0,
+    ))
+    ImageIO.write(image, "PNG", File("mandelbrot.png"))
 }
 ```
 
-The GPU advantage is visible in parallelism, not precision — Monte Carlo converges with
-O(1/√N), delivering roughly one additional correct decimal place per 100× more samples.
-The same algorithm on a single CPU thread runs sequentially; the GPU evaluates all samples
-in parallel.
+The shader is compiled once; `dispatch(x, y, ...)` can be called repeatedly with different
+`Config` values — enabling pan and zoom without recompilation.
 
 ## Roadmap
 
