@@ -6,16 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [v0.8.0] — 2026-06-09
 
 ### Added
+- Mandelbrot renderer in `kompute-showcase` — interactive exploration with real-time pan and zoom - [docs](README.md#mandelbrot-renderer)
 
 ### Changed
-
-### Deprecated
-
-### Removed
+- **Breaking**: `execution` package renamed to `shader` — update imports from `core.execution.*` to `core.shader.*`
+- **Breaking**: `CompiledShader` and `AbstractCompiledShader` moved from `backend` to `shader` package
+- **Breaking**: `InternalApi` annotation moved from `backend` to root `core` package
 
 ### Fixed
-
-### Security
+- `StorageBuffer.toString()` no longer calls `mode()` before `validate()`, which could throw
 
 ## [v0.7.0] — 2026-06-09
 
