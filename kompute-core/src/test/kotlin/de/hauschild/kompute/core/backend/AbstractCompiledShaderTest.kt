@@ -52,6 +52,8 @@ class AbstractCompiledShaderTest {
             return ShaderResult(emptyMap())
         }
 
-        override fun close() {}
+        override fun close() {
+            // nothing to do
+        }
     }
 }
