@@ -451,12 +451,11 @@ in parallel.
 
 ## Roadmap
 
-| Version  | Focus                                                                                                                         |
-|----------|-------------------------------------------------------------------------------------------------------------------------------|
-| `v0.7.0` | Multi-dispatch — `ShaderBuilder.compile()` returns a `CompiledShader` that can be dispatched repeatedly without recompilation |
-| `v0.8.0` | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment                 |
-| `v0.9.0` | Windows support                                                                                                               |
-| `v1.0.0` | Vulkan backend                                                                                                                |
+| Version  | Focus                                                                                                         |
+|----------|---------------------------------------------------------------------------------------------------------------|
+| `v0.8.0` | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
+| `v0.9.0` | Windows support                                                                                               |
+| `v1.0.0` | Vulkan backend                                                                                                |
 
 The full version history is documented in [CHANGELOG.md](CHANGELOG.md).
 

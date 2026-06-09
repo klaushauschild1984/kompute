@@ -3,7 +3,12 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [v0.6.0]
+## [v0.7.0] — 2026-06-09
+
+### Changed
+- Streamlined API: `ShaderBuilder.compile()` now returns a reusable `CompiledShader`, enabling multi-dispatch without recompilation — [docs](README.md#kotlin)
+
+## [v0.6.0] — 2026-06-08
 
 ### Added
 - `Image2D` — GPU-side image generation via `imageStore` — [docs](README.md#image2d)
@@ -50,6 +55,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `StorageBuffer` — CPU↔GPU data exchange — [docs](README.md#storage-buffer)
 - JMH benchmarks — `kompute-benchmark` module — [docs](README.md#performance)
 
+[v0.7.0]: https://github.com/klaushauschild1984/kompute/compare/v0.6.0...v0.7.0
 [v0.6.0]: https://github.com/klaushauschild1984/kompute/compare/v0.5.0...v0.6.0
 [v0.5.0]: https://github.com/klaushauschild1984/kompute/compare/v0.4.0...v0.5.0
 [v0.4.0]: https://github.com/klaushauschild1984/kompute/compare/v0.3.0...v0.4.0
