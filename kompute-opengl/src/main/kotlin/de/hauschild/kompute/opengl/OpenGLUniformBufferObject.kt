@@ -11,7 +11,7 @@ import org.lwjgl.system.MemoryUtil
  */
 class OpenGLUniformBufferObject(
     source: UniformBufferObject
-) : OpenGLBuffer<UniformBufferObject>(source) {
+) : Buffer<UniformBufferObject>(source) {
     override fun bind() {
         val data = source.data!!
         glHandle = GL43.glGenBuffers()

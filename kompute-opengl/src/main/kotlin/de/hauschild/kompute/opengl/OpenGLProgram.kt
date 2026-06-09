@@ -25,7 +25,7 @@ class OpenGLProgram(
     /**
      * Links the attached shader into an executable OpenGL compute program.
      *
-     * @throws [KomputeBackendInitializationException] if linking fails
+     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if linking fails
      */
     fun link() {
         glHandle = GL43.glCreateProgram()
@@ -35,6 +35,7 @@ class OpenGLProgram(
         requireBackendInitialization(GL43.glGetProgrami(glHandle, GL43.GL_LINK_STATUS) == GL11.GL_TRUE) {
             "Program link error: ${GL43.glGetProgramInfoLog(glHandle)}"
         }
+        shader.close()
     }
 
     /**

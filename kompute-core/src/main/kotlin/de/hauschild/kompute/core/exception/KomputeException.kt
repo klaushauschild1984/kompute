@@ -1,6 +1,8 @@
 package de.hauschild.kompute.core.exception
 
 /**
+ * Base class for all Kompute runtime exceptions.
+ *
  * @param message
  * @param cause
  */

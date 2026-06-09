@@ -17,15 +17,15 @@ sealed interface Binding {
 }
 
 /**
- * @param keySelector
- * @param label
+ * @param label human-readable name of the validated property, used in the error message (e.g. `"index"`, `"name"`)
+ * @param keySelector extracts the key to check for duplicates from each binding
  */
 internal fun <T : Binding, K> List<T>.crossValidate(
     label: String,
     keySelector: (T) -> K,
 ) {
-    groupBy(keySelector)
+    val duplicates = groupBy(keySelector)
         .filter { it.value.size > 1 }
         .keys
-        .forEach { requireConfiguration(false) { "Duplicate $label: $it" } }
+    requireConfiguration(duplicates.isEmpty()) { "Duplicate $label: $duplicates" }
 }

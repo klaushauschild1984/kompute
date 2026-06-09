@@ -5,9 +5,9 @@
 package de.hauschild.kompute.core.exception
 
 /**
- * @param value
- * @param lazyMessage
- * @throws KomputeConfigurationException
+ * @param value the condition that must be `true`
+ * @param lazyMessage produces the error message if [value] is `false`
+ * @throws KomputeConfigurationException if [value] is `false`
  */
 fun requireConfiguration(
     value: Boolean,
@@ -19,9 +19,9 @@ fun requireConfiguration(
 }
 
 /**
- * @param value
- * @param lazyMessage
- * @throws KomputeBackendInitializationException
+ * @param value the condition that must be `true`
+ * @param lazyMessage produces the error message if [value] is `false`
+ * @throws KomputeBackendInitializationException if [value] is `false`
  */
 fun requireBackendInitialization(
     value: Boolean,

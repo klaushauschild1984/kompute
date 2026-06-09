@@ -108,29 +108,36 @@ Kompute.openGL().use { openGL ->
     val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
     val result = openGL
         .shader(ShaderSource.Code(glslCode))
-        .data(
-            StorageBuffer<FloatArray>(0).data(input),
-            output,
-        )
-        .dispatch(x = 64)
-        .execute()
+        .compile()
+        .use { it.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output) }
     println(result[output].contentToString())
+}
+```
+
+Compile once, dispatch many times:
+
+```kotlin
+Kompute.openGL().use { openGL ->
+    val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
+    openGL.shader(ShaderSource.Code(glslCode)).compile().use { shader ->
+        repeat(10) { i ->
+            val result = shader.dispatch(64, StorageBuffer<FloatArray>(0).data(inputs[i]), output)
+            println(result[output].contentToString())
+        }
+    }
 }
 ```
 
 ### Java
 
 ```java
-try (Backend backend = Kompute.openGL()) {
+try (Backend backend = Kompute.openGL();
+     var shader = backend.shader(new ShaderSource.Code(glslCode)).compile()) {
     var output = StorageBuffer.newStorageBuffer(1, float[].class).size(128).asOutput();
-    var result = backend
-        .shader(new ShaderSource.Code(glslCode))
-        .data(
-            StorageBuffer.newStorageBuffer(0, float[].class).data(input),
-            output
-        )
-        .dispatch(64)
-        .execute();
+    var result = shader.dispatch(64,
+        StorageBuffer.newStorageBuffer(0, float[].class).data(input),
+        output
+    );
     float[] data = result.get(output);
 }
 ```
@@ -341,7 +348,7 @@ The GLSL format qualifier in the `layout` declaration must match the Kotlin `For
 
 ## Reading Results
 
-After `execute()`, results are retrieved by passing the output object as a key:
+After `dispatch()`, results are retrieved by passing the output object as a key:
 
 ```kotlin
 val data: FloatArray       = result[output]    // StorageBuffer
@@ -355,45 +362,6 @@ val image: Image2DResult   = result[image2D]   // Image2D
 |---------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **macOS**                       | OpenGL support on macOS is limited to 4.1 — compute shaders require 4.3 and are therefore not supported. macOS support depends on the upcoming Vulkan backend.                                            |
 | **`Image2D.toBufferedImage()`** | Depends on `java.awt` (`java.desktop` module). Not available on minimal JRE distributions built with `jlink` without that module. The raw `Image2DResult.data` bytes are always accessible as a fallback. |
-
-## Showcase
-
-Ready-to-run examples in the `kompute-showcase` module that demonstrate Kompute's API
-against real compute problems.
-
-### Monte Carlo π Approximation
-
-Each GPU thread generates a random point (x, y) in the unit square [0, 1] × [0, 1] and
-checks whether it falls inside the unit circle (x² + y² ≤ 1). The ratio of hits to total
-samples converges to π/4 — so π ≈ 4 × hits / samples. An [AtomicCounter] counts the hits
-safely across thousands of parallel threads.
-
-```kotlin
-MonteCarloPiApproximation(samples = 1_000_000).use { monteCarlo ->
-    val pi = monteCarlo.approximate()
-    println("π ≈ $pi")
-}
-```
-
-Shader (GLSL):
-```glsl
-layout(local_size_x = 64) in;
-layout(binding = 0) uniform atomic_uint hits;
-
-void main() {
-    uint id = gl_GlobalInvocationID.x;
-    float x = float(pcg(id))                / float(0xFFFFFFFFu);
-    float y = float(pcg(id + 0x9e3779b9u)) / float(0xFFFFFFFFu);
-    if (x * x + y * y <= 1.0) {
-        atomicCounterIncrement(hits);
-    }
-}
-```
-
-The GPU advantage is visible in parallelism, not precision — Monte Carlo converges with
-O(1/√N), delivering roughly one additional correct decimal place per 100× more samples.
-The same algorithm on a single CPU thread runs sequentially; the GPU evaluates all samples
-in parallel.
 
 ## Performance
 
@@ -483,12 +451,12 @@ in parallel.
 
 ## Roadmap
 
-| Version  | Focus                                                                                                         |
-|----------|---------------------------------------------------------------------------------------------------------------|
-| `v0.7.0` | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
-| `v0.8.0` | Windows support                                                                                               |
-| `v0.9.0` | Vulkan backend                                                                                                |
-| `v1.0.0` | Stable, complete API                                                                                          |
+| Version  | Focus                                                                                                                         |
+|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| `v0.7.0` | Multi-dispatch — `ShaderBuilder.compile()` returns a `CompiledShader` that can be dispatched repeatedly without recompilation |
+| `v0.8.0` | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment                 |
+| `v0.9.0` | Windows support                                                                                                               |
+| `v1.0.0` | Vulkan backend                                                                                                                |
 
 The full version history is documented in [CHANGELOG.md](CHANGELOG.md).
 

@@ -6,7 +6,7 @@ import de.hauschild.kompute.core.execution.ShaderSource
 /**
  * Represents a compute backend capable of executing GPU shaders.
  *
- * Backends are obtained via [de.hauschild.kompute.core.Kompute] andshould be used with [use]
+ * Backends are obtained via [de.hauschild.kompute.core.Kompute] and should be used with [use]
  * to ensure proper resource cleanup.
  */
 interface Backend : AutoCloseable {
@@ -21,7 +21,8 @@ interface Backend : AutoCloseable {
     /**
      * Initializes the backend, preparing it for use.
      *
-     * @throws [KomputeBackendInitializationException] if backend initialization fails
+     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if backend initialization
+     * fails
      */
     @InternalApi
     fun initialize()

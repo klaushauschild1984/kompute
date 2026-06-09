@@ -6,9 +6,9 @@ import de.hauschild.kompute.core.exception.KomputeConfigurationException
 /**
  * Represents an OpenGL buffer that can be read back from the GPU.
  *
- * @param T
+ * @param T the type of the value read back from the GPU
  */
-internal interface OpenGLReadable<T: Any> {
+internal interface Readable<T: Any> {
     /**
      * The source the read data belongs to.
      */

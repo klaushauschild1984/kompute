@@ -1,5 +1,6 @@
 package de.hauschild.kompute.benchmark
 
+import de.hauschild.kompute.core.backend.CompiledShader
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.execution.ShaderSource.Stream
 import org.openjdk.jmh.annotations.Benchmark
@@ -12,6 +13,7 @@ import org.openjdk.jmh.annotations.Param
 import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.Setup
 import org.openjdk.jmh.annotations.State
+import org.openjdk.jmh.annotations.TearDown
 import org.openjdk.jmh.annotations.Warmup
 
 import java.util.concurrent.TimeUnit
@@ -51,27 +53,53 @@ open class MatrixMultiplyBenchmark {
      * OpenGL benchmark.
      *
      * @param matrix
-     * @param openGLBackend
+     * @param openGLShader
      */
     @Benchmark
     fun openGL(
         matrix: MatrixState,
-        openGLBackend: OpenGLBackendState,
+        openGLShader: OpenGLShaderState,
     ) {
-        openGLBackend.backend
-            .shader(
-                Stream(
-                    MatrixMultiplyBenchmark::class.java
-                        .getResourceAsStream("matrix-multiply.glsl")!!,
-                ),
-            )
-            .data(
-                StorageBuffer<FloatArray>(0).data(matrix.a),
-                StorageBuffer<FloatArray>(1).data(matrix.b),
-                StorageBuffer<FloatArray>(2).size(matrix.size * matrix.size).asOutput(),
-            )
-            .dispatch(matrix.size / 8, matrix.size / 8)
-            .execute()
+        openGLShader.shader.dispatch(
+            matrix.size / 8, matrix.size / 8,
+            StorageBuffer<FloatArray>(0).data(matrix.a),
+            StorageBuffer<FloatArray>(1).data(matrix.b),
+            StorageBuffer<FloatArray>(2).size(matrix.size * matrix.size).asOutput(),
+        )
+    }
+
+    /**
+     * Benchmark state holding the compiled matrix-multiply shader.
+     */
+    @State(Scope.Benchmark)
+    open class OpenGLShaderState {
+        /**
+         * Compiled matrix-multiply shader.
+         */
+        lateinit var shader: CompiledShader
+
+        /**
+         * Compiles the shader once per trial.
+         */
+        @Setup(Level.Trial)
+        fun setup(openGLBackend: OpenGLBackendState) {
+            shader = openGLBackend.backend
+                .shader(
+                    Stream(
+                        MatrixMultiplyBenchmark::class.java
+                            .getResourceAsStream("matrix-multiply.glsl")!!,
+                    ),
+                )
+                .compile()
+        }
+
+        /**
+         * Releases the compiled shader after the trial.
+         */
+        @TearDown(Level.Trial)
+        fun tearDown() {
+            shader.close()
+        }
     }
 
     /**

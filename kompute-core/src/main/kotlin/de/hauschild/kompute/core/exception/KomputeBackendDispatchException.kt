@@ -1,6 +1,8 @@
 package de.hauschild.kompute.core.exception
 
 /**
+ * Thrown when a compute dispatch fails at the GPU level.
+ *
  * @param message
  * @param cause
  */

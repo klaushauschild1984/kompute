@@ -21,10 +21,10 @@ interface NamedBinding : Binding {
 
     companion object {
         /**
-         * Validates that no two named bindings share the same binding index.
+         * Validates that no two named bindings share the same binding name.
          *
          * @param namedBindings the list of named bindings to cross-validate
-         * @throws [KomputeConfigurationException] if duplicate indices are found
+         * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if duplicate names are found
          */
         fun crossValidate(namedBindings: List<NamedBinding>) {
             namedBindings.crossValidate("name") { it.name }

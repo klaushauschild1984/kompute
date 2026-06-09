@@ -147,30 +147,30 @@ OutputCapable<T> {
     /**
      * The different modes a [StorageBuffer] can be in.
      *
-     * @param T
+     * @param T the buffer data type (e.g. [FloatArray], [IntArray])
      */
     sealed class Mode<out T> {
         /**
          * Input data to upload to the GPU.
          *
-         * @param T
-         * @property data
+         * @param T the buffer data type
+         * @property data the data to upload
          */
         data class Input<T>(val data: T) : Mode<T>()
 
         /**
          * Output buffer that is allocated on the GPU.
          *
-         * @param T
-         * @property size
+         * @param T the buffer data type
+         * @property size the number of elements to allocate
          */
         data class Output<T>(val size: Int) : Mode<T>()
 
         /**
          * Read-write buffer that is allocated on the GPU.
          *
-         * @param T
-         * @property data
+         * @param T the buffer data type
+         * @property data the initial data to upload
          */
         data class ReadWrite<T>(val data: T) : Mode<T>()
     }
