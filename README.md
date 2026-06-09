@@ -121,7 +121,8 @@ Kompute.openGL().use { openGL ->
     val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
     openGL.shader(ShaderSource.Code(glslCode)).compile().use { shader ->
         repeat(10) { i ->
-            val result = shader.dispatch(64, StorageBuffer<FloatArray>(0).data(inputs[i]), output)
+            val result = shader
+                .dispatch(64, StorageBuffer<FloatArray>(0).data(inputs[i]), output)
             println(result[output].contentToString())
         }
     }
