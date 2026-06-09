@@ -80,6 +80,8 @@ open class MatrixMultiplyBenchmark {
 
         /**
          * Compiles the shader once per trial.
+         *
+         * @param openGLBackend
          */
         @Setup(Level.Trial)
         fun setup(openGLBackend: OpenGLBackendState) {

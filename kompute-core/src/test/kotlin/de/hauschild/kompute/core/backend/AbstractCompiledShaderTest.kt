@@ -14,31 +14,31 @@ class AbstractCompiledShaderTest {
     @Test
     fun `work group count must be at least one`() {
         val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
-        val e = assertFailsWith<KomputeConfigurationException> { shader.dispatch(0, output) }
-        assertEquals("Work group count must be greater than or equal to one", e.message)
+        val exception = assertFailsWith<KomputeConfigurationException> { shader.dispatch(0, output) }
+        assertEquals("Work group count must be greater than or equal to one", exception.message)
     }
 
     @Test
     fun `at least one data is required`() {
-        val e = assertFailsWith<KomputeConfigurationException> { shader.dispatch(1) }
-        assertEquals("At least one data is required", e.message)
+        val exception = assertFailsWith<KomputeConfigurationException> { shader.dispatch(1) }
+        assertEquals("At least one data is required", exception.message)
     }
 
     @Test
     fun `at least one output is required`() {
-        val e = assertFailsWith<KomputeConfigurationException> {
+        val exception = assertFailsWith<KomputeConfigurationException> {
             shader.dispatch(1, StorageBuffer<FloatArray>(0).data(floatArrayOf()))
         }
-        assertEquals("At least one output is required", e.message)
+        assertEquals("At least one output is required", exception.message)
     }
 
     @Test
     fun `outputs must be unique`() {
         val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
-        val e = assertFailsWith<KomputeConfigurationException> {
+        val exception = assertFailsWith<KomputeConfigurationException> {
             shader.dispatch(1, output, output)
         }
-        assertEquals("There are duplicated outputs: [$output]", e.message)
+        assertEquals("There are duplicated outputs: [$output]", exception.message)
     }
 
     @Test
@@ -47,7 +47,12 @@ class AbstractCompiledShaderTest {
     }
 
     private class TestCompiledShader : AbstractCompiledShader() {
-        override fun dispatch(x: Int, y: Int, z: Int, vararg data: ShaderData): ShaderResult {
+        override fun dispatch(
+            x: Int,
+            y: Int,
+            z: Int,
+            vararg data: ShaderData
+        ): ShaderResult {
             validateDispatch(x, y, z, *data)
             return ShaderResult(emptyMap())
         }

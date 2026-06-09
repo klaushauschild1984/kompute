@@ -37,8 +37,8 @@ void main() {
                     """.trimIndent()),
                 )
                 .compile()
-                .use {
-                    it.dispatch(3,
+                .use { compiledShader ->
+                    compiledShader.dispatch(3,
                         UniformBufferObject(0).data(
                             ByteBuffer
                                 .allocate(Float.SIZE_BYTES)

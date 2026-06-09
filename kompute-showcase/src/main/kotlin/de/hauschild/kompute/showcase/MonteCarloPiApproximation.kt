@@ -21,18 +21,21 @@ import de.hauschild.kompute.core.execution.ShaderSource.Code
  *
  * @param samples the total number of random points to sample — rounded up to the next
  * multiple of the internal workgroup size
- * @param backend the compute backend to use — defaults to the OpenGL backend
+ * @param backend the [Backend] to be used for rendering - defaults to [Kompute.openGL]
+ * @param closeBackend whether to close the backend after use - defaults to true
  */
 class MonteCarloPiApproximation(
     private val samples: Int = 1_000_000,
-    private val backend: Backend = Kompute.openGL()
-) : AutoCloseable by backend{
-    private val shaderCode: String = checkNotNull(
+    backend: Backend = Kompute.openGL(),
+    closeBackend: Boolean = true,
+) : BackendUser(backend, closeBackend) {
+    private val compiledShader = backend.shader(Code(checkNotNull(
         MonteCarloPiApproximation::class.java
-            .getResourceAsStream("monte-carlo-pi-approximation.glsl")
+            .getResourceAsStream(SHADER_FILE)
     ) {
-        "Shader monte-carlo-pi-approximation.glsl not found"
+        "Shader $SHADER_FILE not found"
     }.use { it.reader().readText().replace("\$LOCAL_SIZE", LOCAL_SIZE.toString()) }
+    )).compile()
 
     /**
      * Runs the Monte Carlo simulation and returns the approximated value of π.
@@ -44,16 +47,18 @@ class MonteCarloPiApproximation(
         val workgroups = totalThreads / LOCAL_SIZE
 
         val hits = AtomicCounter(0)
-        val result = backend
-            .shader(
-                Code(shaderCode))
-            .compile()
-            .use { it.dispatch(workgroups, hits) }
+        val result = compiledShader.dispatch(workgroups, hits)
 
         return 4.0 * result[hits] / totalThreads
     }
 
+    override fun close() {
+        compiledShader.close()
+        super.close()
+    }
+
     companion object {
         private const val LOCAL_SIZE = 64
+        private const val SHADER_FILE = "monte-carlo-pi-approximation.glsl"
     }
 }
