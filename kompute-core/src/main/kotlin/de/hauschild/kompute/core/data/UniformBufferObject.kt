@@ -54,5 +54,8 @@ class UniformBufferObject(override val index: Int) : ShaderData, IndexedBinding 
         }
     }
 
-    override fun toString(): String = "UniformBufferObject(index=$index)"
+    override fun toString(): String = buildString {
+        append("UniformBufferObject($index)")
+        data?.let { append(".data([${it.size} bytes])") }
+    }
 }

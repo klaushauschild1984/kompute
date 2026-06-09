@@ -1,7 +1,9 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.NamedUniform
 import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.opengl.Bindable
+import de.hauschild.kompute.opengl.backend.OpenGLProgram
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL21
 import org.lwjgl.opengl.GL30
@@ -17,7 +19,7 @@ import org.lwjgl.opengl.GL40
 class OpenGLNamedUniform<T : Any>(
     private val program: OpenGLProgram,
     private val source: NamedUniform<T>
-):Bindable {
+): Bindable {
     override fun bind() {
         val location = GL20.glGetUniformLocation(program.glHandle, source.name)
         requireBackendInitialization(location != -1) { "Named uniform '${source.name}' not found in shader" }

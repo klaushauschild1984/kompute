@@ -88,6 +88,16 @@ OutputCapable<Image2DResult>{
         }
     }
 
+    override fun toString(): String = buildString {
+        append("Image2D($index)")
+        if (width != null && height != null) {
+            append(".dimension($width, $height)")
+        }
+        if (format !is Format.RGBA8) {
+            append(".format(${format::class.simpleName})")
+        }
+    }
+
     /**
      * Holds the pixel data read back from a [Image2D] after compute shader execution.
      *

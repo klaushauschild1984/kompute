@@ -127,13 +127,13 @@ OutputCapable<T> {
         }
     }
 
-    override fun toString(): String {
-        val info = when (val bufferMode = mode()) {
-            is Mode.Input -> "(data: ${bufferMode.data.elementCount()})"
-            is Mode.Output -> "(size: ${bufferMode.size})(as output)"
-            is Mode.ReadWrite -> "(data: ${bufferMode.data.elementCount()})(as output)"
+    override fun toString(): String = buildString {
+        append("StorageBuffer<${type.simpleName}>($index)")
+        data?.let { append(".data([${it.elementCount()} elements])") }
+        size?.let { append(".size($it)") }
+        if (isOutput) {
+            append(".asOutput()")
         }
-        return "StorageBuffer<${type.simpleName}>(index=$index)$info"
     }
 
     private fun Any.elementCount(): Int = when (this) {

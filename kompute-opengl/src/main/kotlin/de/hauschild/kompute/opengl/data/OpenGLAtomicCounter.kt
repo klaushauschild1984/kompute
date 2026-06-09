@@ -1,7 +1,9 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.data.OutputCapable
+import de.hauschild.kompute.opengl.Buffer
+import de.hauschild.kompute.opengl.Readable
 import org.lwjgl.opengl.GL42
 import org.lwjgl.opengl.GL43
 

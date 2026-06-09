@@ -1,6 +1,5 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.shader
 
-import de.hauschild.kompute.core.backend.AbstractCompiledShader
 import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.NamedUniform
@@ -9,14 +8,24 @@ import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.requireConfiguration
-import de.hauschild.kompute.core.execution.ShaderResult
+import de.hauschild.kompute.core.shader.AbstractCompiledShader
+import de.hauschild.kompute.core.shader.ShaderResult
+import de.hauschild.kompute.opengl.Bindable
+import de.hauschild.kompute.opengl.Limits
+import de.hauschild.kompute.opengl.Readable
+import de.hauschild.kompute.opengl.backend.OpenGLProgram
+import de.hauschild.kompute.opengl.data.OpenGLAtomicCounter
+import de.hauschild.kompute.opengl.data.OpenGLImage2D
+import de.hauschild.kompute.opengl.data.OpenGLNamedUniform
+import de.hauschild.kompute.opengl.data.OpenGLStorageBuffer
+import de.hauschild.kompute.opengl.data.OpenGLUniformBufferObject
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 
 /**
  * OpenGL implementation of a compiled compute shader.
  *
- * Holds a linked [OpenGLProgram] and the GPU [Limits] for runtime validation.
+ * Holds a linked [OpenGLProgram] and the GPU [de.hauschild.kompute.opengl.Limits] for runtime validation.
  * On [dispatch], the program is activated, all [de.hauschild.kompute.core.data.ShaderData]
  * is wrapped in OpenGL buffer objects, the compute shader is submitted, a memory
  * barrier synchronizes the GPU, and all output buffers are read back to the CPU.
@@ -74,7 +83,7 @@ class OpenGLCompiledShader(
         validateDispatch(x, y, z, *data)
         program.activate()
         val buffers = bindBuffers(data.toList())
-        return ShaderResult(readBack(buffers, x,y,z))
+        return ShaderResult(readBack(buffers, x, y, z))
     }
 
     private fun bindBuffers(data: List<ShaderData>): List<Bindable> {

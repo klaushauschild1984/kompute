@@ -1,4 +1,4 @@
-package de.hauschild.kompute.core.backend
+package de.hauschild.kompute.core
 
 /**
  * Marks declarations as internal Kompute API not intended for public use.

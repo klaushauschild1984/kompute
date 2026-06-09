@@ -166,17 +166,21 @@ class NamedUniform<T: Any>(
         }
     }
 
-    override fun toString(): String {
-        val valueInfo = when (val v = value) {
-            is FloatArray -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
-            is IntArray -> "Vector(${v.size})"
-            is DoubleArray -> matrixDimension?.let { "Matrix(${it.rows}×${it.columns})" } ?: "Vector(${v.size})"
-            null -> "no value"
-            else -> v
+    override fun toString(): String = buildString {
+        append("NamedUniform<${type.simpleName}>(\"$name\")")
+        value?.let { v ->
+            val repr = when (v) {
+                is FloatArray -> v.contentToString()
+                is IntArray -> v.contentToString()
+                is DoubleArray -> v.contentToString()
+                else -> v
+            }
+            append(".value($repr)")
         }
-        return "NamedUniform<${type.simpleName}>(name=$name)" +
-                (if (unsigned) "(unsigned)" else "") +
-                "($valueInfo)"
+        if (unsigned) {
+            append(".asUnsigned()")
+        }
+        matrixDimension?.let { append(".asMatrix(${it.rows}, ${it.columns})") }
     }
 
     /**

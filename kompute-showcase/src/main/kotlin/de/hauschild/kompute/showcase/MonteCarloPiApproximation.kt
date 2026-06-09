@@ -3,7 +3,7 @@ package de.hauschild.kompute.showcase
 import de.hauschild.kompute.core.Kompute
 import de.hauschild.kompute.core.backend.Backend
 import de.hauschild.kompute.core.data.AtomicCounter
-import de.hauschild.kompute.core.execution.ShaderSource.Code
+import de.hauschild.kompute.core.shader.ShaderSource.Code
 
 /**
  * Approximates π using the Monte Carlo method on the GPU.

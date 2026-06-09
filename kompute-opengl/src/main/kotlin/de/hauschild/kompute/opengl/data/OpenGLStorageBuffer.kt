@@ -1,8 +1,10 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import de.hauschild.kompute.opengl.Buffer
+import de.hauschild.kompute.opengl.Readable
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 

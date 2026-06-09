@@ -1,7 +1,7 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.backend
 
 import de.hauschild.kompute.core.exception.requireBackendInitialization
-import de.hauschild.kompute.core.execution.ShaderSource
+import de.hauschild.kompute.core.shader.ShaderSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL43

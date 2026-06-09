@@ -1,6 +1,4 @@
-package de.hauschild.kompute.core.execution
-
-import de.hauschild.kompute.core.backend.CompiledShader
+package de.hauschild.kompute.core.shader
 
 /**
  * Entry point for compiling a compute shader source into a [CompiledShader].

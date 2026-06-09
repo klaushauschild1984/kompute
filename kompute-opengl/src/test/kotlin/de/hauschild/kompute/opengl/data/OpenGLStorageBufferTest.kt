@@ -1,7 +1,9 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.StorageBuffer
-import de.hauschild.kompute.core.execution.ShaderSource.Code
+import de.hauschild.kompute.core.shader.ShaderSource.Code
+import de.hauschild.kompute.opengl.OpenGLBackendExtension
+import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest

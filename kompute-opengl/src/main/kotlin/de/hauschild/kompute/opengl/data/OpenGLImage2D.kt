@@ -1,10 +1,12 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.Image2D.Format
 import de.hauschild.kompute.core.data.Image2D.Image2DResult
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.exception.requireConfiguration
+import de.hauschild.kompute.opengl.Buffer
+import de.hauschild.kompute.opengl.Readable
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30
 import org.lwjgl.opengl.GL42

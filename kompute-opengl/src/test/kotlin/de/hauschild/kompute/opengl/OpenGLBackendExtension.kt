@@ -1,6 +1,7 @@
 package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.Kompute
+import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext

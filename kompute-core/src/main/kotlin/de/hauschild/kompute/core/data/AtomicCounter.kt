@@ -42,10 +42,13 @@ OutputCapable<Int> {
         this.start = start
         return this
     }
+
     override fun validate() {
         super.validate()
         requireConfiguration(start >= 0) {
             "Counter start must be non-negative"
         }
     }
+
+    override fun toString()= "AtomicCounter($index)${if (start != 0) ".start($start)" else ""}"
 }

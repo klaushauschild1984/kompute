@@ -1,18 +1,20 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.backend
 
+import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.backend.AbstractBackend
-import de.hauschild.kompute.core.backend.CompiledShader
-import de.hauschild.kompute.core.backend.InternalApi
 import de.hauschild.kompute.core.backend.Type
 import de.hauschild.kompute.core.exception.requireBackendInitialization
-import de.hauschild.kompute.core.execution.ShaderSource
+import de.hauschild.kompute.core.shader.CompiledShader
+import de.hauschild.kompute.core.shader.ShaderSource
+import de.hauschild.kompute.opengl.Limits
+import de.hauschild.kompute.opengl.shader.OpenGLCompiledShader
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL31
 import org.lwjgl.opengl.GL42
 import org.lwjgl.opengl.GL43
-import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil
 
 /**
  * OpenGL compute backend implementation using LWJGL.
@@ -21,7 +23,7 @@ import org.lwjgl.system.MemoryUtil.NULL
  * and manages storage buffer transfer between host and GPU.
  */
 class OpenGLBackend : AbstractBackend() {
-    private var windowHandle: Long = NULL
+    private var windowHandle: Long = MemoryUtil.NULL
     private var limits: Limits? = null
 
     @InternalApi
@@ -37,8 +39,8 @@ class OpenGLBackend : AbstractBackend() {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
 
-        windowHandle = GLFW.glfwCreateWindow(1, 1, "Kompute", NULL, NULL)
-        requireBackendInitialization(windowHandle != NULL) {
+        windowHandle = GLFW.glfwCreateWindow(1, 1, "Kompute", MemoryUtil.NULL, MemoryUtil.NULL)
+        requireBackendInitialization(windowHandle != MemoryUtil.NULL) {
             "Failed to create GLFW window"
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
@@ -72,7 +74,7 @@ class OpenGLBackend : AbstractBackend() {
 
     override fun close() {
         logger.debug { "Closing OpenGL Backend" }
-        if (windowHandle == NULL) {
+        if (windowHandle == MemoryUtil.NULL) {
             return
         }
         GLFW.glfwDestroyWindow(windowHandle)

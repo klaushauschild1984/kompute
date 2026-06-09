@@ -1,4 +1,4 @@
-package de.hauschild.kompute.core.backend
+package de.hauschild.kompute.core.shader
 
 import de.hauschild.kompute.core.data.Binding
 import de.hauschild.kompute.core.data.IndexedBinding

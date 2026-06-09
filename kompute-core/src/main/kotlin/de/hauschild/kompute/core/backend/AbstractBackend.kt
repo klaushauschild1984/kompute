@@ -1,9 +1,11 @@
 package de.hauschild.kompute.core.backend
 
 import de.hauschild.kompute.core.BuildInfo
+import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.exception.requireBackendInitialization
-import de.hauschild.kompute.core.execution.ShaderBuilder
-import de.hauschild.kompute.core.execution.ShaderSource
+import de.hauschild.kompute.core.shader.CompiledShader
+import de.hauschild.kompute.core.shader.ShaderBuilder
+import de.hauschild.kompute.core.shader.ShaderSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
@@ -58,10 +60,10 @@ abstract class AbstractBackend : Backend {
     override fun shader(source: ShaderSource): ShaderBuilder = ShaderBuilder(source, ::compileSource)
 
     /**
-     * Compiles the given shader source into a backend-specific [CompiledShader].
+     * Compiles the given shader source into a backend-specific [de.hauschild.kompute.core.shader.CompiledShader].
      *
      * @param source the compute shader source to compile
-     * @return the compiled and linked [CompiledShader]
+     * @return the compiled and linked [de.hauschild.kompute.core.shader.CompiledShader]
      */
     protected abstract fun compileSource(source: ShaderSource): CompiledShader
 }

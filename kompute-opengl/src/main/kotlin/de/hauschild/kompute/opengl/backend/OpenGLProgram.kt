@@ -1,4 +1,4 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.backend
 
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import io.github.oshai.kotlinlogging.KotlinLogging

@@ -1,6 +1,8 @@
-package de.hauschild.kompute.opengl
+package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.UniformBufferObject
+import de.hauschild.kompute.opengl.Buffer
+import de.hauschild.kompute.opengl.useAndFree
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 

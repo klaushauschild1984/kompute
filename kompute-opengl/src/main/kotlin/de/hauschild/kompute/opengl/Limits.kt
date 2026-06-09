@@ -3,7 +3,7 @@ package de.hauschild.kompute.opengl
 /**
  * OpenGL GPU limits queried once during backend initialization.
  *
- * Used by [OpenGLCompiledShader] and the OpenGL buffer wrappers to validate
+ * Used by [de.hauschild.kompute.opengl.shader.OpenGLCompiledShader] and the OpenGL buffer wrappers to validate
  * dispatch parameters and binding indices against the physical hardware limits
  * before submitting work to the GPU.
  *

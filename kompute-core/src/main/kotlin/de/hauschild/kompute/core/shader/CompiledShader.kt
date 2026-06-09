@@ -1,12 +1,11 @@
-package de.hauschild.kompute.core.backend
+package de.hauschild.kompute.core.shader
 
 import de.hauschild.kompute.core.data.ShaderData
-import de.hauschild.kompute.core.execution.ShaderResult
 
 /**
  * A compiled GPU compute shader that can be dispatched multiple times without recompilation.
  *
- * Obtained via [de.hauschild.kompute.core.execution.ShaderBuilder.compile]. Must be closed
+ * Obtained via [ShaderBuilder.compile]. Must be closed
  * after use to release the underlying GPU program.
  *
  * The three [dispatch] overloads cover 1-D, 2-D, and 3-D workgroup grids — dimensions not

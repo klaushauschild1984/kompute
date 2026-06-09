@@ -1,4 +1,4 @@
-package de.hauschild.kompute.core.execution
+package de.hauschild.kompute.core.shader
 
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.exception.KomputeConfigurationException

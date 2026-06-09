@@ -1,4 +1,4 @@
-package de.hauschild.kompute.core.execution
+package de.hauschild.kompute.core.shader
 
 import java.io.InputStream
 import java.nio.file.Path
