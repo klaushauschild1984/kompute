@@ -1,5 +1,5 @@
 #version 430
-layout (local_size_x = $LOCAL_SIZE, local_size_y = $LOCAL_SIZE) in;
+layout (local_size_x =  $LOCAL_SIZE, local_size_y = $LOCAL_SIZE) in;
 layout (binding = 0, rgba8) uniform writeonly image2D mandelbrot;
 uniform int maxIterations;
 uniform double centerX;
@@ -10,7 +10,8 @@ void main() {
     ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
     ivec2 size = imageSize(mandelbrot);
     if (pixel.x >= size.x || pixel.y >= size.y) return;
-    double re = ((double(pixel.x) / double(size.x - 1)) * 2.0 - 1.0) / zoom + centerX;
+    double aspect = double(size.x) / double(size.y);
+    double re = (((double(pixel.x) / double(size.x - 1)) * 2.0 - 1.0) * aspect) / zoom + centerX;
     double im = ((double(pixel.y) / double(size.y - 1)) * 2.0 - 1.0) / zoom + centerY;
 
     double zRe = 0.0, zIm = 0.0;

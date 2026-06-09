@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":kompute-core"))
+    runtimeOnly("ch.qos.logback:logback-classic:1.5.18")
     runtimeOnly(project(":kompute-opengl"))
     runtimeOnly(platform(libs.lwjgl.bom))
     runtimeOnly("org.lwjgl:lwjgl::natives-linux")
