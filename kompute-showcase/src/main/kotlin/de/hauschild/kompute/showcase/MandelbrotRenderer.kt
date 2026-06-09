@@ -25,7 +25,6 @@ class MandelbrotRenderer(
     ) {
         "Shader $SHADER_FILE not found"
     }.use { it.reader().readText().replace("\$LOCAL_SIZE", LOCAL_SIZE.toString()) }
-
     private val compiledShader = backend.shader(Code(shaderCode)).compile()
 
     /**
@@ -78,7 +77,6 @@ class MandelbrotRenderer(
     companion object {
         private const val SHADER_FILE = "mandelbrot.glsl"
         private const val LOCAL_SIZE = 8
-
         private val logger = KotlinLogging.logger {}
     }
 }

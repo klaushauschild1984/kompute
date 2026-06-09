@@ -25,7 +25,9 @@ class MandelbrotRendererTest {
         outputFile.parentFile.mkdirs()
         ImageIO.write(image, "PNG", outputFile)
         if (Desktop.isDesktopSupported()) {
-            Desktop.getDesktop().open(outputFile)
+            runCatching {
+                Desktop.getDesktop().open(outputFile)
+            }
         }
     }
 
