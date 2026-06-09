@@ -26,9 +26,8 @@ class OpenGLAtomicCounterTest {
                     """.trimIndent()
                 )
             )
-            .data(atomicCounter)
-            .dispatch(4)
-            .execute()[atomicCounter]
+            .compile()
+            .use { it.dispatch(4, atomicCounter) }[atomicCounter]
         assertEquals(256, value)
     }
 }

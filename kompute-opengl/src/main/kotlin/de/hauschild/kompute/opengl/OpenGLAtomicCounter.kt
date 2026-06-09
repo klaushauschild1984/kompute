@@ -12,9 +12,9 @@ import org.lwjgl.opengl.GL43
  */
 class OpenGLAtomicCounter(
     source: AtomicCounter
-): OpenGLBuffer<AtomicCounter>(source),
+): Buffer<AtomicCounter>(source),
 OutputCapable<Int> by source,
-OpenGLReadable<Int>{
+Readable<Int> {
     override val barrierBit: Int = GL42.GL_ATOMIC_COUNTER_BARRIER_BIT
 
     override fun bind() {
@@ -24,6 +24,11 @@ OpenGLReadable<Int>{
         GL43.glBindBufferBase(GL42.GL_ATOMIC_COUNTER_BUFFER, source.index, glHandle)
     }
 
+    /**
+     * Reads the current counter value back from the GPU buffer.
+     *
+     * @return the counter value after shader execution
+     */
     override fun read(): Int {
         val result = IntArray(1)
         GL43.glBindBuffer(GL42.GL_ATOMIC_COUNTER_BUFFER, glHandle)

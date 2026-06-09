@@ -8,10 +8,10 @@ import org.lwjgl.opengl.GL43
 /**
  * Wraps an OpenGL buffer object.
  *
- * @param T
- * @property source
+ * @param T the [ShaderData] + [de.hauschild.kompute.core.data.IndexedBinding] type this buffer wraps
+ * @property source the shader data configuration this buffer is based on
  */
-abstract class OpenGLBuffer<T>(
+abstract class Buffer<T>(
     val source: T
 ): Bindable
 where T : ShaderData, T : IndexedBinding{

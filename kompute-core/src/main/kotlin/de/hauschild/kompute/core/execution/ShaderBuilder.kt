@@ -1,67 +1,33 @@
 package de.hauschild.kompute.core.execution
 
-import de.hauschild.kompute.core.data.Binding
-import de.hauschild.kompute.core.data.IndexedBinding
-import de.hauschild.kompute.core.data.NamedBinding
-import de.hauschild.kompute.core.data.OutputCapable
-import de.hauschild.kompute.core.data.ShaderData
-import de.hauschild.kompute.core.exception.requireConfiguration
+import de.hauschild.kompute.core.backend.CompiledShader
 
 /**
- * Attaches input and output data to a compute shader.
+ * Entry point for compiling a compute shader source into a [CompiledShader].
  *
- * Each [ShaderData] is self-validated before being accepted. Proceed to [DispatchBuilder]
- * after configuring all data.
+ * Created by [de.hauschild.kompute.core.backend.Backend.shader]. Call [compile] to obtain
+ * a [CompiledShader] that can be dispatched multiple times without recompilation.
  *
- * @param context
- * @param executor
+ * ```kotlin
+ * val shader = backend.shader(Code(glsl)).compile()
+ * shader.use {
+ *     val result = it.dispatch(64, outputBuffer)
+ * }
+ * ```
+ *
+ * @param source the GLSL source to compile
+ * @param compiler backend-provided function that compiles a [ShaderSource] into a [CompiledShader]
  */
 class ShaderBuilder(
-    private val context: ExecutionContext,
-    private val executor: (ExecutionContext) -> ShaderResult,
+    private val source: ShaderSource,
+    private val compiler: (ShaderSource) -> CompiledShader
 ) {
     /**
-     * Attaches one or more shader data objects to this computation.
+     * Compiles the shader source into a [CompiledShader].
      *
-     * Each item is validated immediately via [ShaderData.validate].
+     * The returned [CompiledShader] holds a compiled GPU program and must be closed after use.
      *
-     * @param data the shader data to attach (storage buffers, etc.)
-     * @return a [DispatchBuilder] to configure the compute grid dimensions
-     * @throws [KomputeConfigurationException] if any item fails validation
+     * @return the compiled [CompiledShader]
      */
-    fun data(vararg data: ShaderData): DispatchBuilder {
-        requireConfiguration(data.isNotEmpty()) {
-            "At least one data is required"
-        }
-
-        data.forEach { it.validate() }
-
-        requireConfiguration(data.filterIsInstance<OutputCapable<*>>().any { it.isOutput }) {
-            "At least one output is required"
-        }
-
-        val duplicates =
-            data
-                .filterIsInstance<OutputCapable<*>>()
-                .groupBy { it }
-                .filter { (_, occurrences) -> occurrences.size > 1 }
-                .keys
-        requireConfiguration(duplicates.isEmpty()) { "There are duplicated outputs: $duplicates" }
-
-        data
-            .filterIsInstance<Binding>()
-            .groupBy { it::class }
-            .forEach { (_, items) ->
-                when (items.first()) {
-                    is IndexedBinding -> IndexedBinding.crossValidate(items.filterIsInstance<IndexedBinding>())
-                    is NamedBinding -> NamedBinding.crossValidate(items.filterIsInstance<NamedBinding>())
-                }
-            }
-
-        // TODO: verify binding indices declared in context.source against the provided data bindings
-
-        context.data.addAll(data.toList())
-
-        return DispatchBuilder(context, executor)
-    }
+    fun compile() = compiler(source)
 }

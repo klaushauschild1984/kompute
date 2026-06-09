@@ -23,7 +23,7 @@ import java.awt.image.BufferedImage
  * Kotlin:
  * ```kotlin
  * val image = Image2D(0).dimension(1024, 768).format(Image2D.Format.RGBA8)
- * val result = backend.shader(...).data(image).dispatch(x, y).execute()
+ * val result = backend.shader(...).compile().use { it.dispatch(x, y, image) }
  * val bufferedImage = result[image].toBufferedImage()
  * ```
  *
@@ -70,7 +70,7 @@ OutputCapable<Image2DResult>{
     /**
      * Sets the pixel format of the image. Defaults to [Format.RGBA8].
      *
-     * @param format
+     * @param format the pixel format to use for this image
      * @return this [Image2D] for chaining
      */
     fun format(format: Format): Image2D {
@@ -148,7 +148,16 @@ OutputCapable<Image2DResult>{
      * or `null` if conversion to [BufferedImage] is not supported
      */
     sealed class Format(val bytesPerPixel: Int, val bufferedImageType: Int?) {
+        /**
+         *  4-channel RGBA, 8 bits per channel. GLSL qualifier: `rgba8`.
+         *  Converts to [java.awt.image.BufferedImage.TYPE_INT_ARGB].
+         */
         object RGBA8 : Format(4,BufferedImage.TYPE_INT_ARGB)
+
+        /**
+         *  Single-channel grayscale, 8 bits per pixel. GLSL qualifier: `r8`.
+         *  Converts to [java.awt.image.BufferedImage.TYPE_BYTE_GRAY].
+         */
         object R8 : Format(1,BufferedImage.TYPE_BYTE_GRAY)
     }
 }

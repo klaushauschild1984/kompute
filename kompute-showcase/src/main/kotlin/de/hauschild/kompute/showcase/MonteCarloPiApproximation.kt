@@ -47,9 +47,8 @@ class MonteCarloPiApproximation(
         val result = backend
             .shader(
                 Code(shaderCode))
-            .data(hits)
-            .dispatch(workgroups)
-            .execute()
+            .compile()
+            .use { it.dispatch(workgroups, hits) }
 
         return 4.0 * result[hits] / totalThreads
     }

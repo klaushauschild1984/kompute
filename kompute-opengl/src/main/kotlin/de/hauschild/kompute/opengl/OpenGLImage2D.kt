@@ -19,9 +19,9 @@ import java.nio.ByteBuffer
  */
 class OpenGLImage2D(
     source: Image2D
-) : OpenGLBuffer<Image2D>(source),
+) : Buffer<Image2D>(source),
 OutputCapable<Image2DResult> by source,
-OpenGLReadable<Image2DResult>{
+Readable<Image2DResult> {
     override val barrierBit: Int = GL43.GL_TEXTURE_UPDATE_BARRIER_BIT
     private val openGLFormat = OpenGLFormat(source.format)
 

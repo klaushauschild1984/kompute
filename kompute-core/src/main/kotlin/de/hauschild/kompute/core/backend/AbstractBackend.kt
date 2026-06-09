@@ -1,12 +1,8 @@
 package de.hauschild.kompute.core.backend
 
 import de.hauschild.kompute.core.BuildInfo
-import de.hauschild.kompute.core.exception.KomputeBackendDispatchException
-import de.hauschild.kompute.core.exception.KomputeException
 import de.hauschild.kompute.core.exception.requireBackendInitialization
-import de.hauschild.kompute.core.execution.ExecutionContext
 import de.hauschild.kompute.core.execution.ShaderBuilder
-import de.hauschild.kompute.core.execution.ShaderResult
 import de.hauschild.kompute.core.execution.ShaderSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -32,7 +28,7 @@ abstract class AbstractBackend : Backend {
      *
      * Delegates to [doInitialize] for backend-specific setup.
      *
-     * @throws [KomputeBackendInitializationException] if called more than once
+     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if called more than once
      */
     @InternalApi
     override fun initialize() {
@@ -48,7 +44,8 @@ abstract class AbstractBackend : Backend {
      * Called once by [initialize]. Implementations should validate GPU capabilities
      * and set up required resources.
      *
-     * @throws [KomputeBackendInitializationException] if GPU resources are unavailable or initialization fails
+     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if GPU resources are
+     * unavailable or initialization fails
      */
     abstract fun doInitialize()
 
@@ -58,29 +55,13 @@ abstract class AbstractBackend : Backend {
      * @param source the compute shader source to use
      * @return a [ShaderBuilder] for configuring shader data
      */
-    @Suppress("TooGenericExceptionCaught")
-    override fun shader(source: ShaderSource): ShaderBuilder {
-        val context = ExecutionContext(source)
-        return ShaderBuilder(context) { ctx ->
-            try {
-                dispatch(ctx)
-            } catch (komputeException: KomputeException) {
-                throw komputeException
-            } catch (exception: Exception) {
-                throw KomputeBackendDispatchException("Unexpected error during GPU dispatch", exception)
-            }
-        }
-    }
+    override fun shader(source: ShaderSource): ShaderBuilder = ShaderBuilder(source, ::compileSource)
 
     /**
-     * Dispatches the execution of the configured compute shader on the GPU.
+     * Compiles the given shader source into a backend-specific [CompiledShader].
      *
-     * Called by [ExecutionBuilder.execute]. Implementations compile and link the shader,
-     * bind buffers, dispatch the computation, and return results.
-     *
-     * @param context the execution context with shader source, data, and dispatch dimensions
-     * @return a [ShaderResult] containing all output buffers
-     * @throws KomputeBackendDispatchException if GPU execution fails
+     * @param source the compute shader source to compile
+     * @return the compiled and linked [CompiledShader]
      */
-    abstract fun dispatch(context: ExecutionContext): ShaderResult
+    protected abstract fun compileSource(source: ShaderSource): CompiledShader
 }

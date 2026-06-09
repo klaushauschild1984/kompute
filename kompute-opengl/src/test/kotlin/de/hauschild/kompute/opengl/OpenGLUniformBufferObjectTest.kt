@@ -36,18 +36,19 @@ void main() {
 }
                     """.trimIndent()),
                 )
-                .data(
-                    UniformBufferObject(0).data(
-                        ByteBuffer
-                            .allocate(Float.SIZE_BYTES)
-                            .order(ByteOrder.nativeOrder())
-                            .putFloat(42f)
-                            .array()
-                    ),
-                    output,
-                )
-                .dispatch(3)
-                .execute()[output]
+                .compile()
+                .use {
+                    it.dispatch(3,
+                        UniformBufferObject(0).data(
+                            ByteBuffer
+                                .allocate(Float.SIZE_BYTES)
+                                .order(ByteOrder.nativeOrder())
+                                .putFloat(42f)
+                                .array()
+                        ),
+                        output,
+                    )
+                }[output]
 
         assertArrayEquals(floatArrayOf(42f, 42f, 42f), result)
     }

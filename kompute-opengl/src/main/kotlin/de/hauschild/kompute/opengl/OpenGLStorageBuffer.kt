@@ -16,9 +16,9 @@ import java.nio.ByteBuffer
  */
 class OpenGLStorageBuffer<T : Any>(
     source: StorageBuffer<T>,
-) : OpenGLBuffer<StorageBuffer<T>>(source),
+) : Buffer<StorageBuffer<T>>(source),
 OutputCapable<T> by source,
-OpenGLReadable<T>{
+Readable<T> {
     override val barrierBit: Int = GL43.GL_SHADER_STORAGE_BARRIER_BIT
 
     override fun bind() {

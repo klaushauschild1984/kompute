@@ -25,10 +25,8 @@ class OpenGLImage2DTest {
                 }
                 """.trimIndent()
             )
-        )
-            .data(image2D)
-            .dispatch(2, 2)
-            .execute()[image2D].data
+        ).compile()
+            .use { it.dispatch(2, 2, image2D) }[image2D].data
 
         assertEquals(16, bytes.size)
         assertContentEquals(ByteArray(16) {

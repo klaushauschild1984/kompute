@@ -76,10 +76,10 @@ class NamedUniform<T: Any>(
     /**
      * Marks this uniform as a matrix and specifies the number of rows and columns. Allowed values are {2, 3, 4}
      *
-     * Only compatible with type[FloatArray].
+     * Only compatible with [FloatArray] and [DoubleArray].
      *
-     * @param rows
-     * @param columns
+     * @param rows number of rows — must be 2, 3, or 4
+     * @param columns number of columns — must be 2, 3, or 4
      * @return this [NamedUniform] for chaining
      */
     fun asMatrix(rows: Int, columns: Int): NamedUniform<T> {
