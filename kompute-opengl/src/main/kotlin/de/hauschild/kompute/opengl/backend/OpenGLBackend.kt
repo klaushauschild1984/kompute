@@ -21,6 +21,9 @@ import org.lwjgl.system.MemoryUtil
  *
  * Initializes an offscreen OpenGL 4.3 context via GLFW, compiles and links compute shaders,
  * and manages storage buffer transfer between host and GPU.
+ *
+ * System property `kompute.backend.egl`: if set, uses EGL instead of WGL for context creation —
+ * required on headless systems without a native OpenGL driver (e.g. CI).
  */
 class OpenGLBackend : AbstractBackend() {
     private var windowHandle: Long = MemoryUtil.NULL
@@ -35,6 +38,10 @@ class OpenGLBackend : AbstractBackend() {
         }
         GLFW.glfwDefaultWindowHints()
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
+        System.getProperty(EGL_PROPERTY)?.let {
+            logger.debug { "EGL context creation API enabled via $EGL_PROPERTY system property" }
+            GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_EGL_CONTEXT_API)
+        }
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR)
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
@@ -84,5 +91,6 @@ class OpenGLBackend : AbstractBackend() {
     companion object {
         private const val OPENGL_VERSION_MAJOR = 4
         private const val OPENGL_VERSION_MINOR = 3
+        private const val EGL_PROPERTY = "kompute.backend.egl"
     }
 }
