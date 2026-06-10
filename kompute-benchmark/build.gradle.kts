@@ -5,7 +5,7 @@ plugins {
 
 dependencies {
     implementation(project(":kompute-opengl"))
-    implementation("com.github.oshi:oshi-core:6.6.5")
+    implementation(libs.oshi)
     implementation(platform(libs.lwjgl.bom))
     runtimeOnly("org.lwjgl:lwjgl::natives-linux")
     runtimeOnly("org.lwjgl:lwjgl-glfw::natives-linux")
