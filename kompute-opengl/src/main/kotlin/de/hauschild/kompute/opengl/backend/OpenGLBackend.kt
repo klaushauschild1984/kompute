@@ -57,6 +57,7 @@ class OpenGLBackend : AbstractBackend() {
         logger.error { "GLFW error after makeContextCurrent: ${GLFW.glfwGetError(null)}" }
         logger.error { "GL.getFunctionProvider() before create: ${GL.getFunctionProvider()}" }
         if (eglActivated && GL.getFunctionProvider() == null) {
+            GL.destroy()
             GL.create { functionName -> GLFW.glfwGetProcAddress(functionName) }
             logger.error { "GL.getFunctionProvider() after create: ${GL.getFunctionProvider()}" }
             logger.error { "glfwGetProcAddress(glGetError): ${GLFW.glfwGetProcAddress("glGetError")}" }
