@@ -461,16 +461,7 @@ MandelbrotRenderer().use { renderer ->
 The shader is compiled once; `dispatch(x, y, ...)` can be called repeatedly with different
 `Config` values — enabling pan and zoom without recompilation.
 
-## Roadmap
-
-| Version   | Focus                                                                                                         |
-|-----------|---------------------------------------------------------------------------------------------------------------|
-| `v0.9.0`  | Typed builder — `kompute-serialization` with `@GpuStruct` / `@GpuField` and automatic std140/std430 alignment |
-| `v0.10.0` | Windows support                                                                                               |
-| `v1.0.0`  | Vulkan backend                                                                                                |
-
-The full version history is documented in [CHANGELOG.md](CHANGELOG.md).
-
 ## Contributing
 
-Contributions are welcome. Please open an issue first to discuss what you would like to change.
+Contributions are welcome. If you face a bug or see the need for an enhancement, feel free to open an issue.
+For changes, please open an issue first to discuss what you would like to change.
