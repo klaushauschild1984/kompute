@@ -54,7 +54,7 @@ jobs:
             - name: Generate Coverage Badge
               uses: cicirello/jacoco-badge-generator@v2
               with:
-                  jacoco-csv-file: build/reports/jacoco/jacocoCoreReport/jacocoCoreReport.csv
+                  jacoco-csv-file: kompute-core/build/reports/jacoco/test/jacocoTestReport.csv
                   coverage-badge-filename: jacoco-core.svg
 
             - name: Commit Badge
