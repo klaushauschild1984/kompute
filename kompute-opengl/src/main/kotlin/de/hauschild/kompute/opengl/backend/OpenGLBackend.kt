@@ -53,8 +53,14 @@ class OpenGLBackend : AbstractBackend() {
             "Failed to create GLFW window"
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
+        logger.error { "current GLFW context: ${GLFW.glfwGetCurrentContext()} (expected: $windowHandle)" }
+        logger.error { "GLFW error after makeContextCurrent: ${GLFW.glfwGetError(null)}" }
+        logger.error { "GL.getFunctionProvider() before create: ${GL.getFunctionProvider()}" }
         if (eglActivated && GL.getFunctionProvider() == null) {
             GL.create { functionName -> GLFW.glfwGetProcAddress(functionName) }
+            logger.error { "GL.getFunctionProvider() after create: ${GL.getFunctionProvider()}" }
+            logger.error { "glfwGetProcAddress(glGetError): ${GLFW.glfwGetProcAddress("glGetError")}" }
+            logger.error { "glfwGetProcAddress(glGetIntegerv): ${GLFW.glfwGetProcAddress("glGetIntegerv")}" }
         }
         GL.createCapabilities()
 
