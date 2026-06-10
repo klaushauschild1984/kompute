@@ -53,7 +53,7 @@ class OpenGLBackend : AbstractBackend() {
             "Failed to create GLFW window"
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
-        if(eglActivated) {
+        if (eglActivated && GL.getFunctionProvider() == null) {
             GL.create { functionName ->
                 GLFW.glfwGetProcAddress(MemoryUtil.memUTF8(functionName))
             }

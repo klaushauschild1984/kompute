@@ -2,6 +2,8 @@ package de.hauschild.kompute.core.backend
 
 import de.hauschild.kompute.core.BuildInfo
 import de.hauschild.kompute.core.InternalApi
+import de.hauschild.kompute.core.exception.KomputeBackendInitializationException
+import de.hauschild.kompute.core.exception.KomputeException
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import de.hauschild.kompute.core.shader.CompiledShader
 import de.hauschild.kompute.core.shader.ShaderBuilder
@@ -36,7 +38,13 @@ abstract class AbstractBackend : Backend {
     override fun initialize() {
         requireBackendInitialization(!initialized) { "Backend already initialized" }
         logger.debug { "Initializing ${this::class.simpleName} v${BuildInfo.VERSION}" }
-        doInitialize()
+        try {
+            doInitialize()
+        } catch (exception: KomputeException) {
+            throw exception
+        } catch (exception: Exception) {
+            throw KomputeBackendInitializationException("Failed to initialize backend", exception)
+        }
         initialized = true
     }
 
