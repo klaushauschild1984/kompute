@@ -38,9 +38,11 @@ class OpenGLBackend : AbstractBackend() {
         }
         GLFW.glfwDefaultWindowHints()
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
-        System.getProperty(EGL_PROPERTY)?.let {
+        val eglActivated = System.getProperty(EGL_PROPERTY) != null
+        if(eglActivated){
             logger.debug { "EGL context creation API enabled via $EGL_PROPERTY system property" }
             GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_EGL_CONTEXT_API)
+            GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API)
         }
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR)
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
@@ -51,6 +53,11 @@ class OpenGLBackend : AbstractBackend() {
             "Failed to create GLFW window"
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
+        if(eglActivated) {
+            GL.create { functionName ->
+                GLFW.glfwGetProcAddress(MemoryUtil.memUTF8(functionName))
+            }
+        }
         GL.createCapabilities()
 
         limits = Limits(

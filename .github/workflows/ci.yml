@@ -128,6 +128,13 @@ jobs:
                   path: kompute-opengl/build/test-results/test/*.xml
                   reporter: java-junit
 
+            - name: Upload test results
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: test-results-${{ matrix.os }}
+                  path: kompute-opengl/build/test-results/test/*.xml
+
             - name: Generate Coverage Badge
               uses: cicirello/jacoco-badge-generator@v2
               if: runner.os == 'Linux'
