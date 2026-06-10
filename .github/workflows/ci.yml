@@ -6,14 +6,144 @@ on:
     pull_request:
         branches: [ main ]
 
-jobs:
-    build:
-        runs-on: ubuntu-latest
-        permissions:
-            checks: write
-            contents: write
-            security-events: write
+permissions:
+    checks: write
+    contents: write
+    security-events: write
 
+jobs:
+    core:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  java-version: '21'
+                  distribution: 'temurin'
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
+
+            - name: Run checks
+              run: ./gradlew :kompute-core:check
+
+            - name: Upload Detekt results
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-core/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-core/build/reports/detekt/detekt.sarif
+                  category: detekt-core
+
+            - name: Upload Diktat results
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-core/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-core/build/reports/diktat/diktat.sarif
+                  category: diktat-core
+
+            - name: Test Report
+              uses: dorny/test-reporter@v1
+              if: always()
+              with:
+                  name: Tests (core)
+                  path: kompute-core/build/test-results/test/*.xml
+                  reporter: java-junit
+
+            - name: Generate Coverage Badge
+              uses: cicirello/jacoco-badge-generator@v2
+              with:
+                  jacoco-csv-file: build/reports/jacoco/jacocoCoreReport/jacocoCoreReport.csv
+                  coverage-badge-filename: jacoco-core.svg
+
+            - name: Commit Badge
+              uses: stefanzweifel/git-auto-commit-action@v5
+              with:
+                  commit_message: "Update core coverage badge"
+                  file_pattern: .github/badges/jacoco-core.svg
+
+    opengl:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                os: [ ubuntu-latest, windows-latest ]
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  java-version: '21'
+                  distribution: 'temurin'
+
+            - name: Setup Gradle
+              uses: gradle/actions/setup-gradle@v4
+
+            - name: Install OpenGL dependencies (Linux)
+              if: runner.os == 'Linux'
+              run: sudo apt-get install -y xvfb libgl1-mesa-dev
+
+            - name: Install Mesa (Windows)
+              if: runner.os == 'Windows'
+              shell: powershell
+              run: |
+                  $version = "24.2.3"
+                  $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$version/mesa3d-$version-release-msvc.7z"
+                  Invoke-WebRequest -Uri $url -OutFile mesa.7z
+                  7z x mesa.7z -omesa
+                  Add-Content $env:GITHUB_PATH "${{ github.workspace }}\mesa\x64"
+
+            - name: Run checks (Linux)
+              if: runner.os == 'Linux'
+              run: xvfb-run ./gradlew :kompute-opengl:check
+              env:
+                  LIBGL_ALWAYS_SOFTWARE: "1"
+
+            - name: Run checks (Windows)
+              if: runner.os == 'Windows'
+              run: ./gradlew :kompute-opengl:check
+              env:
+                  LIBGL_ALWAYS_SOFTWARE: "1"
+
+            - name: Upload Detekt results
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && runner.os == 'Linux' && hashFiles('kompute-opengl/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-opengl/build/reports/detekt/detekt.sarif
+                  category: detekt-opengl
+
+            - name: Upload Diktat results
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && runner.os == 'Linux' && hashFiles('kompute-opengl/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-opengl/build/reports/diktat/diktat.sarif
+                  category: diktat-opengl
+
+            - name: Test Report
+              uses: dorny/test-reporter@v1
+              if: always()
+              with:
+                  name: Tests (opengl / ${{ matrix.os }})
+                  path: kompute-opengl/build/test-results/test/*.xml
+                  reporter: java-junit
+
+            - name: Generate Coverage Badge
+              uses: cicirello/jacoco-badge-generator@v2
+              if: runner.os == 'Linux'
+              with:
+                  jacoco-csv-file: kompute-opengl/build/reports/jacoco/test/jacocoTestReport.csv
+                  coverage-badge-filename: jacoco-opengl.svg
+
+            - name: Commit Badge
+              uses: stefanzweifel/git-auto-commit-action@v5
+              if: runner.os == 'Linux'
+              with:
+                  commit_message: "Update opengl coverage badge"
+                  file_pattern: .github/badges/jacoco-opengl.svg
+
+    other:
+        runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
 
@@ -30,60 +160,42 @@ jobs:
               run: sudo apt-get install -y xvfb libgl1-mesa-dev
 
             - name: Run checks
-              run: xvfb-run ./gradlew check
+              run: xvfb-run ./gradlew :kompute-benchmark:check :kompute-showcase:check
               env:
                   LIBGL_ALWAYS_SOFTWARE: "1"
 
-            -   name: Upload Detekt results (core)
-                uses: github/codeql-action/upload-sarif@v4
-                if: always() && hashFiles('kompute-core/build/reports/detekt/detekt.sarif') != ''
-                with:
-                    sarif_file: kompute-core/build/reports/detekt/detekt.sarif
-                    category: detekt-core
+            - name: Upload Detekt results (benchmark)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-benchmark/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-benchmark/build/reports/detekt/detekt.sarif
+                  category: detekt-benchmark
 
-            -   name: Upload Detekt results (opengl)
-                uses: github/codeql-action/upload-sarif@v4
-                if: always() && hashFiles('kompute-opengl/build/reports/detekt/detekt.sarif') != ''
-                with:
-                    sarif_file: kompute-opengl/build/reports/detekt/detekt.sarif
-                    category: detekt-opengl
+            - name: Upload Diktat results (benchmark)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-benchmark/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-benchmark/build/reports/diktat/diktat.sarif
+                  category: diktat-benchmark
 
-            -   name: Upload Diktat results (core)
-                uses: github/codeql-action/upload-sarif@v4
-                if: always() && hashFiles('kompute-core/build/reports/diktat/diktat.sarif') != ''
-                with:
-                    sarif_file: kompute-core/build/reports/diktat/diktat.sarif
-                    category: diktat-core
+            - name: Upload Detekt results (showcase)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-showcase/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-showcase/build/reports/detekt/detekt.sarif
+                  category: detekt-showcase
 
-            -   name: Upload Diktat results (opengl)
-                uses: github/codeql-action/upload-sarif@v4
-                if: always() && hashFiles('kompute-opengl/build/reports/diktat/diktat.sarif') != ''
-                with:
-                    sarif_file: kompute-opengl/build/reports/diktat/diktat.sarif
-                    category: diktat-opengl
+            - name: Upload Diktat results (showcase)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-showcase/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-showcase/build/reports/diktat/diktat.sarif
+                  category: diktat-showcase
 
-            -   name: Test Report
-                uses: dorny/test-reporter@v1
-                if: always()
-                with:
-                    name: Tests
-                    path: '**/build/test-results/test/*.xml'
-                    reporter: java-junit
-
-            -   name: Generate Coverage Badge (core)
-                uses: cicirello/jacoco-badge-generator@v2
-                with:
-                    jacoco-csv-file: build/reports/jacoco/jacocoCoreReport/jacocoCoreReport.csv
-                    coverage-badge-filename: jacoco-core.svg
-
-            -   name: Generate Coverage Badge (opengl)
-                uses: cicirello/jacoco-badge-generator@v2
-                with:
-                    jacoco-csv-file: kompute-opengl/build/reports/jacoco/test/jacocoTestReport.csv
-                    coverage-badge-filename: jacoco-opengl.svg
-
-            -   name: Commit Badges
-                uses: stefanzweifel/git-auto-commit-action@v5
-                with:
-                    commit_message: "Update coverage badges"
-                    file_pattern: ".github/badges/*.svg"
+            - name: Test Report
+              uses: dorny/test-reporter@v1
+              if: always()
+              with:
+                  name: Tests (other)
+                  path: '**/build/test-results/test/*.xml'
+                  reporter: java-junit
