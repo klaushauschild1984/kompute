@@ -54,9 +54,7 @@ class OpenGLBackend : AbstractBackend() {
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
         if (eglActivated && GL.getFunctionProvider() == null) {
-            GL.create { functionName ->
-                GLFW.glfwGetProcAddress(MemoryUtil.memUTF8(functionName))
-            }
+            GL.create { functionName -> GLFW.glfwGetProcAddress(functionName) }
         }
         GL.createCapabilities()
 

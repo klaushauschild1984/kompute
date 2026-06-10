@@ -38,6 +38,7 @@ abstract class AbstractBackend : Backend {
     override fun initialize() {
         requireBackendInitialization(!initialized) { "Backend already initialized" }
         logger.debug { "Initializing ${this::class.simpleName} v${BuildInfo.VERSION}" }
+        @Suppress("TooGenericExceptionCaught")
         try {
             doInitialize()
         } catch (exception: KomputeException) {
