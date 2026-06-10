@@ -92,7 +92,8 @@ jobs:
                   $url = "https://github.com/pal1000/mesa-dist-win/releases/download/$version/mesa3d-$version-release-msvc.7z"
                   Invoke-WebRequest -Uri $url -OutFile mesa.7z
                   7z x mesa.7z -omesa
-                  Add-Content $env:GITHUB_PATH "${{ github.workspace }}\mesa\x64"
+                  Copy-Item "mesa\x64\opengl32.dll" "C:\Windows\System32\opengl32.dll" -Force
+                  Copy-Item "mesa\x64\libglapi.dll"  "C:\Windows\System32\libglapi.dll"  -Force
 
             - name: Run checks (Linux)
               if: runner.os == 'Linux'
@@ -103,8 +104,6 @@ jobs:
             - name: Run checks (Windows)
               if: runner.os == 'Windows'
               run: ./gradlew :kompute-opengl:check
-              env:
-                  LIBGL_ALWAYS_SOFTWARE: "1"
 
             - name: Upload Detekt results
               uses: github/codeql-action/upload-sarif@v4
