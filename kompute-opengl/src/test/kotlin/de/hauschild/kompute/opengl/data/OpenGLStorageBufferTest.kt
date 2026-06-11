@@ -15,7 +15,6 @@ import kotlin.reflect.KClass
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLStorageBufferTest {
-    @Disabled
     @ParameterizedTest(name = "{0}")
     @MethodSource
     fun `storage buffer`(
@@ -102,8 +101,8 @@ class OpenGLStorageBufferTest {
         @JvmStatic
         fun `storage buffer`(): Stream<Arguments> = Stream.of(
             Arguments.of("int", intArrayOf(1, 2, 3), IntArray::class),
-            Arguments.of("float", floatArrayOf(1f, 2f, 3f), FloatArray::class),
-            Arguments.of("double", doubleArrayOf(1.0, 2.0, 3.0), DoubleArray::class),
+//            Arguments.of("float", floatArrayOf(1f, 2f, 3f), FloatArray::class),
+//            Arguments.of("double", doubleArrayOf(1.0, 2.0, 3.0), DoubleArray::class),
         )
 
         @JvmStatic

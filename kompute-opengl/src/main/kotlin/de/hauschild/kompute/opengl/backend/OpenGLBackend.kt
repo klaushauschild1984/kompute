@@ -86,12 +86,12 @@ class OpenGLBackend : AbstractBackend() {
     }
 
     override fun close() {
-        logger.debug { "Closing OpenGL Backend" }
         if (windowHandle == MemoryUtil.NULL) {
             return
         }
         GLFW.glfwDestroyWindow(windowHandle)
         GLFW.glfwTerminate()
+        logger.debug { "OpenGL Backend closed" }
     }
 
     companion object {
