@@ -2,6 +2,7 @@ package de.hauschild.kompute.opengl
 
 import de.hauschild.kompute.core.Kompute
 import de.hauschild.kompute.core.backend.Backend
+import de.hauschild.kompute.opengl.backend.ContextCreationStrategy
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.extension.ParameterResolver
  * Creates a single [OpenGLBackend] instance shared across the entire test suite and closes it
  * when the root [ExtensionContext] store is closed at the end of the test run.
  * Injects the backend as a parameter into test methods that declare a [Backend] parameter.
+ *
+ * Available as a test fixture via `testImplementation(testFixtures(project(":kompute-opengl")))`.
  */
 class OpenGLBackendExtension :
     BeforeAllCallback,
@@ -40,8 +43,16 @@ class OpenGLBackendExtension :
         const val BACKEND = "backend"
         val NAMESPACE: ExtensionContext.Namespace = ExtensionContext.Namespace.create(OpenGLBackendExtension::class)
 
+        /**
+         * @property backend
+         */
         private class BackendResource(val backend: Backend) : ExtensionContext.Store.CloseableResource {
-            override fun close() = backend.close()
+            override fun close() {
+                if (ContextCreationStrategy.isEglActive()) {
+                    return
+                }
+                backend.close()
+            }
         }
     }
 }

@@ -15,14 +15,18 @@ import kotlin.test.assertTrue
 class MonteCarloPiApproximationTest {
     @ParameterizedTest
     @MethodSource
-    fun `pi approximation accuracy`(samples: Int, expectedDigits: Int, backend: Backend) {
+    fun `pi approximation accuracy`(
+        samples: Int,
+        expectedDigits: Int,
+        backend: Backend
+    ) {
         MonteCarloPiApproximation(samples = samples, backend = backend, closeBackend = false)
             .use { monteCarloPiApproximation ->
-            val pi = monteCarloPiApproximation.approximate()
-            val error = abs(pi - Math.PI)
-            val correctDigits = floor(-log10(error)).toInt()
-            assertTrue(correctDigits >= expectedDigits)
-        }
+                val pi = monteCarloPiApproximation.approximate()
+                val error = abs(pi - Math.PI)
+                val correctDigits = floor(-log10(error)).toInt()
+                assertTrue(correctDigits >= expectedDigits)
+            }
     }
 
     companion object {

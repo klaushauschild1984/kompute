@@ -54,13 +54,19 @@ sealed interface ContextCreationStrategy {
         private val logger = KotlinLogging.logger {}
 
         /**
+         * Whether the EGL context creation API is active or not.
+         *
+         * @return `true` if the system property `kompute.backend.egl` is set, `false` otherwise
+         */
+        fun isEglActive(): Boolean = System.getProperty(EGL_PROPERTY) != null
+
+        /**
          * Get the context creation strategy to use. Defaults to WGL.
          *
          * @return [Wgl] by default and [Egl] if the system property `kompute.backend.egl` is set
          */
         fun get(): ContextCreationStrategy {
-            val eglActivated = System.getProperty(EGL_PROPERTY) != null
-            if(eglActivated){
+            if(isEglActive()){
                 logger.debug { "EGL context creation API enabled via $EGL_PROPERTY system property" }
                 return Egl
             }

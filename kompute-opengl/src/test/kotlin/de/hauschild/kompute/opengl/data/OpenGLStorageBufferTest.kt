@@ -3,6 +3,7 @@ package de.hauschild.kompute.opengl.data
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
+import de.hauschild.kompute.opengl.backend.ContextCreationStrategy
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assumptions.assumeFalse
@@ -74,10 +75,8 @@ class OpenGLStorageBufferTest {
 
     private fun assumeLongArraySupport(type: KClass<*>) {
         if (type == LongArray::class) {
-            val isWindows = System.getProperty("os.name").lowercase().contains("win")
-            val eglActivated = System.getProperty("kompute.backend.egl") != null
             assumeFalse(
-                isWindows && eglActivated,
+                ContextCreationStrategy.isEglActive(),
                 "GL_ARB_gpu_shader_int64 might not supported byWindows Mesa D3D12"
             )
         }
