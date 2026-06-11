@@ -111,7 +111,7 @@ jobs:
               if: always()
               with:
                   name: jvm-crash-logs-${{ matrix.os }}
-                  path: kompute-opengl/build/hs_err_pid*.log
+                  path: '**/hs_err_pid*.log'
                   if-no-files-found: ignore
 
             - name: Upload Detekt results
