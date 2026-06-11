@@ -1,6 +1,7 @@
 plugins {
     id("kompute.kotlin-conventions")
     id("kompute.lwjgl-conventions")
+    `java-test-fixtures`
 }
 
 dependencies {
@@ -8,6 +9,8 @@ dependencies {
     implementation(libs.lwjgl)
     implementation(libs.lwjgl.glfw)
     implementation(libs.lwjgl.opengl)
+
+    testFixturesImplementation(kotlin("test-junit5"))
 }
 
 tasks.test {
