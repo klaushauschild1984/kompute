@@ -6,7 +6,6 @@ import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 
 import java.nio.ByteBuffer
@@ -16,7 +15,6 @@ import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLUniformBufferObjectTest {
-    @Disabled
     @Test
     fun `float array`(backend: OpenGLBackend) {
         val output = StorageBuffer<FloatArray>(1).size(3).asOutput()
