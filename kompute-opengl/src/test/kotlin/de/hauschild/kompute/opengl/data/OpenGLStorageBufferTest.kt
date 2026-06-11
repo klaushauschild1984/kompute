@@ -84,39 +84,43 @@ class OpenGLStorageBufferTest {
     }
 
     companion object {
-        private fun storageBufferSource(glslType: String) = """
-            #version 430 core
-            #extension GL_ARB_gpu_shader_int64 : require
+        private fun storageBufferSource(glslType: String): String {
+            val extension = if (glslType == "int64_t") "\n#extension GL_ARB_gpu_shader_int64 : require" else ""
+            return """
+                    #version 430 core$extension
 
-            layout (local_size_x = 1) in;
+                    layout (local_size_x = 1) in;
 
-            layout (std430, binding = 0) readonly buffer InputBuffer {
-                $glslType values[];
-            } source;
+                    layout (std430, binding = 0) readonly buffer InputBuffer {
+                        $glslType values[];
+                    } source;
 
-            layout (std430, binding = 1) writeonly buffer OutputBuffer {
-                $glslType values[];
-            } result;
+                    layout (std430, binding = 1) writeonly buffer OutputBuffer {
+                        $glslType values[];
+                    } result;
 
-            void main() {
-                result.values[gl_GlobalInvocationID.x] = source.values[gl_GlobalInvocationID.x];
-            }
-        """.trimIndent()
+                    void main() {
+                        result.values[gl_GlobalInvocationID.x] = source.values[gl_GlobalInvocationID.x];
+                    }
+                """.trimIndent()
+        }
 
-        private fun readWriteStorageBufferSource(glslType: String) = """
-            #version 430 core
-            #extension GL_ARB_gpu_shader_int64 : require
+        private fun readWriteStorageBufferSource(glslType: String): String {
+            val extension = if (glslType == "int64_t") "\n#extension GL_ARB_gpu_shader_int64 : require" else ""
+            return """
+                    #version 430 core$extension
 
-            layout (local_size_x = 1) in;
+                    layout (local_size_x = 1) in;
 
-            layout (std430, binding = 0) buffer Buffer {
-                $glslType values[];
-            } data;
+                    layout (std430, binding = 0) buffer Buffer {
+                        $glslType values[];
+                    } data;
 
-            void main() {
-                data.values[gl_GlobalInvocationID.x] = data.values[gl_GlobalInvocationID.x];
-            }
-        """.trimIndent()
+                    void main() {
+                        data.values[gl_GlobalInvocationID.x] = data.values[gl_GlobalInvocationID.x];
+                    }
+                """.trimIndent()
+        }
 
         @JvmStatic
         fun `storage buffer`(): Stream<Arguments> = Stream.of(
