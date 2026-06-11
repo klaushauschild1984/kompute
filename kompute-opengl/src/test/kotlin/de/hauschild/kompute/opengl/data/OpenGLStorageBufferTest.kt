@@ -3,10 +3,8 @@ package de.hauschild.kompute.opengl.data
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
-import de.hauschild.kompute.opengl.backend.ContextCreationStrategy
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -24,8 +22,6 @@ class OpenGLStorageBufferTest {
         type: KClass<*>,
         backend: OpenGLBackend
     ) {
-//        assumeLongArraySupport(type)
-
         @Suppress("UNCHECKED_CAST")
         val inputBuffer = StorageBuffer.newStorageBuffer(0, type.java as Class<Any>).data(input)
         val outputBuffer = StorageBuffer.newStorageBuffer(1, type.java).size(3).asOutput()
@@ -53,8 +49,6 @@ class OpenGLStorageBufferTest {
         type: KClass<*>,
         backend: OpenGLBackend
     ) {
-        assumeLongArraySupport(type)
-
         @Suppress("UNCHECKED_CAST")
         val buffer = StorageBuffer.newStorageBuffer(0, type.java as Class<Any>)
             .data(input)
@@ -70,15 +64,6 @@ class OpenGLStorageBufferTest {
             is LongArray -> assertArrayEquals(input as LongArray, result)
             is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
-        }
-    }
-
-    private fun assumeLongArraySupport(type: KClass<*>) {
-        if (type == LongArray::class) {
-            assumeFalse(
-                ContextCreationStrategy.isEglActive(),
-                "GL_ARB_gpu_shader_int64 might not supported byWindows Mesa D3D12"
-            )
         }
     }
 
