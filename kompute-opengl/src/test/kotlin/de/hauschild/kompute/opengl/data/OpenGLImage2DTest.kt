@@ -4,7 +4,6 @@ import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -12,7 +11,6 @@ import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLImage2DTest {
-    @Disabled
     @Test
     fun image2D(backend: OpenGLBackend) {
         val image2D = Image2D(0).dimension(2, 2)
