@@ -22,11 +22,11 @@ import org.lwjgl.system.MemoryUtil
  * Initializes an offscreen OpenGL 4.3 context via GLFW, compiles and links compute shaders,
  * and manages storage buffer transfer between host and GPU.
  *
- * System property `kompute.backend.egl`: if set, uses EGL instead of WGL for context creation —
- * required on headless systems without a native OpenGL driver (e.g. CI).
+ * Uses [ContextCreationStrategy] to customize the OpenGL context creation.
  */
 class OpenGLBackend : AbstractBackend() {
     private var windowHandle: Long = MemoryUtil.NULL
+    private val contextCreationStrategy = ContextCreationStrategy.get()
     private var limits: Limits? = null
 
     @InternalApi
@@ -38,25 +38,17 @@ class OpenGLBackend : AbstractBackend() {
         }
         GLFW.glfwDefaultWindowHints()
         GLFW.glfwWindowHint(GLFW.GLFW_VISIBLE, GLFW.GLFW_FALSE)
-        val eglActivated = System.getProperty(EGL_PROPERTY) != null
-        if(eglActivated){
-            logger.debug { "EGL context creation API enabled via $EGL_PROPERTY system property" }
-            GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_CREATION_API, GLFW.GLFW_EGL_CONTEXT_API)
-            GLFW.glfwWindowHint(GLFW.GLFW_CLIENT_API, GLFW.GLFW_OPENGL_API)
-        }
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR)
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
+        contextCreationStrategy.windowHints()
 
         windowHandle = GLFW.glfwCreateWindow(1, 1, "Kompute", MemoryUtil.NULL, MemoryUtil.NULL)
         requireBackendInitialization(windowHandle != MemoryUtil.NULL) {
             "Failed to create GLFW window"
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
-        if (eglActivated) {
-            GL.destroy()
-            GL.create { functionName -> GLFW.glfwGetProcAddress(functionName) }
-        }
+        contextCreationStrategy.contextCreation()
         GL.createCapabilities()
 
         limits = Limits(
@@ -89,6 +81,7 @@ class OpenGLBackend : AbstractBackend() {
         if (windowHandle == MemoryUtil.NULL) {
             return
         }
+        contextCreationStrategy.close()
         GLFW.glfwDestroyWindow(windowHandle)
         GLFW.glfwTerminate()
         logger.debug { "OpenGL Backend closed" }
@@ -97,6 +90,5 @@ class OpenGLBackend : AbstractBackend() {
     companion object {
         private const val OPENGL_VERSION_MAJOR = 4
         private const val OPENGL_VERSION_MINOR = 3
-        private const val EGL_PROPERTY = "kompute.backend.egl"
     }
 }
