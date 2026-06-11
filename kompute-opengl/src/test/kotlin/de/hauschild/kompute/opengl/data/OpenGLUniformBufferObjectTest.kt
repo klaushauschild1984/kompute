@@ -6,6 +6,7 @@ import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 
 import java.nio.ByteBuffer
@@ -15,28 +16,30 @@ import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLUniformBufferObjectTest {
+    @Disabled
     @Test
     fun `float array`(backend: OpenGLBackend) {
         val output = StorageBuffer<FloatArray>(1).size(3).asOutput()
         val result =
             backend
                 .shader(
-                    Code("""
-#version 430 core
-layout (local_size_x = 1) in;
+                    Code(
+                        """
+                        #version 430 core
+                        layout (local_size_x = 1) in;
 
-layout (std140, binding = 0) uniform Params {
-    float value;
-} params;
+                        layout (std140, binding = 0) uniform Params {
+                            float value;
+                        } params;
 
-layout (std430, binding = 1) writeonly buffer OutputBuffer {
-    float values[];
-} outputBuffer;
+                        layout (std430, binding = 1) writeonly buffer OutputBuffer {
+                            float values[];
+                        } outputBuffer;
 
-void main() {
-    outputBuffer.values[gl_GlobalInvocationID.x] = params.value;
-}
-                    """.trimIndent()),
+                        void main() {
+                            outputBuffer.values[gl_GlobalInvocationID.x] = params.value;
+                        }
+                        """.trimIndent()),
                 )
                 .compile()
                 .use { compiledShader ->

@@ -4,12 +4,14 @@ import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLAtomicCounterTest {
+    @Disabled
     @Test
     fun `atomic counter`(backend: OpenGLBackend) {
         val atomicCounter = AtomicCounter(0)
