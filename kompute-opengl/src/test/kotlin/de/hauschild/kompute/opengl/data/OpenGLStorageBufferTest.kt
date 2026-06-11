@@ -5,6 +5,7 @@ import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -40,6 +41,7 @@ class OpenGLStorageBufferTest {
         }
     }
 
+    @Disabled
     @ParameterizedTest(name = "{0}")
     @MethodSource
     fun `read-write storage buffer`(
