@@ -1,3 +1,5 @@
+import org.gradle.internal.os.OperatingSystem
+
 plugins {
     id("kompute.kotlin-conventions")
     id("kompute.lwjgl-conventions")
@@ -11,9 +13,11 @@ dependencies {
     implementation(libs.lwjgl.opengl)
 }
 
-tasks.withType<Test> {
+tasks.test {
     jvmArgs("-XX:ErrorFile=${layout.buildDirectory.get().asFile.absolutePath}/hs_err_pid%p.log")
-    retry {
-        maxRetries.set(3)
+    if (OperatingSystem.current().isWindows) {
+        retry {
+            maxRetries.set(3)
+        }
     }
 }
