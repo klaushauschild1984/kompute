@@ -106,6 +106,14 @@ jobs:
               env:
                   JAVA_TOOL_OPTIONS: "-Dkompute.backend.egl=true"
 
+            - name: Upload JVM crash logs
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: jvm-crash-logs-${{ matrix.os }}
+                  path: kompute-opengl/build/hs_err_pid*.log
+                  if-no-files-found: ignore
+
             - name: Upload Detekt results
               uses: github/codeql-action/upload-sarif@v4
               if: always() && runner.os == 'Linux' && hashFiles('kompute-opengl/build/reports/detekt/detekt.sarif') != ''

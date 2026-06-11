@@ -9,3 +9,7 @@ dependencies {
     implementation(libs.lwjgl.glfw)
     implementation(libs.lwjgl.opengl)
 }
+
+tasks.withType<Test> {
+    jvmArgs("-XX:ErrorFile=${layout.buildDirectory.get().asFile.absolutePath}/hs_err_pid%p.log")
+}
