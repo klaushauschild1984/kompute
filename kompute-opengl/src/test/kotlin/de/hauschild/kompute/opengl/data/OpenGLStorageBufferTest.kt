@@ -74,8 +74,10 @@ class OpenGLStorageBufferTest {
 
     private fun assumeLongArraySupport(type: KClass<*>) {
         if (type == LongArray::class) {
+            val isWindows = System.getProperty("os.name").lowercase().contains("win")
+            val eglActivated = System.getProperty("kompute.backend.egl") != null
             assumeFalse(
-                System.getProperty("os.name").lowercase().contains("win"),
+                isWindows && eglActivated,
                 "GL_ARB_gpu_shader_int64 might not supported byWindows Mesa D3D12"
             )
         }
