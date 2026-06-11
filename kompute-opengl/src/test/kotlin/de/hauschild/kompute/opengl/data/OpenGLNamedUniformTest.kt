@@ -5,7 +5,6 @@ import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -15,7 +14,6 @@ import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLNamedUniformTest {
-    @Disabled
     @ParameterizedTest(name = "{0} -> {1}")
     @MethodSource
     fun `named uniform`(
