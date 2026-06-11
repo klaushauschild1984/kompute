@@ -34,8 +34,9 @@ class OpenGLStorageBufferTest {
             .use { it.dispatch(3, inputBuffer, outputBuffer) }
 
         when (val result = result[outputBuffer]) {
-            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is IntArray -> assertArrayEquals(input as IntArray, result)
+            is LongArray -> assertArrayEquals(input as LongArray, result)
+            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
         }
     }
@@ -59,8 +60,9 @@ class OpenGLStorageBufferTest {
             .use { it.dispatch(3, buffer) }
 
         when (val result = result[buffer]) {
-            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is IntArray -> assertArrayEquals(input as IntArray, result)
+            is LongArray -> assertArrayEquals(input as LongArray, result)
+            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
         }
     }
@@ -68,6 +70,8 @@ class OpenGLStorageBufferTest {
     companion object {
         private fun storageBufferSource(glslType: String) = """
             #version 430 core
+            #extension GL_ARB_gpu_shader_int64 : require
+
             layout (local_size_x = 1) in;
 
             layout (std430, binding = 0) readonly buffer InputBuffer {
@@ -85,6 +89,8 @@ class OpenGLStorageBufferTest {
 
         private fun readWriteStorageBufferSource(glslType: String) = """
             #version 430 core
+            #extension GL_ARB_gpu_shader_int64 : require
+
             layout (local_size_x = 1) in;
 
             layout (std430, binding = 0) buffer Buffer {
@@ -99,6 +105,7 @@ class OpenGLStorageBufferTest {
         @JvmStatic
         fun `storage buffer`(): Stream<Arguments> = Stream.of(
             Arguments.of("int", intArrayOf(1, 2, 3), IntArray::class),
+            Arguments.of("int64_t", longArrayOf(1, 2, 3), LongArray::class),
             Arguments.of("float", floatArrayOf(1f, 2f, 3f), FloatArray::class),
             Arguments.of("double", doubleArrayOf(1.0, 2.0, 3.0), DoubleArray::class),
         )
@@ -106,6 +113,7 @@ class OpenGLStorageBufferTest {
         @JvmStatic
         fun `read-write storage buffer`(): Stream<Arguments> = Stream.of(
             Arguments.of("int", intArrayOf(1, 2, 3), IntArray::class),
+            Arguments.of("int64_t", longArrayOf(1, 2, 3), LongArray::class),
             Arguments.of("float", floatArrayOf(1f, 2f, 3f), FloatArray::class),
             Arguments.of("double", doubleArrayOf(1.0, 2.0, 3.0), DoubleArray::class),
         )

@@ -13,6 +13,7 @@ import kotlin.reflect.KClass
  *
  * Supported types and their GLSL equivalents:
  * - [IntArray] → `int` / `ivec*` / `uint` / `uvec*`
+ * - [LongArray] → `int64_t` / `uint64_t`
  * - [FloatArray] → `float` / `vec*` / `mat*`
  * - [DoubleArray] → `double` / `dvec*`
  * - [ByteArray] → struct (manual layout)
@@ -138,6 +139,7 @@ OutputCapable<T> {
 
     private fun Any.elementCount(): Int = when (this) {
         is IntArray -> size
+        is LongArray -> size
         is FloatArray -> size
         is DoubleArray -> size
         is ByteArray -> size
@@ -179,6 +181,7 @@ OutputCapable<T> {
         private val SUPPORTED_TYPES =
             setOf(
                 IntArray::class,
+                LongArray::class,
                 FloatArray::class,
                 DoubleArray::class,
                 ByteArray::class,
