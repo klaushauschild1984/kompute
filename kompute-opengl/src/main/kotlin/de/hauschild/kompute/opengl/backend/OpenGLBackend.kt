@@ -21,9 +21,12 @@ import org.lwjgl.system.MemoryUtil
  *
  * Initializes an offscreen OpenGL 4.3 context via GLFW, compiles and links compute shaders,
  * and manages storage buffer transfer between host and GPU.
+ *
+ * Uses [ContextCreationStrategy] to customize the OpenGL context creation.
  */
 class OpenGLBackend : AbstractBackend() {
     private var windowHandle: Long = MemoryUtil.NULL
+    private val contextCreationStrategy = ContextCreationStrategy.get()
     private var limits: Limits? = null
 
     @InternalApi
@@ -38,12 +41,14 @@ class OpenGLBackend : AbstractBackend() {
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, OPENGL_VERSION_MAJOR)
         GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, OPENGL_VERSION_MINOR)
         GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
+        contextCreationStrategy.windowHints()
 
         windowHandle = GLFW.glfwCreateWindow(1, 1, "Kompute", MemoryUtil.NULL, MemoryUtil.NULL)
         requireBackendInitialization(windowHandle != MemoryUtil.NULL) {
             "Failed to create GLFW window"
         }
         GLFW.glfwMakeContextCurrent(windowHandle)
+        contextCreationStrategy.contextCreation()
         GL.createCapabilities()
 
         limits = Limits(
@@ -73,12 +78,13 @@ class OpenGLBackend : AbstractBackend() {
     }
 
     override fun close() {
-        logger.debug { "Closing OpenGL Backend" }
         if (windowHandle == MemoryUtil.NULL) {
             return
         }
+        contextCreationStrategy.close()
         GLFW.glfwDestroyWindow(windowHandle)
         GLFW.glfwTerminate()
+        logger.debug { "OpenGL Backend closed" }
     }
 
     companion object {

@@ -21,22 +21,23 @@ class OpenGLUniformBufferObjectTest {
         val result =
             backend
                 .shader(
-                    Code("""
-#version 430 core
-layout (local_size_x = 1) in;
+                    Code(
+                        """
+                        #version 430 core
+                        layout (local_size_x = 1) in;
 
-layout (std140, binding = 0) uniform Params {
-    float value;
-} params;
+                        layout (std140, binding = 0) uniform Params {
+                            float value;
+                        } params;
 
-layout (std430, binding = 1) writeonly buffer OutputBuffer {
-    float values[];
-} outputBuffer;
+                        layout (std430, binding = 1) writeonly buffer OutputBuffer {
+                            float values[];
+                        } outputBuffer;
 
-void main() {
-    outputBuffer.values[gl_GlobalInvocationID.x] = params.value;
-}
-                    """.trimIndent()),
+                        void main() {
+                            outputBuffer.values[gl_GlobalInvocationID.x] = params.value;
+                        }
+                        """.trimIndent()),
                 )
                 .compile()
                 .use { compiledShader ->
