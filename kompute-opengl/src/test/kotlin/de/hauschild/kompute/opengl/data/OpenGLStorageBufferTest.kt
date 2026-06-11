@@ -24,7 +24,7 @@ class OpenGLStorageBufferTest {
         type: KClass<*>,
         backend: OpenGLBackend
     ) {
-        assumeLongArraySupport(type)
+//        assumeLongArraySupport(type)
 
         @Suppress("UNCHECKED_CAST")
         val inputBuffer = StorageBuffer.newStorageBuffer(0, type.java as Class<Any>).data(input)
@@ -53,7 +53,7 @@ class OpenGLStorageBufferTest {
         type: KClass<*>,
         backend: OpenGLBackend
     ) {
-        assumeLongArraySupport(type)
+//        assumeLongArraySupport(type)
 
         @Suppress("UNCHECKED_CAST")
         val buffer = StorageBuffer.newStorageBuffer(0, type.java as Class<Any>)
