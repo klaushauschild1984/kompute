@@ -3,8 +3,10 @@ package de.hauschild.kompute.opengl.data
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import de.hauschild.kompute.core.exception.requireConfiguration
 import de.hauschild.kompute.opengl.Buffer
 import de.hauschild.kompute.opengl.Readable
+import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 
@@ -13,7 +15,9 @@ import java.nio.ByteBuffer
 /**
  * Wraps an OpenGL shader storage buffer object (SSBO) for a [StorageBuffer].
  *
- * @param T the data type — must be [IntArray], [FloatArray], [DoubleArray], or [ByteArray]
+ * Note: [LongArray] requires `#extension GL_ARB_gpu_shader_int64 : require` in the shader source.
+ *
+ * @param T the data type — must be [IntArray], [LongArray], [FloatArray], [DoubleArray], or [ByteArray]
  * @param source the [StorageBuffer] configuration this buffer is based on
  */
 class OpenGLStorageBuffer<T : Any>(
@@ -24,6 +28,12 @@ Readable<T> {
     override val barrierBit: Int = GL43.GL_SHADER_STORAGE_BARRIER_BIT
 
     override fun bind() {
+        if (source.type == LongArray::class) {
+            requireConfiguration(GL.getCapabilities().GL_ARB_gpu_shader_int64) {
+                "LongArray requires '#extension GL_ARB_gpu_shader_int64 : require' in the shader source"
+            }
+        }
+
         glHandle = GL43.glGenBuffers()
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (val mode = source.mode()) {
@@ -38,6 +48,7 @@ Readable<T> {
     private fun uploadData(data: T, usage: Int) {
         when (data) {
             is IntArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
+            is LongArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
             is FloatArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
             is DoubleArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, data, usage)
             is ByteArray -> GL43.glBufferData(GL43.GL_SHADER_STORAGE_BUFFER, ByteBuffer.wrap(data), usage)
@@ -48,36 +59,19 @@ Readable<T> {
     private fun elementSizeInBytes(): Int =
         when (source.type) {
             IntArray::class -> Int.SIZE_BYTES
+            LongArray::class -> Long.SIZE_BYTES
             FloatArray::class -> Float.SIZE_BYTES
             DoubleArray::class -> Double.SIZE_BYTES
             ByteArray::class -> 1
             else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
         }
 
-    @Suppress("UNCHECKED_CAST")
     override fun read(): T {
-        val elementCount = when (val mode = source.mode()) {
-            is StorageBuffer.Mode.Output -> mode.size
-            is StorageBuffer.Mode.ReadWrite -> when (val d = mode.data) {
-                is IntArray -> d.size
-                is FloatArray -> d.size
-                is DoubleArray -> d.size
-                is ByteArray -> d.size
-                else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
-            }
-            is StorageBuffer.Mode.Input -> error("Cannot read an input-only buffer")
-        }
-        val buffer: T =
-            when (source.type) {
-                IntArray::class -> IntArray(elementCount)
-                FloatArray::class -> FloatArray(elementCount)
-                DoubleArray::class -> DoubleArray(elementCount)
-                ByteArray::class -> ByteArray(elementCount)
-                else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
-            } as T
+        val buffer: T = prepareReadbackBuffer()
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (buffer) {
             is IntArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
+            is LongArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is FloatArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is DoubleArray -> GL43.glGetBufferSubData(GL43.GL_SHADER_STORAGE_BUFFER, 0, buffer)
             is ByteArray -> {
@@ -91,6 +85,33 @@ Readable<T> {
                 }
             }
         }
+        return buffer
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun OpenGLStorageBuffer<T>.prepareReadbackBuffer(): T {
+        val elementCount = when (val mode = source.mode()) {
+            is StorageBuffer.Mode.Output -> mode.size
+            is StorageBuffer.Mode.ReadWrite -> when (val d = mode.data) {
+                is IntArray -> d.size
+                is LongArray -> d.size
+                is FloatArray -> d.size
+                is DoubleArray -> d.size
+                is ByteArray -> d.size
+                else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
+            }
+
+            is StorageBuffer.Mode.Input -> error("Cannot read an input-only buffer")
+        }
+        val buffer: T =
+            when (source.type) {
+                IntArray::class -> IntArray(elementCount)
+                LongArray::class -> LongArray(elementCount)
+                FloatArray::class -> FloatArray(elementCount)
+                DoubleArray::class -> DoubleArray(elementCount)
+                ByteArray::class -> ByteArray(elementCount)
+                else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
+            } as T
         return buffer
     }
 }

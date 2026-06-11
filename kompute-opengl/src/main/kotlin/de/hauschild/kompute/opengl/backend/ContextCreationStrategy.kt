@@ -3,7 +3,6 @@ package de.hauschild.kompute.opengl.backend
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
-import java.lang.AutoCloseable
 
 /**
  * Represents the available context creation strategies.
@@ -11,7 +10,7 @@ import java.lang.AutoCloseable
  * System property `kompute.backend.egl`: if set, uses EGL instead of WGL for context creation —
  * required on headless systems without a native OpenGL driver (e.g. CI).
  */
-sealed interface ContextCreationStrategy: AutoCloseable {
+sealed interface ContextCreationStrategy {
     /**
      * Default [ContextCreationStrategy] where nothing additional is done.
      */
@@ -21,9 +20,6 @@ sealed interface ContextCreationStrategy: AutoCloseable {
         }
 
         override fun contextCreation() {
-            // nothing to do
-        }
-        override fun close() {
             // nothing to do
         }
     }
@@ -40,9 +36,6 @@ sealed interface ContextCreationStrategy: AutoCloseable {
         override fun contextCreation() {
             GL.destroy()
             GL.create { functionName -> GLFW.glfwGetProcAddress(functionName) }
-        }
-        override fun close() {
-            GL.destroy()
         }
     }
 
@@ -61,13 +54,19 @@ sealed interface ContextCreationStrategy: AutoCloseable {
         private val logger = KotlinLogging.logger {}
 
         /**
+         * Whether the EGL context creation API is active or not.
+         *
+         * @return `true` if the system property `kompute.backend.egl` is set, `false` otherwise
+         */
+        fun isEglActive(): Boolean = System.getProperty(EGL_PROPERTY) != null
+
+        /**
          * Get the context creation strategy to use. Defaults to WGL.
          *
          * @return [Wgl] by default and [Egl] if the system property `kompute.backend.egl` is set
          */
         fun get(): ContextCreationStrategy {
-            val eglActivated = System.getProperty(EGL_PROPERTY) != null
-            if(eglActivated){
+            if(isEglActive()){
                 logger.debug { "EGL context creation API enabled via $EGL_PROPERTY system property" }
                 return Egl
             }

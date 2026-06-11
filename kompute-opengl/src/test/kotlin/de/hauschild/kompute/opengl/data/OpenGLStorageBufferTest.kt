@@ -34,8 +34,9 @@ class OpenGLStorageBufferTest {
             .use { it.dispatch(3, inputBuffer, outputBuffer) }
 
         when (val result = result[outputBuffer]) {
-            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is IntArray -> assertArrayEquals(input as IntArray, result)
+            is LongArray -> assertArrayEquals(input as LongArray, result)
+            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
         }
     }
@@ -59,46 +60,56 @@ class OpenGLStorageBufferTest {
             .use { it.dispatch(3, buffer) }
 
         when (val result = result[buffer]) {
-            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is IntArray -> assertArrayEquals(input as IntArray, result)
+            is LongArray -> assertArrayEquals(input as LongArray, result)
+            is FloatArray -> assertArrayEquals(input as FloatArray, result)
             is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
         }
     }
 
     companion object {
-        private fun storageBufferSource(glslType: String) = """
-            #version 430 core
-            layout (local_size_x = 1) in;
+        private fun storageBufferSource(glslType: String): String {
+            val extension = if (glslType == "int64_t") "\n#extension GL_ARB_gpu_shader_int64 : require" else ""
+            return """
+                    #version 430 core$extension
 
-            layout (std430, binding = 0) readonly buffer InputBuffer {
-                $glslType values[];
-            } source;
+                    layout (local_size_x = 1) in;
 
-            layout (std430, binding = 1) writeonly buffer OutputBuffer {
-                $glslType values[];
-            } result;
+                    layout (std430, binding = 0) readonly buffer InputBuffer {
+                        $glslType values[];
+                    } source;
 
-            void main() {
-                result.values[gl_GlobalInvocationID.x] = source.values[gl_GlobalInvocationID.x];
-            }
-        """.trimIndent()
+                    layout (std430, binding = 1) writeonly buffer OutputBuffer {
+                        $glslType values[];
+                    } result;
 
-        private fun readWriteStorageBufferSource(glslType: String) = """
-            #version 430 core
-            layout (local_size_x = 1) in;
+                    void main() {
+                        result.values[gl_GlobalInvocationID.x] = source.values[gl_GlobalInvocationID.x];
+                    }
+                """.trimIndent()
+        }
 
-            layout (std430, binding = 0) buffer Buffer {
-                $glslType values[];
-            } data;
+        private fun readWriteStorageBufferSource(glslType: String): String {
+            val extension = if (glslType == "int64_t") "\n#extension GL_ARB_gpu_shader_int64 : require" else ""
+            return """
+                    #version 430 core$extension
 
-            void main() {
-                data.values[gl_GlobalInvocationID.x] = data.values[gl_GlobalInvocationID.x];
-            }
-        """.trimIndent()
+                    layout (local_size_x = 1) in;
+
+                    layout (std430, binding = 0) buffer Buffer {
+                        $glslType values[];
+                    } data;
+
+                    void main() {
+                        data.values[gl_GlobalInvocationID.x] = data.values[gl_GlobalInvocationID.x];
+                    }
+                """.trimIndent()
+        }
 
         @JvmStatic
         fun `storage buffer`(): Stream<Arguments> = Stream.of(
             Arguments.of("int", intArrayOf(1, 2, 3), IntArray::class),
+            Arguments.of("int64_t", longArrayOf(1, 2, 3), LongArray::class),
             Arguments.of("float", floatArrayOf(1f, 2f, 3f), FloatArray::class),
             Arguments.of("double", doubleArrayOf(1.0, 2.0, 3.0), DoubleArray::class),
         )
@@ -106,6 +117,7 @@ class OpenGLStorageBufferTest {
         @JvmStatic
         fun `read-write storage buffer`(): Stream<Arguments> = Stream.of(
             Arguments.of("int", intArrayOf(1, 2, 3), IntArray::class),
+            Arguments.of("int64_t", longArrayOf(1, 2, 3), LongArray::class),
             Arguments.of("float", floatArrayOf(1f, 2f, 3f), FloatArray::class),
             Arguments.of("double", doubleArrayOf(1.0, 2.0, 3.0), DoubleArray::class),
         )

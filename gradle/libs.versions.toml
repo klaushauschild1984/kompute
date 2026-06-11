@@ -7,7 +7,6 @@ kotlin-logging = "7.0.3"
 logback = "1.5.18"
 lwjgl = "3.3.4"
 oshi = "6.6.5"
-test-retry = "1.6.5"
 
 [libraries]
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
@@ -23,4 +22,3 @@ detekt     = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 diktat     = { id = "com.saveourtool.diktat", version.ref = "diktat" }
 jmh        = { id = "me.champeau.jmh", version.ref = "jmh" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-testRetry  = { id = "org.gradle.test-retry", version.ref = "test-retry" }

@@ -102,9 +102,9 @@ jobs:
 
             - name: Run checks (Windows)
               if: runner.os == 'Windows'
-              run: ./gradlew :kompute-opengl:check
               env:
                   JAVA_TOOL_OPTIONS: "-Dkompute.backend.egl=true"
+              run: ./gradlew :kompute-opengl:check
 
             - name: Upload JVM crash logs
               uses: actions/upload-artifact@v4

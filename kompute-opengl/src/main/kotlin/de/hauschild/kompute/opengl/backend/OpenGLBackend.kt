@@ -81,7 +81,7 @@ class OpenGLBackend : AbstractBackend() {
         if (windowHandle == MemoryUtil.NULL) {
             return
         }
-        contextCreationStrategy.close()
+        GL.destroy()
         GLFW.glfwDestroyWindow(windowHandle)
         GLFW.glfwTerminate()
         logger.debug { "OpenGL Backend closed" }
