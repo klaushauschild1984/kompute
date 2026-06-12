@@ -67,7 +67,7 @@ For asynchronous dispatch via Kotlin Coroutines, add `kompute-coroutines`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.klaushauschild1984.kompute:kompute-coroutines:v0.8.0")
+    implementation("com.github.klaushauschild1984.kompute:kompute-coroutines:v0.9.0")
 }
 ```
 
