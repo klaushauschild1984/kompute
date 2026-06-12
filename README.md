@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.klaushauschild1984.kompute:kompute-core:v0.8.0")
+    implementation("com.github.klaushauschild1984.kompute:kompute-core:v0.9.0")
 }
 ```
 

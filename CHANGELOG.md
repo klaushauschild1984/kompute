@@ -6,16 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [v0.9.0] — 2026-06-12
 
 ### Added
+- `Pipeline` — multi-stage compute dispatch without CPU round-trips between stages — [docs](README.md#pipeline)
+- `LongArray` support in `StorageBuffer` (GLSL `int64_t` / `uint64_t`, requires `GL_ARB_gpu_shader_int64`) — [docs](README.md#storage-buffer)
+- `kompute-coroutines` module — non-blocking dispatch via Kotlin Coroutines and the `.async()` extension — [docs](README.md#async-dispatch)
+- Windows support: EGL-based headless OpenGL context via Mesa3D in CI — [docs](README.md#backends)
 
 ### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
+- `ShaderResult` is now lazy — GPU read-back is deferred until first access, enabling GPU→GPU data flow in pipelines
+- `OpenGLStorageBuffer` reuses GPU buffer handles across dispatches via `WeakHashMap`, avoiding redundant uploads for intermediate buffers
+- `ContextCreationStrategy` — OpenGL context creation is now customizable and backend-independent
+- CI split into per-module jobs with OS matrix for the OpenGL module
+- LWJGL dependency management extracted into a shared Gradle convention plugin
+- Dependencies migrated to version catalogs
+- README simplified — detailed API docs moved to Wiki
 
 ## [v0.8.0] — 2026-06-09
 
