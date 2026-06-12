@@ -7,15 +7,18 @@ kotlin-logging = "7.0.3"
 logback = "1.5.18"
 lwjgl = "3.3.4"
 oshi = "6.6.5"
+kotlinx-coroutines = "1.10.2"
 
 [libraries]
-kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
-logback        = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-oshi           = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
-lwjgl-bom      = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
-lwjgl          = { module = "org.lwjgl:lwjgl" }
-lwjgl-glfw     = { module = "org.lwjgl:lwjgl-glfw" }
-lwjgl-opengl   = { module = "org.lwjgl:lwjgl-opengl" }
+kotlin-logging          = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
+logback                 = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+oshi                    = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
+lwjgl-bom               = { module = "org.lwjgl:lwjgl-bom", version.ref = "lwjgl" }
+lwjgl                   = { module = "org.lwjgl:lwjgl" }
+lwjgl-glfw              = { module = "org.lwjgl:lwjgl-glfw" }
+lwjgl-opengl            = { module = "org.lwjgl:lwjgl-opengl" }
+kotlinx-coroutines      = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines" }
 
 [plugins]
 detekt     = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
