@@ -7,9 +7,9 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 ## CI Status
 
-|                                                                               Build                                                                               |                  Core Coverage                   |                   OpenGL Coverage                    |                                     Last Commit                                      |                                Open Issues                                 |                                    Repo Size                                     |
-|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------:|:----------------------------------------------------:|:------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
-| [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) | ![Coverage Core](.github/badges/jacoco-core.svg) | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute) | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute) |
+|                                                                               Build                                                                               |                  Core Coverage                   |                   OpenGL Coverage                    |                     Coroutines Coverage                      |                                     Last Commit                                      |                                Open Issues                                 |                                    Repo Size                                     |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------:|:----------------------------------------------------:|:------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
+| [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) | ![Coverage Core](.github/badges/jacoco-core.svg) | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) | ![Coverage Coroutines](.github/badges/jacoco-coroutines.svg) | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute) | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute) |
 
 ## Requirements
 
@@ -61,6 +61,24 @@ dependencies {
 
 To run compute shaders a backend module and matching LWJGL natives are required — see [Wiki: Backends](https://github.com/klaushauschild1984/kompute/wiki/Backends).
 
+### Optional: Coroutines support
+
+For asynchronous dispatch via Kotlin Coroutines, add `kompute-coroutines`:
+
+```kotlin
+dependencies {
+    implementation("com.github.klaushauschild1984.kompute:kompute-coroutines:v0.8.0")
+}
+```
+
+```xml
+<dependency>
+    <groupId>com.github.klaushauschild1984.kompute</groupId>
+    <artifactId>kompute-coroutines</artifactId>
+    <version>v0.8.0</version>
+</dependency>
+```
+
 ## Usage
 
 Select a backend, attach a compute shader, configure storage buffers, dispatch, and read results.
@@ -71,6 +89,22 @@ Kompute.openGL().use { openGL ->
     val result = openGL
         .shader(ShaderSource.Code(glslCode))
         .compile()
+        .use { it.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output) }
+    println(result[output].contentToString())
+}
+```
+
+### Async dispatch
+
+With `kompute-coroutines`, dispatch suspends the caller instead of blocking the thread:
+
+```kotlin
+Kompute.openGL().use { openGL ->
+    val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
+    val result = openGL
+        .shader(ShaderSource.Code(glslCode))
+        .compile()
+        .async()
         .use { it.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output) }
     println(result[output].contentToString())
 }
