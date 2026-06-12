@@ -3,15 +3,15 @@ package de.hauschild.kompute.opengl.shader
 import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.NamedUniform
-import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.requireConfiguration
+import de.hauschild.kompute.core.result.ShaderResult
 import de.hauschild.kompute.core.shader.AbstractCompiledShader
-import de.hauschild.kompute.core.shader.ShaderResult
 import de.hauschild.kompute.opengl.Bindable
 import de.hauschild.kompute.opengl.Limits
+import de.hauschild.kompute.opengl.OpenGLResultReader
 import de.hauschild.kompute.opengl.Readable
 import de.hauschild.kompute.opengl.backend.OpenGLProgram
 import de.hauschild.kompute.opengl.data.OpenGLAtomicCounter
@@ -19,11 +19,10 @@ import de.hauschild.kompute.opengl.data.OpenGLImage2D
 import de.hauschild.kompute.opengl.data.OpenGLNamedUniform
 import de.hauschild.kompute.opengl.data.OpenGLStorageBuffer
 import de.hauschild.kompute.opengl.data.OpenGLUniformBufferObject
-import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL43
 
 /**
- * OpenGL implementation of a compiled compute shader.
+ * OpenGL implementation of [de.hauschild.kompute.core.shader.CompiledShader].
  *
  * Holds a linked [OpenGLProgram] and the GPU [de.hauschild.kompute.opengl.Limits] for runtime validation.
  * On [dispatch], the program is activated, all [de.hauschild.kompute.core.data.ShaderData]
@@ -82,11 +81,12 @@ class OpenGLCompiledShader(
     ): ShaderResult {
         validateDispatch(x, y, z, *data)
         program.activate()
-        val buffers = bindBuffers(data.toList())
-        return ShaderResult(readBack(buffers, x, y, z))
+        val bindables = bind(data.toList())
+        dispatch(x, y, z, bindables)
+        return ShaderResult(OpenGLResultReader(bindables))
     }
 
-    private fun bindBuffers(data: List<ShaderData>): List<Bindable> {
+    private fun bind(data: List<ShaderData>): List<Bindable> {
         val storageBuffer = mutableListOf<OpenGLStorageBuffer<*>>()
         val uniformBufferObjects = mutableListOf<OpenGLUniformBufferObject>()
         val namedUniforms = mutableListOf<OpenGLNamedUniform<*>>()
@@ -125,42 +125,25 @@ class OpenGLCompiledShader(
                 }
             }
         }
-        return storageBuffer + uniformBufferObjects + namedUniforms + atomicCounters + image2Ds
+        val bindable = storageBuffer + uniformBufferObjects + namedUniforms + atomicCounters + image2Ds
+        bindable.forEach { bindable -> bindable.bind() }
+        return bindable
     }
 
-    private fun readBack(
-        buffers: List<Bindable>,
+    private fun dispatch(
         x:Int,
         y:Int,
         z:Int,
-    ): MutableMap<OutputCapable<*>, Any> {
-        val results = mutableMapOf<OutputCapable<*>, Any>()
-        try {
-            buffers.forEach { buffer -> buffer.bind() }
-
-            logger.debug { "Dispatching computation with (x: $x, y: $y, z: $z)" }
-            GL43.glDispatchCompute(x, y, z)
-            GL43.glMemoryBarrier(
-                buffers.filterIsInstance<Readable<*>>()
-                    .fold(0) { acc, readable -> acc or readable.barrierBit }
-            )
-
-            logger.debug { "Read back results from GPU" }
-            buffers.filterIsInstance<Readable<*>>()
-                .filter { buffer -> buffer.source.isOutput }
-                .forEach { buffer -> results[buffer.source] = buffer.read() }
-
-            return results
-        } finally {
-            buffers.forEach { it.close() }
-        }
+        bindables: List<Bindable>
+    ) {
+        GL43.glDispatchCompute(x, y, z)
+        GL43.glMemoryBarrier(
+            bindables.filterIsInstance<Readable<*>>()
+                .fold(0) { acc, readable -> acc or readable.barrierBit }
+        )
     }
 
     override fun close() {
         program.close()
-    }
-
-    companion object {
-        private val logger = KotlinLogging.logger {}
     }
 }

@@ -3,6 +3,7 @@
   configuration:
     domainName: de.hauschild.kompute
     kotlinVersion: 2.1
+    srcDirectories: "main,test,testFixtures"
 
 # Float arithmetic is intentional and correct in GPU compute code
 - name: FLOAT_IN_ACCURATE_CALCULATIONS

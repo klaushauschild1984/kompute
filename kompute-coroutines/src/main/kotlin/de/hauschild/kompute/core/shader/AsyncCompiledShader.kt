@@ -1,6 +1,7 @@
 package de.hauschild.kompute.core.shader
 
 import de.hauschild.kompute.core.data.ShaderData
+import de.hauschild.kompute.core.result.ShaderResult
 
 /**
  * A compiled GPU compute shader that dispatches asynchronously via Kotlin Coroutines.

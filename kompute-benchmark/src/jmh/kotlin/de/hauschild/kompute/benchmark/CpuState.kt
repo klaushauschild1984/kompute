@@ -1,4 +1,4 @@
-package de.hauschild.kompute.benchmark
+package de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.openjdk.jmh.annotations.Level

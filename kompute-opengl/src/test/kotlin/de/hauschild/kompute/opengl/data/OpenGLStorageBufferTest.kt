@@ -31,9 +31,12 @@ class OpenGLStorageBufferTest {
                 Code(storageBufferSource(glslType)),
             )
             .compile()
-            .use { it.dispatch(3, inputBuffer, outputBuffer) }
+            .use { compiledShader ->
+                compiledShader.dispatch(3, inputBuffer, outputBuffer)
+                    .use { it[outputBuffer] }
+            }
 
-        when (val result = result[outputBuffer]) {
+        when (result) {
             is IntArray -> assertArrayEquals(input as IntArray, result)
             is LongArray -> assertArrayEquals(input as LongArray, result)
             is FloatArray -> assertArrayEquals(input as FloatArray, result)
@@ -57,9 +60,12 @@ class OpenGLStorageBufferTest {
         val result = backend
             .shader(Code(readWriteStorageBufferSource(glslType)))
             .compile()
-            .use { it.dispatch(3, buffer) }
+            .use { compiledShader ->
+                compiledShader.dispatch(3, buffer)
+                    .use { it[buffer] }
+            }
 
-        when (val result = result[buffer]) {
+        when (result) {
             is IntArray -> assertArrayEquals(input as IntArray, result)
             is LongArray -> assertArrayEquals(input as LongArray, result)
             is FloatArray -> assertArrayEquals(input as FloatArray, result)

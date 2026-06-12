@@ -27,8 +27,13 @@ class OpenGLImage2DTest {
                 }
                 """.trimIndent()
             )
-        ).compile()
-            .use { it.dispatch(2, 2, image2D) }[image2D].data
+        )
+            .compile()
+            .use { compiledShader ->
+                compiledShader.dispatch(2, 2, image2D)
+                    .use { it[image2D] }
+            }
+            .data
 
         assertEquals(16, bytes.size)
         assertContentEquals(ByteArray(16) {

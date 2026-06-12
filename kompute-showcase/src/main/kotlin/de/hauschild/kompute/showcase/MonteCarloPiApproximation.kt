@@ -47,9 +47,7 @@ class MonteCarloPiApproximation(
         val workgroups = totalThreads / LOCAL_SIZE
 
         val hits = AtomicCounter(0)
-        val result = compiledShader.dispatch(workgroups, hits)
-
-        return 4.0 * result[hits] / totalThreads
+        return compiledShader.dispatch(workgroups, hits).use { 4.0 * it[hits] / totalThreads }
     }
 
     override fun close() {
