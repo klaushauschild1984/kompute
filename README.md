@@ -54,7 +54,7 @@ dependencies {
     <dependency>
         <groupId>com.github.klaushauschild1984.kompute</groupId>
         <artifactId>kompute-core</artifactId>
-        <version>v0.8.0</version>
+        <version>v0.9.0</version>
     </dependency>
 </dependencies>
 ```
@@ -75,7 +75,7 @@ dependencies {
 <dependency>
     <groupId>com.github.klaushauschild1984.kompute</groupId>
     <artifactId>kompute-coroutines</artifactId>
-    <version>v0.8.0</version>
+    <version>v0.9.0</version>
 </dependency>
 ```
 
