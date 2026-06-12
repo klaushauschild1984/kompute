@@ -1,6 +1,7 @@
 package de.hauschild.kompute.core.shader
 
 import de.hauschild.kompute.core.data.ShaderData
+import de.hauschild.kompute.core.result.ShaderResult
 
 /**
  * Mock implementation of [CompiledShader] for testing.
@@ -32,7 +33,7 @@ internal class CompiledShaderMock : CompiledShader {
         vararg data: ShaderData
     ): ShaderResult {
         dispatched = true
-        return ShaderResult(emptyMap())
+        return ShaderResult{emptyMap()}
     }
 
     /**

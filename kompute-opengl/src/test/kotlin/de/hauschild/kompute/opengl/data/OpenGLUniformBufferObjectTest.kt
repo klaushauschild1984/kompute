@@ -50,8 +50,8 @@ class OpenGLUniformBufferObjectTest {
                                 .array()
                         ),
                         output,
-                    )
-                }[output]
+                    ).use { it[output] }
+                }
 
         assertArrayEquals(floatArrayOf(42f, 42f, 42f), result)
     }

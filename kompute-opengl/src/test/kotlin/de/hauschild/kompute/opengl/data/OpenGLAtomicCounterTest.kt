@@ -29,7 +29,10 @@ class OpenGLAtomicCounterTest {
                 )
             )
             .compile()
-            .use { it.dispatch(4, atomicCounter) }[atomicCounter]
+            .use { compiledShader ->
+                compiledShader.dispatch(4, atomicCounter)
+                    .use { it[atomicCounter] }
+            }
         assertEquals(256, value)
     }
 }

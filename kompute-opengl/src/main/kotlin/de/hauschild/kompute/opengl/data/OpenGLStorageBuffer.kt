@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 
 import java.nio.ByteBuffer
+import java.util.WeakHashMap
 
 /**
  * Wraps an OpenGL shader storage buffer object (SSBO) for a [StorageBuffer].
@@ -34,7 +35,14 @@ Readable<T> {
             }
         }
 
+        if (glHandles.containsKey(source)) {
+            glHandle = glHandles[source]!!
+            GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, source.index, glHandle)
+            return
+        }
+
         glHandle = GL43.glGenBuffers()
+        glHandles[source] = glHandle
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (val mode = source.mode()) {
             is StorageBuffer.Mode.Input -> uploadData(mode.data, GL43.GL_STATIC_DRAW)
@@ -113,5 +121,14 @@ Readable<T> {
                 else -> throw KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
             } as T
         return buffer
+    }
+
+    override fun close() {
+        glHandles.remove(source)
+        super.close()
+    }
+
+    companion object {
+        private val glHandles = WeakHashMap<StorageBuffer<*>, Int>()
     }
 }

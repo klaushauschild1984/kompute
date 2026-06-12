@@ -1,4 +1,4 @@
-package de.hauschild.kompute.benchmark
+package de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark
 
 import de.hauschild.kompute.core.Kompute
 import de.hauschild.kompute.core.backend.Backend

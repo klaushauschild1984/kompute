@@ -3,6 +3,7 @@ package de.hauschild.kompute.core.shader
 import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import de.hauschild.kompute.core.result.ShaderResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -42,7 +43,7 @@ class AbstractCompiledShaderTest {
 
     @Test
     fun `validation succeeds`() {
-        shader.dispatch(1, StorageBuffer.Companion<FloatArray>(0).size(1).asOutput())
+        shader.dispatch(1, StorageBuffer.Companion<FloatArray>(0).size(1).asOutput()).close()
     }
 
     private class TestCompiledShader : AbstractCompiledShader() {
@@ -53,7 +54,7 @@ class AbstractCompiledShaderTest {
             vararg data: ShaderData
         ): ShaderResult {
             validateDispatch(x, y, z, *data)
-            return ShaderResult(emptyMap())
+            return ShaderResult{ emptyMap() }
         }
 
         override fun close() {

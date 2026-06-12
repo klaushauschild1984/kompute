@@ -30,9 +30,12 @@ class OpenGLNamedUniformTest {
         val result = backend
             .shader(Code(namedUniformSource(glslType)))
             .compile()
-            .use { it.dispatch(1, uniform, output) }
+            .use { compiledShader ->
+                compiledShader.dispatch(1, uniform, output)
+                    .use { it[output] }
+            }
 
-        when (val result = result[output]) {
+        when (result) {
             is Int -> assertEquals(value as Int, result)
             is Float -> assertEquals(value as Float, result)
             is Double -> assertEquals(value as Double, result)

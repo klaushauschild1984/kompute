@@ -12,7 +12,7 @@ class AsyncCompiledShaderDecoratorTest {
         val asyncCompiledShader = compiledShader.async()
 
         runTest {
-            asyncCompiledShader.dispatch(0, 0, 0)
+            asyncCompiledShader.dispatch(0, 0, 0).close()
             asyncCompiledShader.close()
         }
 

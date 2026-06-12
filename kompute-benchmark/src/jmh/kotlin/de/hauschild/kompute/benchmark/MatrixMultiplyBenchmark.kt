@@ -1,4 +1,4 @@
-package de.hauschild.kompute.benchmark
+package de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark
 
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.CompiledShader
@@ -65,7 +65,7 @@ open class MatrixMultiplyBenchmark {
             StorageBuffer<FloatArray>(0).data(matrix.a),
             StorageBuffer<FloatArray>(1).data(matrix.b),
             StorageBuffer<FloatArray>(2).size(matrix.size * matrix.size).asOutput(),
-        )
+        ).close()
     }
 
     /**
