@@ -27,41 +27,69 @@ jobs:
               uses: gradle/actions/setup-gradle@v4
 
             - name: Run checks
-              run: ./gradlew :kompute-core:check
+              run: ./gradlew :kompute-core:check :kompute-coroutines:check
 
-            - name: Upload Detekt results
+            - name: Upload Detekt results (core)
               uses: github/codeql-action/upload-sarif@v4
               if: always() && hashFiles('kompute-core/build/reports/detekt/detekt.sarif') != ''
               with:
                   sarif_file: kompute-core/build/reports/detekt/detekt.sarif
                   category: detekt-core
 
-            - name: Upload Diktat results
+            - name: Upload Diktat results (core)
               uses: github/codeql-action/upload-sarif@v4
               if: always() && hashFiles('kompute-core/build/reports/diktat/diktat.sarif') != ''
               with:
                   sarif_file: kompute-core/build/reports/diktat/diktat.sarif
                   category: diktat-core
 
+            - name: Upload Detekt results (coroutines)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-coroutines/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-coroutines/build/reports/detekt/detekt.sarif
+                  category: detekt-coroutines
+
+            - name: Upload Diktat results (coroutines)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-coroutines/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-coroutines/build/reports/diktat/diktat.sarif
+                  category: diktat-coroutines
+
             - name: Test Report
               uses: dorny/test-reporter@v1
               if: always()
               with:
                   name: Tests (core)
-                  path: kompute-core/build/test-results/test/*.xml
+                  path: |
+                      kompute-core/build/test-results/test/*.xml
+                      kompute-coroutines/build/test-results/test/*.xml
                   reporter: java-junit
 
-            - name: Generate Coverage Badge
+            - name: Generate Coverage Badge (core)
               uses: cicirello/jacoco-badge-generator@v2
               with:
                   jacoco-csv-file: kompute-core/build/reports/jacoco/test/jacocoTestReport.csv
                   coverage-badge-filename: jacoco-core.svg
 
-            - name: Commit Badge
+            - name: Commit Badge (core)
               uses: stefanzweifel/git-auto-commit-action@v5
               with:
                   commit_message: "Update core coverage badge"
                   file_pattern: .github/badges/jacoco-core.svg
+
+            - name: Generate Coverage Badge (coroutines)
+              uses: cicirello/jacoco-badge-generator@v2
+              with:
+                  jacoco-csv-file: kompute-coroutines/build/reports/jacoco/test/jacocoTestReport.csv
+                  coverage-badge-filename: jacoco-coroutines.svg
+
+            - name: Commit Badge (coroutines)
+              uses: stefanzweifel/git-auto-commit-action@v5
+              with:
+                  commit_message: "Update coroutines coverage badge"
+                  file_pattern: .github/badges/jacoco-coroutines.svg
 
     opengl:
         runs-on: ${{ matrix.os }}
