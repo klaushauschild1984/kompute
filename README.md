@@ -89,8 +89,11 @@ Kompute.openGL().use { openGL ->
     val result = openGL
         .shader(ShaderSource.Code(glslCode))
         .compile()
-        .use { it.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output) }
-    println(result[output].contentToString())
+        .use { shader ->
+            shader.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output)
+                .use { it[output] }
+        }
+    println(result.contentToString())
 }
 ```
 
@@ -105,8 +108,11 @@ Kompute.openGL().use { openGL ->
         .shader(ShaderSource.Code(glslCode))
         .compile()
         .async()
-        .use { it.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output) }
-    println(result[output].contentToString())
+        .use { shader ->
+            shader.dispatch(64, StorageBuffer<FloatArray>(0).data(input), output)
+                .use { it[output] }
+        }
+    println(result.contentToString())
 }
 ```
 
