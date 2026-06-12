@@ -57,14 +57,20 @@ jobs:
                   sarif_file: kompute-coroutines/build/reports/diktat/diktat.sarif
                   category: diktat-coroutines
 
-            - name: Test Report
+            - name: Test Report (core)
               uses: dorny/test-reporter@v1
               if: always()
               with:
                   name: Tests (core)
-                  path: |
-                      kompute-core/build/test-results/test/*.xml
-                      kompute-coroutines/build/test-results/test/*.xml
+                  path: kompute-core/build/test-results/test/*.xml
+                  reporter: java-junit
+
+            - name: Test Report (coroutines)
+              uses: dorny/test-reporter@v1
+              if: always()
+              with:
+                  name: Tests (coroutines)
+                  path: kompute-coroutines/build/test-results/test/*.xml
                   reporter: java-junit
 
             - name: Generate Coverage Badge (core)
