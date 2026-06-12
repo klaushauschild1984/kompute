@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.lwjgl.opengl)
 
     testFixturesImplementation(kotlin("test-junit5"))
+    testImplementation(testFixtures(project(":kompute-opengl")))
 }
 
 tasks.test {

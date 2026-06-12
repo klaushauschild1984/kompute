@@ -1,5 +1,8 @@
 - name: DIKTAT_COMMON
   enabled: true
+  configuration:
+    domainName: de.hauschild.kompute
+    kotlinVersion: 2.1
 
 # Float arithmetic is intentional and correct in GPU compute code
 - name: FLOAT_IN_ACCURATE_CALCULATIONS
