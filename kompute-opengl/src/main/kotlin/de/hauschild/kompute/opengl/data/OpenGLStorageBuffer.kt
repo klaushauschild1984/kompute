@@ -38,6 +38,7 @@ Readable<T> {
         if (glHandles.containsKey(source)) {
             glHandle = glHandles[source]!!
             GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, source.index, glHandle)
+            return
         }
 
         glHandle = GL43.glGenBuffers()

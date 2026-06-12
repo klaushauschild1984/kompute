@@ -18,7 +18,7 @@ where T : ShaderData, T : IndexedBinding{
     /**
      * The OpenGL buffer object handle.
      */
-    protected var glHandle: Int = 0
+    internal var glHandle: Int = 0
 
     /**
      * Validates that the buffer's binding index is within the GPU's supported range.
