@@ -34,7 +34,7 @@ jobs:
             - name: Set release version
               run: |
                   sed -i 's/version = ".*-SNAPSHOT"/version = "${{ inputs.version }}"/' build.gradle.kts
-                  sed -i 's/:kompute-opengl:v[0-9.]*/:kompute-opengl:v${{ inputs.version }}/' README.md
+                  sed -i 's/\(kompute-[a-z-]*\):v[0-9.]*/\1:v${{ inputs.version }}/g' README.md
                   sed -i 's|<version>v[0-9.]*</version>|<version>v${{ inputs.version }}</version>|' README.md
                   VERSION="${{ inputs.version }}"
                   DATE=$(date +%Y-%m-%d)
