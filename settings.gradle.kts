@@ -6,4 +6,7 @@ include(
     "kompute-benchmark",
     "kompute-showcase",
     "kompute-coroutines",
+    "kompute-serialization",
+    "kompute-serialization:processor",
+    "kompute-serialization:test"
 )
