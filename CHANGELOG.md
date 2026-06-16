@@ -6,16 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [v0.10.0] — 2026-06-16
 
 ### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-### Security
+- GPU struct serialization — annotate data classes with `@GpuStruct` for automatic std140/std430 layout without reflection — [docs](README.md#optional-gpu-struct-serialization)
 
 ## [v0.9.0] — 2026-06-12
 
