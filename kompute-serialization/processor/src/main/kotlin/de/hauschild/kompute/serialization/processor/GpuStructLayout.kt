@@ -94,6 +94,14 @@ class GpuStructLayout(private val logger: KSPLogger) {
         return (alignment - (rawSize % alignment)) % alignment
     }
 
+    /**
+     * Determines whether the layout of the struct is dependent on the values of the given properties.
+     *
+     * @param properties the properties to check
+     */
+    fun isLayoutDependent(properties: List<KSPropertyDeclaration>): Boolean =
+        properties.any { descriptorFor(it).isLayoutDependent() }
+
     private fun computeStructSizeOf(declaration: KSClassDeclaration, layout: Layout): Int {
         val innerProperties = gpuFields(declaration)
         val innerLayout = computeLayout(innerProperties, layout)
@@ -127,7 +135,9 @@ class GpuStructLayout(private val logger: KSPLogger) {
                             )
                             4
                         }
-                    StructArrayDescriptor(elemDecl, alignment, ::computeStructSizeOf)
+                    StructArrayDescriptor(elemDecl, alignment, ::computeStructSizeOf) {
+                        isLayoutDependent(gpuFields(it))
+                    }
                 } else {
                     logger.error("Unsupported array element type: ${property.type}", property)
                     ScalarDescriptor
@@ -144,7 +154,9 @@ class GpuStructLayout(private val logger: KSPLogger) {
                             )
                             4
                         }
-                    GpuStructDescriptor(decl, alignment, ::computeStructSizeOf)
+                    GpuStructDescriptor(decl, alignment, ::computeStructSizeOf) {
+                        isLayoutDependent(gpuFields(it))
+                    }
                 } else {
                     logger.error("Unsupported type: ${property.type}", property)
                     ScalarDescriptor

@@ -67,6 +67,13 @@ interface GpuTypeDescriptor {
      * @return stride in bytes, or 0 for non-array types
      */
     fun elementStride(layout: Layout): Int = 0
+
+    /**
+     * Specifies whether this type is layout-dependent, i.e. depends on the GPU memory layout standard.
+     *
+     * @return 'true' if this type is layout-dependent, 'false' otherwise
+     */
+    fun isLayoutDependent(): Boolean = false
 }
 
 /**
@@ -82,16 +89,19 @@ object ScalarDescriptor : GpuTypeDescriptor {
  *
  * @param declaredAlignment alignment in bytes from its [de.hauschild.kompute.serialization.annotation.Align]
  * @param computeStructSize computes the serialized size of [declaration] for a given layout
+ * @param checkLayoutDependent checks if the struct is layout-dependent
  * @property declaration the nested struct's class declaration
  */
 class GpuStructDescriptor(
     val declaration: KSClassDeclaration,
     private val declaredAlignment: Int,
     private val computeStructSize: (KSClassDeclaration, Layout) -> Int,
+    private val checkLayoutDependent: (KSClassDeclaration) -> Boolean,
 ) : GpuTypeDescriptor {
     override fun isGpuStruct() = true
     override fun alignment(layout: Layout) = declaredAlignment
     override fun size(layout: Layout) = computeStructSize(declaration, layout)
+    override fun isLayoutDependent() = checkLayoutDependent(declaration)
 }
 
 /**
@@ -103,6 +113,7 @@ object PrimitiveArrayDescriptor : GpuTypeDescriptor {
     override fun size(layout: Layout) = 0
     override fun elementSize(layout: Layout) = 4
     override fun elementStride(layout: Layout) = alignment(layout)
+    override fun isLayoutDependent() = true
 }
 
 /**
@@ -111,11 +122,13 @@ object PrimitiveArrayDescriptor : GpuTypeDescriptor {
  * @param elementDeclaration the element struct's class declaration
  * @param elementDeclaredAlignment alignment in bytes, from [de.hauschild.kompute.serialization.annotation.Align]
  * @param computeStructSize computes the serialized size of [elementDeclaration] for a given layout
+ * @param checkLayoutDependent
  */
 class StructArrayDescriptor(
     private val elementDeclaration: KSClassDeclaration,
     private val elementDeclaredAlignment: Int,
     private val computeStructSize: (KSClassDeclaration, Layout) -> Int,
+    private val checkLayoutDependent: (KSClassDeclaration) -> Boolean,
 ) : GpuTypeDescriptor {
     override fun isArray() = true
     override fun isElementGpuStruct() = true
@@ -129,4 +142,6 @@ class StructArrayDescriptor(
         val remainder = elemSize % align
         return if (remainder == 0) elemSize else elemSize + (align - remainder)
     }
+    override fun isLayoutDependent() =
+        elementDeclaredAlignment < 16 || checkLayoutDependent(elementDeclaration)
 }

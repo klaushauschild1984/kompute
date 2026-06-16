@@ -1,5 +1,6 @@
 package de.hauschild.kompute.serialization
 
+import de.hauschild.kompute.serialization.annotation.Layout
 import de.hauschild.kompute.serialization.fixture.DirectionalLight
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
@@ -82,6 +83,17 @@ class SerializationTest {
         buffer.position(16)
         assertEquals(2f, buffer.float)
         buffer.position(32)
+        assertEquals(3f, buffer.float)
+    }
+
+    @Test
+    fun `float array std430`() {
+        val bytes = FloatBuffer(floatArrayOf(1f, 2f, 3f)).toByteArray(Layout.STD430)
+
+        assertEquals(12, bytes.size)
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        assertEquals(1f, buffer.float)
+        assertEquals(2f, buffer.float)
         assertEquals(3f, buffer.float)
     }
 
