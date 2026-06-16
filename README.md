@@ -7,9 +7,9 @@ tasks, such as machine learning inference, physics simulations, and data process
 
 ## CI Status
 
-|                                                                               Build                                                                               |                  Core Coverage                   |                   OpenGL Coverage                    |                     Coroutines Coverage                      |                                     Last Commit                                      |                                Open Issues                                 |                                    Repo Size                                     |
-|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------:|:----------------------------------------------------:|:------------------------------------------------------------:|:------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
-| [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) | ![Coverage Core](.github/badges/jacoco-core.svg) | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) | ![Coverage Coroutines](.github/badges/jacoco-coroutines.svg) | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute) | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute) |
+|                                                                               Build                                                                               |                  Core Coverage                   |                   OpenGL Coverage                    |                                     Last Commit                                      |                                Open Issues                                 |                                    Repo Size                                     |
+|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------:|:----------------------------------------------------:|:------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|
+| [![CI](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml/badge.svg)](https://github.com/klaushauschild1984/kompute/actions/workflows/ci.yml) | ![Coverage Core](.github/badges/jacoco-core.svg) | ![Coverage OpenGL](.github/badges/jacoco-opengl.svg) | ![Last Commit](https://img.shields.io/github/last-commit/klaushauschild1984/kompute) | ![Issues](https://img.shields.io/github/issues/klaushauschild1984/kompute) | ![Repo Size](https://img.shields.io/github/repo-size/klaushauschild1984/kompute) |
 
 ## Requirements
 
@@ -77,6 +77,44 @@ dependencies {
     <artifactId>kompute-coroutines</artifactId>
     <version>v0.9.0</version>
 </dependency>
+```
+
+### Optional: GPU struct serialization
+
+For automatic `toByteArray()` serialization of GPU structs with std140/std430 memory layout, add `kompute-serialization` and its KSP processor:
+
+```kotlin
+dependencies {
+    implementation("com.github.klaushauschild1984.kompute:kompute-serialization:v0.9.0")
+    ksp("com.github.klaushauschild1984.kompute:kompute-serialization-processor:v0.9.0")
+}
+```
+
+```xml
+<dependency>
+    <groupId>com.github.klaushauschild1984.kompute</groupId>
+    <artifactId>kompute-serialization</artifactId>
+    <version>v0.9.0</version>
+</dependency>
+```
+
+Annotate your data classes with `@GpuStruct` and `@GpuField` — the processor generates a `toByteArray()` extension at compile time, with no runtime reflection:
+
+```kotlin
+@GpuStruct
+data class DirectionalLight(
+    @GpuField val direction: Vector3f,
+    @GpuField val intensity: Float,
+    @GpuField val color: Vector3f,
+    @GpuField val ambient: Float,
+)
+
+val bytes = DirectionalLight(
+    direction = Vector3f(1f, 0f, 0f),
+    intensity = 0.8f,
+    color = Vector3f(1f, 1f, 1f),
+    ambient = 0.1f,
+).toByteArray()
 ```
 
 ## Usage

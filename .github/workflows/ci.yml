@@ -27,7 +27,7 @@ jobs:
               uses: gradle/actions/setup-gradle@v4
 
             - name: Run checks
-              run: ./gradlew :kompute-core:check :kompute-coroutines:check
+              run: ./gradlew :kompute-core:check :kompute-coroutines:check :kompute-serialization:check :kompute-serialization:processor:check :kompute-serialization:test:check
 
             - name: Upload Detekt results (core)
               uses: github/codeql-action/upload-sarif@v4
@@ -73,6 +73,56 @@ jobs:
                   path: kompute-coroutines/build/test-results/test/*.xml
                   reporter: java-junit
 
+            - name: Upload Detekt results (serialization)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-serialization/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-serialization/build/reports/detekt/detekt.sarif
+                  category: detekt-serialization
+
+            - name: Upload Diktat results (serialization)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-serialization/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-serialization/build/reports/diktat/diktat.sarif
+                  category: diktat-serialization
+
+            - name: Upload Detekt results (serialization:processor)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-serialization/processor/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-serialization/processor/build/reports/detekt/detekt.sarif
+                  category: detekt-serialization-processor
+
+            - name: Upload Diktat results (serialization:processor)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-serialization/processor/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-serialization/processor/build/reports/diktat/diktat.sarif
+                  category: diktat-serialization-processor
+
+            - name: Upload Detekt results (serialization:test)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-serialization/test/build/reports/detekt/detekt.sarif') != ''
+              with:
+                  sarif_file: kompute-serialization/test/build/reports/detekt/detekt.sarif
+                  category: detekt-serialization-test
+
+            - name: Upload Diktat results (serialization:test)
+              uses: github/codeql-action/upload-sarif@v4
+              if: always() && hashFiles('kompute-serialization/test/build/reports/diktat/diktat.sarif') != ''
+              with:
+                  sarif_file: kompute-serialization/test/build/reports/diktat/diktat.sarif
+                  category: diktat-serialization-test
+
+            - name: Test Report (serialization)
+              uses: dorny/test-reporter@v1
+              if: always()
+              with:
+                  name: Tests (serialization)
+                  path: kompute-serialization/test/build/test-results/test/*.xml
+                  reporter: java-junit
+
             - name: Generate Coverage Badge (core)
               uses: cicirello/jacoco-badge-generator@v2
               with:
@@ -85,17 +135,6 @@ jobs:
                   commit_message: "Update core coverage badge"
                   file_pattern: .github/badges/jacoco-core.svg
 
-            - name: Generate Coverage Badge (coroutines)
-              uses: cicirello/jacoco-badge-generator@v2
-              with:
-                  jacoco-csv-file: kompute-coroutines/build/reports/jacoco/test/jacocoTestReport.csv
-                  coverage-badge-filename: jacoco-coroutines.svg
-
-            - name: Commit Badge (coroutines)
-              uses: stefanzweifel/git-auto-commit-action@v5
-              with:
-                  commit_message: "Update coroutines coverage badge"
-                  file_pattern: .github/badges/jacoco-coroutines.svg
 
     opengl:
         runs-on: ${{ matrix.os }}
