@@ -5,17 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [v0.10.1] — 2026-06-19
 
-### Added
-
 ### Changed
-
-### Deprecated
-
-### Removed
+- `Stage` — no longer closes its `CompiledShader` after dispatch; shader lifetime is the caller's responsibility, enabling reuse across pipeline executions
 
 ### Fixed
-
-### Security
+- `OpenGLStorageBuffer` — `close()` deleted the GL buffer after every dispatch result, destroying persistent GPU-side data (e.g. particle state) across frames
+- `OpenGLAtomicCounter` — `bind()` allocated a new GL buffer on every call, resetting the counter and losing accumulated state
 
 ## [v0.10.0] — 2026-06-16
 
