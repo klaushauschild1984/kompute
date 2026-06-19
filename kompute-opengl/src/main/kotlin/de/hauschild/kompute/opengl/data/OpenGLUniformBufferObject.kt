@@ -25,4 +25,6 @@ class OpenGLUniformBufferObject(
         }
         GL43.glBindBufferBase(GL43.GL_UNIFORM_BUFFER, source.index, glHandle)
     }
+
+    override fun close() = deleteGlBuffer()
 }

@@ -53,6 +53,14 @@ Readable<Image2DResult> {
             GL11.GL_UNSIGNED_BYTE,
             null as ByteBuffer?
         )
+        val zeros = MemoryUtil.memCalloc(source.width!! * source.height!! * source.format.bytesPerPixel)
+        try {
+            GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0,
+                source.width!!, source.height!!,
+                openGLFormat.pixelFormat, GL11.GL_UNSIGNED_BYTE, zeros)
+        } finally {
+            MemoryUtil.memFree(zeros)
+        }
 
         GL42.glBindImageTexture(
             source.index,

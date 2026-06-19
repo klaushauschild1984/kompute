@@ -32,10 +32,18 @@ where T : ShaderData, T : IndexedBinding{
         }
     }
 
-    override fun close() {
+    /**
+     * Deletes the underlying GL buffer object.
+     *
+     * Subclasses that manage deletion directly (e.g. transient buffers) should call this from [close].
+     * Subclasses using [de.hauschild.kompute.opengl.data.GlBufferCache] must override [close] with a no-op instead.
+     */
+    protected fun deleteGlBuffer() {
         if (glHandle == 0) {
             return
         }
         GL43.glDeleteBuffers(glHandle)
     }
+
+    abstract override fun close()
 }

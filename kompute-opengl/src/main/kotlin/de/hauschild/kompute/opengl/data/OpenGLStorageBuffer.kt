@@ -3,6 +3,7 @@ package de.hauschild.kompute.opengl.data
 import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import de.hauschild.kompute.core.exception.requireBackendInitialization
 import de.hauschild.kompute.core.exception.requireConfiguration
 import de.hauschild.kompute.opengl.Buffer
 import de.hauschild.kompute.opengl.Readable
@@ -11,10 +12,12 @@ import org.lwjgl.opengl.GL43
 import org.lwjgl.system.MemoryUtil
 
 import java.nio.ByteBuffer
-import java.util.WeakHashMap
 
 /**
  * Wraps an OpenGL shader storage buffer object (SSBO) for a [StorageBuffer].
+ *
+ * GL buffer lifetime is managed by [GlBufferCache]: allocated on first [bind], deleted when
+ * the source becomes unreachable. [close] is intentionally a no-op.
  *
  * Note: [LongArray] requires `#extension GL_ARB_gpu_shader_int64 : require` in the shader source.
  *
@@ -29,20 +32,21 @@ Readable<T> {
     override val barrierBit: Int = GL43.GL_SHADER_STORAGE_BARRIER_BIT
 
     override fun bind() {
+        cache.flushDeletions()
+
         if (source.type == LongArray::class) {
             requireConfiguration(GL.getCapabilities().GL_ARB_gpu_shader_int64) {
                 "LongArray requires '#extension GL_ARB_gpu_shader_int64 : require' in the shader source"
             }
         }
 
-        if (glHandles.containsKey(source)) {
-            glHandle = glHandles[source]!!
+        val (handle, isNew) = cache.getOrAllocate(source)
+        glHandle = handle
+        if (!isNew) {
             GL43.glBindBufferBase(GL43.GL_SHADER_STORAGE_BUFFER, source.index, glHandle)
             return
         }
 
-        glHandle = GL43.glGenBuffers()
-        glHandles[source] = glHandle
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (val mode = source.mode()) {
             is StorageBuffer.Mode.Input -> uploadData(mode.data, GL43.GL_STATIC_DRAW)
@@ -75,6 +79,7 @@ Readable<T> {
         }
 
     override fun read(): T {
+        requireBackendInitialization(glHandle != 0) { "bind() must be called before read()" }
         val buffer: T = prepareReadbackBuffer()
         GL43.glBindBuffer(GL43.GL_SHADER_STORAGE_BUFFER, glHandle)
         when (buffer) {
@@ -124,11 +129,10 @@ Readable<T> {
     }
 
     override fun close() {
-        glHandles.remove(source)
-        super.close()
+        // GL buffer lifetime is managed by Cleaner — intentional no-op
     }
 
     companion object {
-        private val glHandles = WeakHashMap<StorageBuffer<*>, Int>()
+        private val cache = GlBufferCache<StorageBuffer<*>>()
     }
 }
