@@ -9,9 +9,9 @@ import de.hauschild.kompute.core.result.ShaderResult
  * on the GPU — their handles are reused automatically and no read-back occurs until the final
  * stage result is accessed via [PipelineResult].
  *
- * Each stage's [de.hauschild.kompute.core.shader.CompiledShader] is closed immediately after
- * its dispatch. All [de.hauschild.kompute.core.result.ShaderResult]s are released when
- * [PipelineResult.close] is called.
+ * Each stage's [de.hauschild.kompute.core.shader.CompiledShader] is NOT closed — its lifetime
+ * is managed by the caller. All [de.hauschild.kompute.core.result.ShaderResult]s are released
+ * when [PipelineResult.close] is called.
  */
 class Pipeline {
     private val results = mutableListOf<ShaderResult>()
@@ -29,7 +29,6 @@ class Pipeline {
     fun execute(vararg stages: Stage): PipelineResult {
         stages.forEach { stage ->
             val result = stage.shader.dispatch(stage.x, stage.y, stage.z, *stage.data.toTypedArray())
-            stage.close()
             results.add(result)
         }
         return PipelineResult(this, results.last())

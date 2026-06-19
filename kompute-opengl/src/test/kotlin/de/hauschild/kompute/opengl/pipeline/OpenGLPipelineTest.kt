@@ -18,20 +18,17 @@ class OpenGLPipelineTest {
         val intermediate = StorageBuffer<FloatArray>(1).data(floatArrayOf(0f, 0f, 0f)).asOutput()
         val output = StorageBuffer<FloatArray>(2).size(3).asOutput()
 
-        val stage1 = Stage(
-            shader = backend.shader(Code(doubleSource(readBinding = 0, writeBinding = 1))).compile(),
-            x = 3,
-            data = listOf(input, intermediate),
-        )
-        val stage2 = Stage(
-            shader = backend.shader(Code(doubleSource(readBinding = 1, writeBinding = 2))).compile(),
-            x = 3,
-            data = listOf(intermediate, output),
-        )
+        val shader1 = backend.shader(Code(doubleSource(readBinding = 0, writeBinding = 1))).compile()
+        val shader2 = backend.shader(Code(doubleSource(readBinding = 1, writeBinding = 2))).compile()
+        val stage1 = Stage(shader = shader1, x = 3, data = listOf(input, intermediate))
+        val stage2 = Stage(shader = shader2, x = 3, data = listOf(intermediate, output))
 
         Pipeline().execute(stage1, stage2).use { result ->
             assertArrayEquals(floatArrayOf(4f, 8f, 12f), result[output], 0.001f)
         }
+
+        shader1.close()
+        shader2.close()
     }
 
     companion object {

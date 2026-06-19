@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 
 class PipelineTest {
     @Test
-    fun `stage shader is closed after dispatch`() {
+    fun `stage shader is not closed after dispatch`() {
         val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
         val closed = AtomicBoolean(false)
         val shader = object : AbstractCompiledShader() {
@@ -32,7 +32,7 @@ class PipelineTest {
 
         Pipeline().execute(Stage(shader = shader, x = 1, data = listOf(output))).close()
 
-        assertTrue(closed.get())
+        assertTrue(!closed.get())
     }
 
     @Test

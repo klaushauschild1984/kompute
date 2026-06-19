@@ -6,7 +6,7 @@ import de.hauschild.kompute.core.shader.CompiledShader
 /**
  * A single step in a [Pipeline], combining a compiled shader with its dispatch parameters.
  *
- * The [shader] is closed automatically after its dispatch completes. [data] may include
+ * The [shader] is not closed automatically after its dispatch completes. [data] may include
  * intermediate [de.hauschild.kompute.core.data.StorageBuffer]s shared with other stages —
  * their GPU handles are retained across stage boundaries without CPU round-trips.
  *
@@ -22,4 +22,4 @@ class Stage(
     val y: Int = 1,
     val z: Int = 1,
     val data: List<ShaderData>
-) : AutoCloseable by shader
+)
