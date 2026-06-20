@@ -95,7 +95,8 @@ class GpuStructCodeGenerator(private val layout: GpuStructLayout) {
                 }
                 codeBlockBuilder.endControlFlow()
             } else if (field.isGpuStructField()) {
-                codeBlockBuilder.addStatement("writer.write(this.%L.toByteArray())", field.property.simpleName.asString())
+                codeBlockBuilder.addStatement("writer.write(this.%L.toByteArray())",
+                    field.property.simpleName.asString())
             } else {
                 codeBlockBuilder.addStatement("writer.write(this.%L)", field.property.simpleName.asString())
             }
