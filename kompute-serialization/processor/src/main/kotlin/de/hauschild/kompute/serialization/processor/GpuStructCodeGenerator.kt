@@ -4,6 +4,12 @@ import de.hauschild.kompute.serialization.GpuStructSerializer
 import de.hauschild.kompute.serialization.annotation.Layout
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.CodeBlock
+import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.asClassName
 
 /**
  * Generates the `toByteArray()` extension function for [KSClassDeclaration]s
@@ -24,74 +30,78 @@ class GpuStructCodeGenerator(private val layout: GpuStructLayout) {
         val properties = layout.gpuFields(classDeclaration)
         val layoutDependent = layout.isLayoutDependent(properties)
 
-        return buildString {
-            appendLine("package $packageName")
-            appendLine()
-            appendLine("import ${GpuStructSerializer::class.qualifiedName}")
-            if (layoutDependent) {
-                appendLine("import ${Layout::class.qualifiedName}")
+        val serializerClass = GpuStructSerializer::class.asClassName()
+        val receiverClass = ClassName(packageName, className)
+        val layoutClass =  Layout::class.asClassName()
+
+        val bodyBuilder = CodeBlock.builder()
+        val funSpecBuilder = FunSpec.builder("toByteArray")
+            .receiver(receiverClass)
+            .returns(ByteArray::class)
+
+        if (!layoutDependent) {
+            val fieldLayouts = layout.computeLayout(properties, Layout.STD140)
+            val (bufferSizeExpr, trailingPadding) = computeBufferSizing(fieldLayouts, properties, Layout.STD140)
+            bodyBuilder.addStatement("val writer = %T(%L)", serializerClass, bufferSizeExpr)
+            generateBody(bodyBuilder, fieldLayouts, trailingPadding)
+            bodyBuilder.addStatement("return writer.toByteArray()")
+        } else {
+            funSpecBuilder.addParameter(
+                ParameterSpec.builder("layout", layoutClass)
+                    .defaultValue("%T.STD140", layoutClass)
+                    .build()
+            )
+            bodyBuilder.beginControlFlow("return when (layout)")
+            for (memLayout in Layout.entries) {
+                val fieldLayouts = layout.computeLayout(properties, memLayout)
+                val (bufferSizeExpr, trailingPadding) = computeBufferSizing(fieldLayouts, properties, memLayout)
+                bodyBuilder.beginControlFlow("%T.%L ->", layoutClass, memLayout)
+                bodyBuilder.addStatement("val writer = %T(%L)", serializerClass, bufferSizeExpr)
+                generateBody(bodyBuilder, fieldLayouts, trailingPadding)
+                bodyBuilder.addStatement("writer.toByteArray()")
+                bodyBuilder.endControlFlow()
             }
-            appendLine()
-            if (!layoutDependent) {
-                val fieldLayouts = layout.computeLayout(properties, Layout.STD140)
-                val (bufferSizeExpr, trailingPadding) = computeBufferSizing(fieldLayouts, properties, Layout.STD140)
-                appendLine("fun $className.toByteArray(): ByteArray {")
-                append(generateBody(fieldLayouts, trailingPadding, bufferSizeExpr))
-                appendLine("}")
-            } else {
-                appendLine("fun $className.toByteArray(layout: Layout = Layout.STD140): ByteArray = when (layout) {")
-                for (memLayout in Layout.entries) {
-                    val fieldLayouts = layout.computeLayout(properties, memLayout)
-                    val (bufferSizeExpr, trailingPadding) = computeBufferSizing(fieldLayouts, properties, memLayout)
-                    appendLine("    Layout.$memLayout -> {")
-                    append(
-                        generateBody(fieldLayouts, trailingPadding, bufferSizeExpr, useReturn = false)
-                            .trimEnd()
-                            .prependIndent("    ")
-                    )
-                    appendLine()
-                    appendLine("    }")
-                }
-                appendLine("}")
-            }
+            bodyBuilder.endControlFlow()
         }
+
+        return FileSpec.builder(packageName, className)
+            .addFunction(
+                funSpecBuilder
+                    .addCode(bodyBuilder.build())
+                    .build()
+            )
+            .build()
+            .toString()
     }
 
     private fun generateBody(
+        codeBlockBuilder: CodeBlock.Builder,
         fieldLayouts: List<GpuStructLayout.FieldLayout>,
         trailingPadding: Int,
-        bufferSizeExpr: String,
-        useReturn: Boolean = true,
-    ): String = buildString {
-        appendLine("    val writer = ${GpuStructSerializer::class.simpleName}($bufferSizeExpr)")
+    ) {
         fieldLayouts.forEach { field ->
             if (field.padding > 0) {
-                appendLine("    writer.skip(${field.padding})")
+                codeBlockBuilder.addStatement("writer.skip(%L)", field.padding)
             }
             if (field.isArray()) {
-                appendLine("    this.${field.property.simpleName.asString()}.forEach { element ->")
+                codeBlockBuilder.beginControlFlow("for (element in this.%L)", field.property.simpleName.asString())
                 if (field.isElementGpuStruct()) {
-                    appendLine("        writer.write(element.toByteArray())")
+                    codeBlockBuilder.addStatement("writer.write(element.toByteArray())")
                 } else {
-                    appendLine("        writer.write(element)")
+                    codeBlockBuilder.addStatement("writer.write(element)")
                 }
                 if (field.interElementPadding() > 0) {
-                    appendLine("        writer.skip(${field.interElementPadding()})")
+                    codeBlockBuilder.addStatement("writer.skip(%L)", field.interElementPadding())
                 }
-                appendLine("    }")
+                codeBlockBuilder.endControlFlow()
             } else if (field.isGpuStructField()) {
-                appendLine("    writer.write(this.${field.property.simpleName.asString()}.toByteArray())")
+                codeBlockBuilder.addStatement("writer.write(this.%L.toByteArray())", field.property.simpleName.asString())
             } else {
-                appendLine("    writer.write(this.${field.property.simpleName.asString()})")
+                codeBlockBuilder.addStatement("writer.write(this.%L)", field.property.simpleName.asString())
             }
         }
         if (trailingPadding > 0) {
-            appendLine("    writer.skip($trailingPadding)")
-        }
-        if (useReturn) {
-            appendLine("    return writer.toByteArray()")
-        } else {
-            appendLine("    writer.toByteArray()")
+            codeBlockBuilder.addStatement("writer.skip(%L)", trailingPadding)
         }
     }
 
@@ -101,7 +111,7 @@ class GpuStructCodeGenerator(private val layout: GpuStructLayout) {
         memoryLayout: Layout,
     ): BufferSizing {
         val arrayField = fieldLayouts.lastOrNull { it.isArray() }
-        val staticSize = fieldLayouts.filter { !it.isArray() }.lastOrNull()?.let { it.offset + it.size } ?: 0
+        val staticSize = fieldLayouts.lastOrNull { !it.isArray() }?.let { it.offset + it.size } ?: 0
         val trailing = layout.trailingPadding(staticSize, properties, memoryLayout)
         val sizeExpr = arrayField?.let {
             val dynamic = "this.${it.property.simpleName.asString()}.size * ${it.elementStride}"
