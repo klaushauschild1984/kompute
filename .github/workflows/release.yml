@@ -34,8 +34,6 @@ jobs:
             - name: Set release version
               run: |
                   sed -i 's/version = ".*-SNAPSHOT"/version = "${{ inputs.version }}"/' build.gradle.kts
-                  sed -i 's/\(kompute-[a-z-]*\):v[0-9.]*/\1:v${{ inputs.version }}/g' README.md
-                  sed -i 's|<version>v[0-9.]*</version>|<version>v${{ inputs.version }}</version>|' README.md
                   VERSION="${{ inputs.version }}"
                   DATE=$(date +%Y-%m-%d)
                   PREV=$(grep -m1 '^\[v' CHANGELOG.md | sed 's/\[\(v[0-9.]*\)\].*/\1/')
@@ -51,7 +49,7 @@ jobs:
               run: |
                   git config user.name "GitHub Actions"
                   git config user.email "actions@github.com"
-                  git add build.gradle.kts README.md CHANGELOG.md
+                  git add build.gradle.kts CHANGELOG.md
                   git commit -m "Release v${{ inputs.version }}"
                   git tag "v${{ inputs.version }}"
 

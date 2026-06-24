@@ -36,7 +36,7 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.klaushauschild1984.kompute:kompute-core:v0.10.1")
+    implementation("com.github.klaushauschild1984.kompute:kompute-core:x.y.z")
 }
 ```
 
@@ -54,7 +54,7 @@ dependencies {
     <dependency>
         <groupId>com.github.klaushauschild1984.kompute</groupId>
         <artifactId>kompute-core</artifactId>
-        <version>v0.10.1</version>
+        <version>x.y.z</version>
     </dependency>
 </dependencies>
 ```
@@ -67,7 +67,7 @@ For asynchronous dispatch via Kotlin Coroutines, add `kompute-coroutines`:
 
 ```kotlin
 dependencies {
-    implementation("com.github.klaushauschild1984.kompute:kompute-coroutines:v0.10.1")
+    implementation("com.github.klaushauschild1984.kompute:kompute-coroutines:x.y.z")
 }
 ```
 
@@ -75,7 +75,7 @@ dependencies {
 <dependency>
     <groupId>com.github.klaushauschild1984.kompute</groupId>
     <artifactId>kompute-coroutines</artifactId>
-    <version>v0.10.1</version>
+    <version>x.y.z</version>
 </dependency>
 ```
 
@@ -85,8 +85,8 @@ For automatic `toByteArray()` serialization of GPU structs with std140/std430 me
 
 ```kotlin
 dependencies {
-    implementation("com.github.klaushauschild1984.kompute:kompute-serialization:v0.10.1")
-    ksp("com.github.klaushauschild1984.kompute:kompute-serialization-processor:v0.10.1")
+    implementation("com.github.klaushauschild1984.kompute:kompute-serialization:x.y.z")
+    ksp("com.github.klaushauschild1984.kompute:kompute-serialization-processor:x.y.z")
 }
 ```
 
@@ -94,7 +94,7 @@ dependencies {
 <dependency>
     <groupId>com.github.klaushauschild1984.kompute</groupId>
     <artifactId>kompute-serialization</artifactId>
-    <version>v0.10.1</version>
+    <version>x.y.z</version>
 </dependency>
 ```
 
