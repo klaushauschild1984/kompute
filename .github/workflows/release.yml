@@ -2,22 +2,18 @@ name: Release
 
 on:
     workflow_dispatch:
-        inputs:
-            version:
-                description: 'Release version (e.g. 0.2.0)'
-                required: true
-            next-version:
-                description: 'Next development version (e.g. 0.3.0-SNAPSHOT)'
-                required: true
 
 jobs:
     release:
         runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main'
         permissions:
             contents: write
 
         steps:
             - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
 
             - name: Set up JDK 21
               uses: actions/setup-java@v4
@@ -31,35 +27,37 @@ jobs:
             - name: Install OpenGL dependencies
               run: sudo apt-get install -y xvfb libgl1-mesa-dev
 
-            - name: Set release version
-              run: |
-                  sed -i 's/version = ".*-SNAPSHOT"/version = "${{ inputs.version }}"/' build.gradle.kts
-                  VERSION="${{ inputs.version }}"
-                  DATE=$(date +%Y-%m-%d)
-                  PREV=$(grep -m1 '^\[v' CHANGELOG.md | sed 's/\[\(v[0-9.]*\)\].*/\1/')
-                  sed -i "0,/^## \[v/s/^## \[v/## [v${VERSION}] — ${DATE}\n\n### Added\n\n### Changed\n\n### Deprecated\n\n### Removed\n\n### Fixed\n\n### Security\n\n## [v/" CHANGELOG.md
-                  sed -i "0,/^\[v/s/^\[v/[v${VERSION}]: https:\/\/github.com\/klaushauschild1984\/kompute\/compare\/${PREV}...v${VERSION}\n[v/" CHANGELOG.md
+            - name: Validate changelog and determine version
+              id: version
+              run: python3 .github/scripts/release.py validate
+
+            - name: Finalize changelog and set release version
+              run: python3 .github/scripts/release.py finalize
 
             - name: Build and test
               run: xvfb-run ./gradlew build
               env:
                   LIBGL_ALWAYS_SOFTWARE: "1"
 
-            - name: Commit and tag release
+            - name: Commit release and tag
               run: |
-                  git config user.name "GitHub Actions"
-                  git config user.email "actions@github.com"
-                  git add build.gradle.kts CHANGELOG.md
-                  git commit -m "Release v${{ inputs.version }}"
-                  git tag "v${{ inputs.version }}"
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git commit -am "Release ${VERSION}"
+                  .github/scripts/git-push-retry.sh "${VERSION}"
+              env:
+                  VERSION: ${{ steps.version.outputs.version }}
 
-            - name: Set next development version
-              run: sed -i 's/version = "${{ inputs.version }}"/version = "${{ inputs.next-version }}"/' build.gradle.kts
-
-            - name: Commit next development version
+            - name: Create GitHub release
               run: |
-                  git add build.gradle.kts
-                  git commit -m "Prepare next development version ${{ inputs.next-version }}"
+                  python3 .github/scripts/release.py notes > release-notes.md
+                  gh release create "${VERSION}" --title "${VERSION}" --notes-file release-notes.md
+              env:
+                  VERSION: ${{ steps.version.outputs.version }}
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Push
-              run: git push origin main --tags
+            - name: Prepare next development cycle
+              run: |
+                  python3 .github/scripts/release.py prepare
+                  git commit -am "Prepare next development cycle [skip ci]"
+                  .github/scripts/git-push-retry.sh
