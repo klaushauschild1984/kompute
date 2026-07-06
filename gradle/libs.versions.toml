@@ -1,8 +1,10 @@
 [versions]
+assertj            = "3.27.7"
 ben-manes-versions = "0.54.0"
 detekt             = "1.23.7"
 diktat             = "2.0.0"
 jmh                = "0.7.2"
+junit-bom          = "5.14.4"
 kotlin             = "2.1.0"
 kotlin-logging     = "7.0.3"
 logback            = "1.5.18"
@@ -13,6 +15,8 @@ ksp                = "2.1.0-1.0.29"
 kotlinpoet         = "2.1.0"
 
 [libraries]
+assertj                 = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+junit-bom               = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 kotlin-logging          = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 logback                 = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 oshi                    = { module = "com.github.oshi:oshi-core", version.ref = "oshi" }
