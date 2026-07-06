@@ -2,10 +2,16 @@ package de.hauschild.kompute.core.data
 
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 
 class Image2DTest {
+    @Test
+    fun `validation succeeds`() {
+        Image2D(0).dimension(800, 600).validate()
+    }
+
     @ParameterizedTest
     @MethodSource
     fun `validation fails`(image2D: Image2D) {
