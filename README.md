@@ -156,6 +156,26 @@ Kompute.openGL().use { openGL ->
 
 Full API documentation is available in the [Wiki](https://github.com/klaushauschild1984/kompute/wiki).
 
+## Logging
+
+`kompute-core` uses [kotlin-logging](https://github.com/oshai/kotlin-logging) (an SLF4J facade) internally and pulls
+it in as a transitive dependency. Bind it to a concrete backend of your choice, e.g. [Logback](https://logback.qos.ch/):
+
+```kotlin
+dependencies {
+    runtimeOnly("ch.qos.logback:logback-classic:x.y.z")
+}
+```
+
+| Level   | Content                                                                  |
+|---------|---------------------------------------------------------------------------|
+| `INFO`  | Backend lifecycle milestones (e.g. GPU driver/vendor/version on startup) |
+| `DEBUG` | Data flow: shader compile/link, dispatch inputs, and durations          |
+| `TRACE` | Full shader source and other fine-grained diagnostics                   |
+
+See [`kompute-showcase`'s `logback.xml`](kompute-showcase/src/main/resources/logback.xml) for an example
+configuration with `DEBUG` enabled.
+
 ## Contributing
 
 Contributions are welcome. If you face a bug or see the need for an enhancement, feel free to open an issue. For changes, please open an issue first to discuss what you would like to change.

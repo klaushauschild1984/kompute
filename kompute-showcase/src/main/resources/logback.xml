@@ -1,0 +1,14 @@
+<configuration>
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[%d{HH:mm:ss.SSS}] %-5level %class{1}.%method\(\):%line - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- DEBUG exposes the GPU data flow: shader compile/link, dispatch inputs, and durations. -->
+    <logger name="de.hauschild.kompute" level="DEBUG"/>
+</configuration>

@@ -1,6 +1,8 @@
 package de.hauschild.kompute.core.pipeline
 
+import de.hauschild.kompute.core.logging.debugTimed
 import de.hauschild.kompute.core.result.ShaderResult
+import io.github.oshai.kotlinlogging.KotlinLogging
 
 /**
  * Executes a sequence of compute shader [Stage]s without CPU round-trips between them.
@@ -27,9 +29,12 @@ class Pipeline {
      */
     @Suppress("SpreadOperator")
     fun execute(vararg stages: Stage): PipelineResult {
-        stages.forEach { stage ->
-            val result = stage.shader.dispatch(stage.x, stage.y, stage.z, *stage.data.toTypedArray())
-            results.add(result)
+        logger.debug { "Executing pipeline with ${stages.size} stage(s)" }
+        logger.debugTimed({ duration -> "Pipeline execution completed in $duration" }) {
+            stages.forEach { stage ->
+                val result = stage.shader.dispatch(stage.x, stage.y, stage.z, *stage.data.toTypedArray())
+                results.add(result)
+            }
         }
         return PipelineResult(this, results.last())
     }
@@ -40,5 +45,9 @@ class Pipeline {
     internal fun close() {
         results.forEach { it.close() }
         results.clear()
+    }
+
+    companion object {
+        private val logger = KotlinLogging.logger {}
     }
 }

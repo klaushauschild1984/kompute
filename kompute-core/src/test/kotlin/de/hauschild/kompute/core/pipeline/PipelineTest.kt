@@ -18,11 +18,11 @@ class PipelineTest {
         val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
         val closed = AtomicBoolean(false)
         val shader = object : AbstractCompiledShader() {
-            override fun dispatch(
+            override fun doDispatch(
                 x: Int,
                 y: Int,
                 z: Int,
-                vararg data: ShaderData
+                data: List<ShaderData>
             ): ShaderResult =
                 ShaderResult { emptyMap() }
             override fun close() {
@@ -39,11 +39,11 @@ class PipelineTest {
     fun `pipeline result accesses last stage output`() {
         val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
         val shader = object : AbstractCompiledShader() {
-            override fun dispatch(
+            override fun doDispatch(
                 x: Int,
                 y: Int,
                 z: Int,
-                vararg data: ShaderData
+                data: List<ShaderData>
             ): ShaderResult =
                 ShaderResult { mapOf(output to floatArrayOf(42f)) }
             override fun close() = Unit
@@ -59,11 +59,11 @@ class PipelineTest {
         val output = StorageBuffer<FloatArray>(0).size(1).asOutput()
         val closedCount = AtomicInteger(0)
         val shader = object : AbstractCompiledShader() {
-            override fun dispatch(
+            override fun doDispatch(
                 x: Int,
                 y: Int,
                 z: Int,
-                vararg data: ShaderData
+                data: List<ShaderData>
             ): ShaderResult =
                 ShaderResult(object : ResultReader {
                     override fun read(): Map<OutputCapable<*>, Any> = emptyMap()

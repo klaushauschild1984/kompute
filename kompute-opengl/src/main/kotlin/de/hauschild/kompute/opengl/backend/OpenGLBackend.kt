@@ -8,6 +8,7 @@ import de.hauschild.kompute.core.shader.CompiledShader
 import de.hauschild.kompute.core.shader.ShaderSource
 import de.hauschild.kompute.opengl.Limits
 import de.hauschild.kompute.opengl.shader.OpenGLCompiledShader
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.glfw.GLFW
 import org.lwjgl.opengl.GL
 import org.lwjgl.opengl.GL11
@@ -90,5 +91,6 @@ class OpenGLBackend : AbstractBackend() {
     companion object {
         private const val OPENGL_VERSION_MAJOR = 4
         private const val OPENGL_VERSION_MINOR = 3
+        private val logger = KotlinLogging.logger {}
     }
 }
