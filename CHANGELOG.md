@@ -3,7 +3,13 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [v0.11.0]
+## [v0.10.2]
+
+### Changed
+- Kotlin updated to 2.4.0
+- `kotlin-logging-jvm` (transitive API dependency of `kompute-core`) updated to 8.0.4
+- `kotlinx-coroutines` (transitive API dependency of `kompute-coroutines`) updated to 1.11.0
+- LWJGL updated to 3.4.1
 
 ## [v0.10.1] — 2026-06-19
 
