@@ -21,20 +21,20 @@ import org.junit.jupiter.api.extension.ParameterResolver
 class OpenGLBackendExtension :
     BeforeAllCallback,
     ParameterResolver {
-    override fun beforeAll(context: ExtensionContext?) {
-        requireNotNull(context).root.getStore(NAMESPACE)
-            .getOrComputeIfAbsent(BACKEND) { BackendResource(Kompute.openGL()) }
+    override fun beforeAll(context: ExtensionContext) {
+        context.root.getStore(NAMESPACE)
+            .computeIfAbsent(BACKEND, { BackendResource(Kompute.openGL()) }, BackendResource::class.java)
     }
 
     override fun supportsParameter(
-        parameterContext: ParameterContext?,
-        extensionContext: ExtensionContext?,
-    ): Boolean = Backend::class.java.isAssignableFrom(requireNotNull(parameterContext).parameter.type)
+        parameterContext: ParameterContext,
+        extensionContext: ExtensionContext,
+    ): Boolean = Backend::class.java.isAssignableFrom(parameterContext.parameter.type)
 
     override fun resolveParameter(
-        parameterContext: ParameterContext?,
-        extensionContext: ExtensionContext?,
-    ): Any? = requireNotNull(extensionContext).root
+        parameterContext: ParameterContext,
+        extensionContext: ExtensionContext,
+    ): Any? = extensionContext.root
         .getStore(NAMESPACE)
         .get(BACKEND, BackendResource::class.java)
         ?.backend
@@ -46,7 +46,7 @@ class OpenGLBackendExtension :
         /**
          * @property backend
          */
-        private class BackendResource(val backend: Backend) : ExtensionContext.Store.CloseableResource {
+        private class BackendResource(val backend: Backend) : AutoCloseable {
             override fun close() {
                 if (ContextCreationStrategy.isEglActive()) {
                     return
