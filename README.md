@@ -16,7 +16,7 @@ tasks, such as machine learning inference, physics simulations, and data process
 | Requirement | Version                                                                                  |
 |-------------|------------------------------------------------------------------------------------------|
 | JDK         | ![JDK](https://img.shields.io/badge/JDK-21+-orange)                                      |
-| Kotlin      | ![Kotlin](https://img.shields.io/badge/Kotlin-2.2.21-purple?logo=kotlin&logoColor=white) |
+| Kotlin      | ![Kotlin](https://img.shields.io/badge/Kotlin-2.4.0-purple?logo=kotlin&logoColor=white)  |
 | OpenGL      | ![OpenGL](https://img.shields.io/badge/OpenGL-4.3+-blue)                                 |
 | OS          | ![OS](https://img.shields.io/badge/OS-Linux%20%7C%20Windows-lightgrey)                   |
 

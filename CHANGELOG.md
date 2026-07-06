@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [v0.10.2]
 
+### Added
+- Structured logging via `kotlin-logging` — `INFO` for backend lifecycle milestones (e.g. GPU renderer/vendor/version), `DEBUG` for shader compile/link/dispatch timing and data summaries, `TRACE` for full shader source — [docs](README.md#logging)
+
 ### Changed
+- `AbstractCompiledShader` now logs dispatch timing and input summaries uniformly for all backends; subclasses implement `doDispatch()` instead of overriding `dispatch()` directly
 - Kotlin updated to 2.4.0
 - `kotlin-logging-jvm` (transitive API dependency of `kompute-core`) updated to 8.0.4
 - `kotlinx-coroutines` (transitive API dependency of `kompute-coroutines`) updated to 1.11.0
