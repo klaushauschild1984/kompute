@@ -4,9 +4,8 @@ import de.hauschild.kompute.core.data.ShaderData
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import de.hauschild.kompute.core.result.ShaderResult
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Test
 
 class AbstractCompiledShaderTest {
     private val shader = TestCompiledShader()
@@ -14,31 +13,33 @@ class AbstractCompiledShaderTest {
     @Test
     fun `work group count must be at least one`() {
         val output = StorageBuffer.Companion<FloatArray>(0).size(1).asOutput()
-        val exception = assertFailsWith<KomputeConfigurationException> { shader.dispatch(0, output) }
-        assertEquals("Work group count must be greater than or equal to one", exception.message)
+        assertThatThrownBy { shader.dispatch(0, output) }
+            .isInstanceOf(KomputeConfigurationException::class.java)
+            .hasMessage("Work group count must be greater than or equal to one")
     }
 
     @Test
     fun `at least one data is required`() {
-        val exception = assertFailsWith<KomputeConfigurationException> { shader.dispatch(1) }
-        assertEquals("At least one data is required", exception.message)
+        assertThatThrownBy { shader.dispatch(1) }
+            .isInstanceOf(KomputeConfigurationException::class.java)
+            .hasMessage("At least one data is required")
     }
 
     @Test
     fun `at least one output is required`() {
-        val exception = assertFailsWith<KomputeConfigurationException> {
+        assertThatThrownBy {
             shader.dispatch(1, StorageBuffer.Companion<FloatArray>(0).data(floatArrayOf()))
         }
-        assertEquals("At least one output is required", exception.message)
+            .isInstanceOf(KomputeConfigurationException::class.java)
+            .hasMessage("At least one output is required")
     }
 
     @Test
     fun `outputs must be unique`() {
         val output = StorageBuffer.Companion<FloatArray>(0).size(1).asOutput()
-        val exception = assertFailsWith<KomputeConfigurationException> {
-            shader.dispatch(1, output, output)
-        }
-        assertEquals("There are duplicated outputs: [$output]", exception.message)
+        assertThatThrownBy { shader.dispatch(1, output, output) }
+            .isInstanceOf(KomputeConfigurationException::class.java)
+            .hasMessage("There are duplicated outputs: [$output]")
     }
 
     @Test

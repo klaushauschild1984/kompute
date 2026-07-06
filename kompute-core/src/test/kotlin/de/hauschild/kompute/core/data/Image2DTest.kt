@@ -1,15 +1,15 @@
 package de.hauschild.kompute.core.data
 
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.test.assertFailsWith
 
 class Image2DTest {
     @ParameterizedTest
     @MethodSource
     fun `validation fails`(image2D: Image2D) {
-        assertFailsWith<KomputeConfigurationException> { image2D.validate() }
+        assertThatThrownBy { image2D.validate() }.isInstanceOf(KomputeConfigurationException::class.java)
     }
 
     companion object {

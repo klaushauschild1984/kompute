@@ -6,11 +6,10 @@ import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.result.ResultReader
 import de.hauschild.kompute.core.result.ShaderResult
 import de.hauschild.kompute.core.shader.AbstractCompiledShader
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class PipelineTest {
     @Test
@@ -32,7 +31,7 @@ class PipelineTest {
 
         Pipeline().execute(Stage(shader = shader, x = 1, data = listOf(output))).close()
 
-        assertTrue(!closed.get())
+        assertThat(closed.get()).isFalse()
     }
 
     @Test
@@ -50,7 +49,7 @@ class PipelineTest {
         }
 
         Pipeline().execute(Stage(shader = shader, x = 1, data = listOf(output))).use { result ->
-            assertEquals(42f, result[output][0])
+            assertThat(result[output][0]).isEqualTo(42f)
         }
     }
 
@@ -78,6 +77,6 @@ class PipelineTest {
         val stage2 = Stage(shader = shader, x = 1, data = listOf(output))
         Pipeline().execute(stage1, stage2).close()
 
-        assertEquals(2, closedCount.get())
+        assertThat(closedCount.get()).isEqualTo(2)
     }
 }

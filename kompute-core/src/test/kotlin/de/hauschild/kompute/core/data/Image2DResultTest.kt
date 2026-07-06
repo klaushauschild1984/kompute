@@ -1,13 +1,12 @@
 package de.hauschild.kompute.core.data
 
 import de.hauschild.kompute.core.data.Image2D.Format
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Named
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class Image2DResultTest {
     @ParameterizedTest(name = "{0}")
@@ -22,13 +21,12 @@ class Image2DResultTest {
 
         val isRGB = image.colorModel.colorSpace.isCS_sRGB
         if (isRGB) {
-            assertEquals(
-                "0x${expectedColor.toString(16).uppercase()}",
+            assertThat(
                 "0x${(image.getRGB(0, 0).toLong() and 0xFF_FF_FF_FFL)
                     .toString(16).padStart(8, '0').uppercase()}"
-            )
+            ).isEqualTo("0x${expectedColor.toString(16).uppercase()}")
         } else {
-            assertEquals(expectedColor.toUByte(), image.raster.getSample(0, 0, 0).toUByte())
+            assertThat(image.raster.getSample(0, 0, 0).toUByte()).isEqualTo(expectedColor.toUByte())
         }
     }
     @Test
@@ -38,7 +36,7 @@ class Image2DResultTest {
             .filter { it.bufferedImageType == null }
             .forEach { format ->
                 val result = Image2D.Image2DResult(ByteArray(0), 1, 1, format)
-                assertNull(result.toBufferedImage())
+                assertThat(result.toBufferedImage()).isNull()
             }
     }
 

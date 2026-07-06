@@ -2,9 +2,9 @@ package de.hauschild.kompute.core.result
 
 import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 
 class ShaderResultTest {
     @Test
@@ -12,7 +12,7 @@ class ShaderResultTest {
         val atomicCounter = AtomicCounter(0)
         val shaderResult = ShaderResult { mutableMapOf(Pair(atomicCounter, 42)) }
         shaderResult.use {
-            assertEquals(42, it[atomicCounter])
+            assertThat(it[atomicCounter]).isEqualTo(42)
         }
     }
 
@@ -21,7 +21,7 @@ class ShaderResultTest {
         val atomicCounter = AtomicCounter(0)
         val shaderResult = ShaderResult{ mutableMapOf() }
         shaderResult.use {
-            assertFailsWith<KomputeConfigurationException> { it[atomicCounter] }
+            assertThatThrownBy { it[atomicCounter] }.isInstanceOf(KomputeConfigurationException::class.java)
         }
     }
 }

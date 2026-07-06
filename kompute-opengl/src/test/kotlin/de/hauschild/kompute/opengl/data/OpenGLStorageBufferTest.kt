@@ -4,7 +4,7 @@ import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
-import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import java.util.stream.Stream
 import kotlin.reflect.KClass
-import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLStorageBufferTest {
@@ -39,10 +38,10 @@ class OpenGLStorageBufferTest {
             }
 
         when (result) {
-            is IntArray -> assertArrayEquals(input as IntArray, result)
-            is LongArray -> assertArrayEquals(input as LongArray, result)
-            is FloatArray -> assertArrayEquals(input as FloatArray, result)
-            is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
+            is IntArray -> assertThat(result).containsExactly(*(input as IntArray))
+            is LongArray -> assertThat(result).containsExactly(*(input as LongArray))
+            is FloatArray -> assertThat(result).containsExactly(*(input as FloatArray))
+            is DoubleArray -> assertThat(result).containsExactly(*(input as DoubleArray))
         }
     }
 
@@ -68,10 +67,10 @@ class OpenGLStorageBufferTest {
             }
 
         when (result) {
-            is IntArray -> assertArrayEquals(input as IntArray, result)
-            is LongArray -> assertArrayEquals(input as LongArray, result)
-            is FloatArray -> assertArrayEquals(input as FloatArray, result)
-            is DoubleArray -> assertArrayEquals(input as DoubleArray, result)
+            is IntArray -> assertThat(result).containsExactly(*(input as IntArray))
+            is LongArray -> assertThat(result).containsExactly(*(input as LongArray))
+            is FloatArray -> assertThat(result).containsExactly(*(input as FloatArray))
+            is DoubleArray -> assertThat(result).containsExactly(*(input as DoubleArray))
         }
     }
 
@@ -85,7 +84,7 @@ class OpenGLStorageBufferTest {
 
         val second = OpenGLStorageBuffer(storageBuffer)
         second.bind()
-        assertEquals(handle, second.glHandle)
+        assertThat(second.glHandle).isEqualTo(handle)
 
         second.close()
     }

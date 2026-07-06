@@ -5,12 +5,12 @@ import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import kotlin.reflect.KClass
-import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLNamedUniformTest {
@@ -36,9 +36,9 @@ class OpenGLNamedUniformTest {
             }
 
         when (result) {
-            is Int -> assertEquals(value as Int, result)
-            is Float -> assertEquals(value as Float, result)
-            is Double -> assertEquals(value as Double, result)
+            is Int -> assertThat(result).isEqualTo(value as Int)
+            is Float -> assertThat(result).isEqualTo(value as Float)
+            is Double -> assertThat(result).isEqualTo(value as Double)
         }
     }
 

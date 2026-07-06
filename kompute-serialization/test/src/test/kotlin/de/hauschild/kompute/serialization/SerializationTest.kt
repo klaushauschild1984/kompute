@@ -8,29 +8,29 @@ import de.hauschild.kompute.serialization.fixture.SingleFloat
 import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.toByteArray
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 class SerializationTest {
     @Test
     fun `single float std140`() {
         val bytes = SingleFloat(value = 3.14f).toByteArray()
 
-        assertEquals(4, bytes.size)
-        assertEquals(3.14f, ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).float)
+        assertThat(bytes).hasSize(4)
+        assertThat(ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).float).isEqualTo(3.14f)
     }
 
     @Test
     fun `vec3 std140`() {
         val bytes = Vector3f(3f, 4f, 5f).toByteArray()
 
-        assertEquals(12, bytes.size)
+        assertThat(bytes).hasSize(12)
         val byteBuffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        assertEquals(3f, byteBuffer.float)
-        assertEquals(4f, byteBuffer.float)
-        assertEquals(5f, byteBuffer.float)
+        assertThat(byteBuffer.float).isEqualTo(3f)
+        assertThat(byteBuffer.float).isEqualTo(4f)
+        assertThat(byteBuffer.float).isEqualTo(5f)
     }
 
     @Test
@@ -42,16 +42,16 @@ class SerializationTest {
             ambient = 1f,
         ).toByteArray()
 
-        assertEquals(32, bytes.size)
+        assertThat(bytes).hasSize(32)
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        assertEquals(1f, buffer.float)
-        assertEquals(2f, buffer.float)
-        assertEquals(3f, buffer.float)
-        assertEquals(0.5f, buffer.float)
-        assertEquals(4f, buffer.float)
-        assertEquals(5f, buffer.float)
-        assertEquals(6f, buffer.float)
-        assertEquals(1f, buffer.float)
+        assertThat(buffer.float).isEqualTo(1f)
+        assertThat(buffer.float).isEqualTo(2f)
+        assertThat(buffer.float).isEqualTo(3f)
+        assertThat(buffer.float).isEqualTo(0.5f)
+        assertThat(buffer.float).isEqualTo(4f)
+        assertThat(buffer.float).isEqualTo(5f)
+        assertThat(buffer.float).isEqualTo(6f)
+        assertThat(buffer.float).isEqualTo(1f)
     }
 
     @Test
@@ -61,40 +61,40 @@ class SerializationTest {
             end = Vector3f(4f, 5f, 6f),
         ).toByteArray()
 
-        assertEquals(32, bytes.size)
+        assertThat(bytes).hasSize(32)
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        assertEquals(1f, buffer.float)
-        assertEquals(2f, buffer.float)
-        assertEquals(3f, buffer.float)
-        assertEquals(0f, buffer.float)
-        assertEquals(4f, buffer.float)
-        assertEquals(5f, buffer.float)
-        assertEquals(6f, buffer.float)
-        assertEquals(0f, buffer.float)
+        assertThat(buffer.float).isEqualTo(1f)
+        assertThat(buffer.float).isEqualTo(2f)
+        assertThat(buffer.float).isEqualTo(3f)
+        assertThat(buffer.float).isEqualTo(0f)
+        assertThat(buffer.float).isEqualTo(4f)
+        assertThat(buffer.float).isEqualTo(5f)
+        assertThat(buffer.float).isEqualTo(6f)
+        assertThat(buffer.float).isEqualTo(0f)
     }
 
     @Test
     fun `float array std140`() {
         val bytes = FloatBuffer(floatArrayOf(1f, 2f, 3f)).toByteArray()
 
-        assertEquals(48, bytes.size)
+        assertThat(bytes).hasSize(48)
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        assertEquals(1f, buffer.float)
+        assertThat(buffer.float).isEqualTo(1f)
         buffer.position(16)
-        assertEquals(2f, buffer.float)
+        assertThat(buffer.float).isEqualTo(2f)
         buffer.position(32)
-        assertEquals(3f, buffer.float)
+        assertThat(buffer.float).isEqualTo(3f)
     }
 
     @Test
     fun `float array std430`() {
         val bytes = FloatBuffer(floatArrayOf(1f, 2f, 3f)).toByteArray(Layout.STD430)
 
-        assertEquals(12, bytes.size)
+        assertThat(bytes).hasSize(12)
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        assertEquals(1f, buffer.float)
-        assertEquals(2f, buffer.float)
-        assertEquals(3f, buffer.float)
+        assertThat(buffer.float).isEqualTo(1f)
+        assertThat(buffer.float).isEqualTo(2f)
+        assertThat(buffer.float).isEqualTo(3f)
     }
 
     @Test
@@ -104,14 +104,14 @@ class SerializationTest {
             Vector3f(4f, 5f, 6f)
         )).toByteArray()
 
-        assertEquals(32, bytes.size)
+        assertThat(bytes).hasSize(32)
         val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-        assertEquals(1f, buffer.float)
-        assertEquals(2f, buffer.float)
-        assertEquals(3f, buffer.float)
+        assertThat(buffer.float).isEqualTo(1f)
+        assertThat(buffer.float).isEqualTo(2f)
+        assertThat(buffer.float).isEqualTo(3f)
         buffer.position(16)
-        assertEquals(4f, buffer.float)
-        assertEquals(5f, buffer.float)
-        assertEquals(6f, buffer.float)
+        assertThat(buffer.float).isEqualTo(4f)
+        assertThat(buffer.float).isEqualTo(5f)
+        assertThat(buffer.float).isEqualTo(6f)
     }
 }
