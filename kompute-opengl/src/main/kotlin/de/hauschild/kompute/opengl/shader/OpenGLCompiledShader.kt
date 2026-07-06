@@ -64,24 +64,23 @@ class OpenGLCompiledShader(
     }
 
     /**
-     * Validates, activates the shader program, binds all data, runs the compute
-     * dispatch, and returns the GPU outputs.
+     * Activates the shader program, binds all data, runs the compute dispatch, and returns
+     * the GPU outputs. Called by [AbstractCompiledShader.dispatch] after validation.
      *
      * @param x number of work groups in the X dimension — must be ≥ 1 and ≤ [Limits.maxComputeWorkGroupCountX]
      * @param y number of work groups in the Y dimension — must be ≥ 1 and ≤ [Limits.maxComputeWorkGroupCountY]
      * @param z number of work groups in the Z dimension — must be ≥ 1 and ≤ [Limits.maxComputeWorkGroupCountZ]
-     * @param data shader inputs and outputs — at least one output required
+     * @param data shader inputs and outputs, already validated
      * @return the results of all output buffers after the dispatch completes
      */
-    override fun dispatch(
+    override fun doDispatch(
         x: Int,
         y: Int,
         z: Int,
-        vararg data: ShaderData
+        data: List<ShaderData>
     ): ShaderResult {
-        validateDispatch(x, y, z, *data)
         program.activate()
-        val bindables = bind(data.toList())
+        val bindables = bind(data)
         dispatch(x, y, z, bindables)
         return ShaderResult(OpenGLResultReader(bindables))
     }

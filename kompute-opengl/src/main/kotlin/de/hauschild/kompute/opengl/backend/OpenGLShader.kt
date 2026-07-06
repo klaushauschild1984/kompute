@@ -1,6 +1,7 @@
 package de.hauschild.kompute.opengl.backend
 
 import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.logging.debugTimed
 import de.hauschild.kompute.core.shader.ShaderSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.opengl.GL11
@@ -29,11 +30,6 @@ class OpenGLShader(
             when (source) {
                 is ShaderSource.Code -> {
                     logger.debug { "Reading shader from code" }
-                    logger.trace {
-                        """
-                        ${source.glsl}
-                        """.trimIndent()
-                    }
                     source.glsl
                 }
                 is ShaderSource.File -> {
@@ -45,14 +41,16 @@ class OpenGLShader(
                     source.inputStream.use { it.reader().readText() }
                 }
             }
+        logger.trace { glsl }
         // TODO: cache compiled shader handles by source hash to avoid redundant recompilation
         // TODO: support pre-compilation (glProgramBinary / GL_ARB_get_program_binary) for faster startup
         glHandle = GL43.glCreateShader(GL43.GL_COMPUTE_SHADER)
         GL43.glShaderSource(glHandle, glsl)
-        logger.debug { "Compiling shader" }
-        GL43.glCompileShader(glHandle)
-        requireBackendInitialization(GL43.glGetShaderi(glHandle, GL43.GL_COMPILE_STATUS) == GL11.GL_TRUE) {
-            "Shader compile error: ${GL43.glGetShaderInfoLog(glHandle)}"
+        logger.debugTimed({ duration -> "Shader compiled in $duration" }) {
+            GL43.glCompileShader(glHandle)
+            requireBackendInitialization(GL43.glGetShaderi(glHandle, GL43.GL_COMPILE_STATUS) == GL11.GL_TRUE) {
+                "Shader compile error: ${GL43.glGetShaderInfoLog(glHandle)}"
+            }
         }
     }
 

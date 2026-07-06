@@ -47,15 +47,12 @@ class AbstractCompiledShaderTest {
     }
 
     private class TestCompiledShader : AbstractCompiledShader() {
-        override fun dispatch(
+        override fun doDispatch(
             x: Int,
             y: Int,
             z: Int,
-            vararg data: ShaderData
-        ): ShaderResult {
-            validateDispatch(x, y, z, *data)
-            return ShaderResult{ emptyMap() }
-        }
+            data: List<ShaderData>
+        ): ShaderResult = ShaderResult { emptyMap() }
 
         override fun close() {
             // nothing to do

@@ -12,8 +12,6 @@ import oshi.SystemInfo
  */
 @State(Scope.Benchmark)
 open class CpuState {
-    private val logger = KotlinLogging.logger {}
-
     /**
      * Set up the state.
      */
@@ -25,5 +23,9 @@ open class CpuState {
             "CPU Info: ${cpu.processorIdentifier.name}, ${cpu.physicalProcessorCount} physical cores, ${cpu
                 .logicalProcessorCount} logical cores, max freq: ${cpu.maxFreq / 1_000_000_000.0} GHz"
         }
+    }
+
+    companion object {
+        private val logger = KotlinLogging.logger {}
     }
 }
