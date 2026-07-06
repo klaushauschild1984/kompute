@@ -1,8 +1,8 @@
 package de.hauschild.kompute.core.shader
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 class AsyncCompiledShaderDecoratorTest {
@@ -16,7 +16,8 @@ class AsyncCompiledShaderDecoratorTest {
             asyncCompiledShader.close()
         }
 
-        assertTrue { (compiledShader as CompiledShaderMock).dispatched }
-        assertTrue { (compiledShader as CompiledShaderMock).closed }
+        val mock = compiledShader as CompiledShaderMock
+        assertThat(mock.dispatched).isTrue()
+        assertThat(mock.closed).isTrue()
     }
 }

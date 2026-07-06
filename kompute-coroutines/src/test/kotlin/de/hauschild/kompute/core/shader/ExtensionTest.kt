@@ -1,13 +1,13 @@
 package de.hauschild.kompute.core.shader
 
-import kotlin.test.Test
-import kotlin.test.assertIs
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
 class ExtensionTest {
     @Test
     fun async() {
         val compiledShader: CompiledShader = CompiledShaderMock()
         val asyncCompiledShader = compiledShader.async()
-        assertIs<AsyncCompiledShader>(asyncCompiledShader)
+        assertThat(asyncCompiledShader).isInstanceOf(AsyncCompiledShader::class.java)
     }
 }

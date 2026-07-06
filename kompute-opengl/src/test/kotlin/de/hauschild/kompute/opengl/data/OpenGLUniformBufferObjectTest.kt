@@ -5,13 +5,12 @@ import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
-import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-
-import kotlin.test.Test
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLUniformBufferObjectTest {
@@ -53,6 +52,6 @@ class OpenGLUniformBufferObjectTest {
                     ).use { it[output] }
                 }
 
-        assertArrayEquals(floatArrayOf(42f, 42f, 42f), result)
+        assertThat(result).containsExactly(42f, 42f, 42f)
     }
 }

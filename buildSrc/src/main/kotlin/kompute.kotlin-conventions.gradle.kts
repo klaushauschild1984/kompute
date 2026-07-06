@@ -20,8 +20,11 @@ repositories {
 }
 
 dependencies {
-    testImplementation(kotlin("test"))
+    testImplementation(platform(libs.junit.bom))
     testImplementation("org.junit.jupiter:junit-jupiter-params")
+    testImplementation(libs.assertj)
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly(libs.logback)
 }
 
@@ -82,5 +85,9 @@ tasks.withType<com.saveourtool.diktat.plugin.gradle.tasks.DiktatCheckTask> {
 }
 tasks.withType<com.saveourtool.diktat.plugin.gradle.tasks.DiktatFixTask> {
     outputs.upToDateWhen { false }
+}
+
+tasks.check {
+    dependsOn(tasks.named("diktatCheck"))
 }
 

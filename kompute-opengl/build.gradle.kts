@@ -10,7 +10,8 @@ dependencies {
     implementation(libs.lwjgl.glfw)
     implementation(libs.lwjgl.opengl)
 
-    testFixturesImplementation(kotlin("test-junit5"))
+    testFixturesImplementation(platform(libs.junit.bom))
+    testFixturesImplementation("org.junit.jupiter:junit-jupiter-api")
     testImplementation(testFixtures(project(":kompute-opengl")))
 }
 

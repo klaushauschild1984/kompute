@@ -4,9 +4,9 @@ import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import kotlin.test.Test
-import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLAtomicCounterTest {
@@ -33,6 +33,6 @@ class OpenGLAtomicCounterTest {
                 compiledShader.dispatch(4, atomicCounter)
                     .use { it[atomicCounter] }
             }
-        assertEquals(256, value)
+        assertThat(value).isEqualTo(256)
     }
 }

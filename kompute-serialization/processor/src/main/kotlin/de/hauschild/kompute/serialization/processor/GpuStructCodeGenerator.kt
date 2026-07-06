@@ -32,7 +32,7 @@ class GpuStructCodeGenerator(private val layout: GpuStructLayout) {
 
         val serializerClass = GpuStructSerializer::class.asClassName()
         val receiverClass = ClassName(packageName, className)
-        val layoutClass =  Layout::class.asClassName()
+        val layoutClass = Layout::class.asClassName()
 
         val bodyBuilder = CodeBlock.builder()
         val funSpecBuilder = FunSpec.builder("toByteArray")

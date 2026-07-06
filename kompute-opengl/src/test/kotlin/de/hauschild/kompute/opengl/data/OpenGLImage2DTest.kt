@@ -4,10 +4,9 @@ import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.shader.ShaderSource.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import kotlin.test.Test
-import kotlin.test.assertContentEquals
-import kotlin.test.assertEquals
 
 @ExtendWith(OpenGLBackendExtension::class)
 class OpenGLImage2DTest {
@@ -35,9 +34,11 @@ class OpenGLImage2DTest {
             }
             .data
 
-        assertEquals(16, bytes.size)
-        assertContentEquals(ByteArray(16) {
-            byteArrayOf(255.toByte(), 0, 0, 255.toByte())[it % 4]
-        }, bytes)
+        assertThat(bytes).hasSize(16)
+        assertThat(bytes).containsExactly(
+            *ByteArray(16) {
+                byteArrayOf(255.toByte(), 0, 0, 255.toByte())[it % 4]
+            }
+        )
     }
 }
