@@ -16,7 +16,8 @@ class AsyncCompiledShaderDecoratorTest {
             asyncCompiledShader.close()
         }
 
-        assertThat((compiledShader as CompiledShaderMock).dispatched).isTrue()
-        assertThat((compiledShader as CompiledShaderMock).closed).isTrue()
+        val mock = compiledShader as CompiledShaderMock
+        assertThat(mock.dispatched).isTrue()
+        assertThat(mock.closed).isTrue()
     }
 }
