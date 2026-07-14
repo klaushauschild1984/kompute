@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [v0.11.0]
 
+### Added
+- `sizeOf()` and `fromByteArray()` code generators for `@GpuStruct` annotated classes — round-trip deserialization without runtime reflection — [docs](https://github.com/klaushauschild1984/kompute/wiki/Gpu-Struct-Serialization)
+- Validation for constructor field alignment and dynamic array constraints in `GpuStruct` layout computation
+- `@FixedSize(n)` annotation for statically-sized array fields — no longer limited to being the last field in a `@GpuStruct`, and may be nested inside another struct — [docs](https://github.com/klaushauschild1984/kompute/wiki/Gpu-Struct-Serialization)
+
 ## [v0.10.2] — 2026-07-06
 
 ### Added
