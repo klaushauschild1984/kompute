@@ -101,7 +101,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                 )
                 CodeBlock.of(
                     "Array(%L) { i -> this.copyOfRange(%L, %L).fromByteArray(%T::class) }",
-                    "(this.size - ${field.offset}) / ${field.elementStride}",
+                    elementCountExpr(field),
                     "${field.offset} + i * ${field.elementStride}",
                     "${field.offset} + i * ${field.elementStride} + ${field.elementSize}",
                     elementType,
@@ -112,7 +112,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                 CodeBlock.of(
                     "%T(%L) { i -> reader.%L(%L) }",
                     arrayType,
-                    "(this.size - ${field.offset}) / ${field.elementStride}",
+                    elementCountExpr(field),
                     readFunctionName,
                     "${field.offset} + i * ${field.elementStride}",
                 )
@@ -129,6 +129,17 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
             }
             else -> CodeBlock.of("reader.%L(%L)", primitiveReadFunctionName(field.property), field.offset)
         }
+
+    /**
+     * Returns the Kotlin expression for the array's element count: the declared
+     * [de.hauschild.kompute.serialization.annotation.FixedSize] value for a fixed-size array, or an
+     * expression deriving the count from the remaining byte array length for a dynamically sized one.
+     *
+     * @param field the array field to compute the element count expression for
+     * @return the element count as a Kotlin source expression
+     */
+    private fun elementCountExpr(field: GpuStructLayout.FieldLayout): String =
+        field.fixedElementCount()?.toString() ?: "(this.size - ${field.offset}) / ${field.elementStride}"
 
     private fun primitiveReadFunctionName(property: KSPropertyDeclaration): String {
         val type = property.type.resolve()

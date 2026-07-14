@@ -2,13 +2,16 @@ package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
 import de.hauschild.kompute.serialization.fixture.DirectionalLight
+import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
+import de.hauschild.kompute.serialization.fixture.Particle
 import de.hauschild.kompute.serialization.fixture.SingleFloat
 import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.toByteArray
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -113,5 +116,58 @@ class SerializationTest {
         assertThat(buffer.float).isEqualTo(4f)
         assertThat(buffer.float).isEqualTo(5f)
         assertThat(buffer.float).isEqualTo(6f)
+    }
+
+    @Test
+    fun `fixed size struct array not last field`() {
+        val history = Array(8) { i -> Vector3f(i * 10f, i * 10f + 1f, i * 10f + 2f) }
+        val bytes = Particle(history, velocity = Vector3f(100f, 200f, 300f)).toByteArray()
+
+        assertThat(bytes).hasSize(144)
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        assertThat(buffer.float).isEqualTo(0f)
+        buffer.position(16 * 7)
+        assertThat(buffer.float).isEqualTo(70f)
+        buffer.position(128)
+        assertThat(buffer.float).isEqualTo(100f)
+        assertThat(buffer.float).isEqualTo(200f)
+        assertThat(buffer.float).isEqualTo(300f)
+    }
+
+    @Test
+    fun `fixed size array with wrong length throws`() {
+        val history = Array(7) { Vector3f(0f, 0f, 0f) }
+        val particle = Particle(history, velocity = Vector3f(0f, 0f, 0f))
+
+        assertThatThrownBy { particle.toByteArray() }
+            .isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessage("Expected 8 elements for 'history', but was 7")
+    }
+
+    @Test
+    fun `fixed size primitive array std140`() {
+        val bytes = FixedFloatBuffer(floatArrayOf(1f, 2f, 3f), scale = 4f).toByteArray()
+
+        assertThat(bytes).hasSize(64)
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        assertThat(buffer.float).isEqualTo(1f)
+        buffer.position(16)
+        assertThat(buffer.float).isEqualTo(2f)
+        buffer.position(32)
+        assertThat(buffer.float).isEqualTo(3f)
+        buffer.position(48)
+        assertThat(buffer.float).isEqualTo(4f)
+    }
+
+    @Test
+    fun `fixed size primitive array std430`() {
+        val bytes = FixedFloatBuffer(floatArrayOf(1f, 2f, 3f), scale = 4f).toByteArray(Layout.STD430)
+
+        assertThat(bytes).hasSize(16)
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        assertThat(buffer.float).isEqualTo(1f)
+        assertThat(buffer.float).isEqualTo(2f)
+        assertThat(buffer.float).isEqualTo(3f)
+        assertThat(buffer.float).isEqualTo(4f)
     }
 }
