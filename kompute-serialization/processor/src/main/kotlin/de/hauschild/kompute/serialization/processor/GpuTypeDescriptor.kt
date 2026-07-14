@@ -119,13 +119,13 @@ object PrimitiveArrayDescriptor : GpuTypeDescriptor {
 /**
  * Descriptor for [Array] fields whose element type is a [de.hauschild.kompute.serialization.annotation.GpuStruct].
  *
- * @param elementDeclaration the element struct's class declaration
  * @param elementDeclaredAlignment alignment in bytes, from [de.hauschild.kompute.serialization.annotation.Align]
- * @param computeStructSize computes the serialized size of [elementDeclaration] for a given layout
+ * @param computeStructSize computes the serialized size of the element declaration for a given layout
  * @param checkLayoutDependent
+ * @property elementDeclaration the element struct's class declaration
  */
 class StructArrayDescriptor(
-    private val elementDeclaration: KSClassDeclaration,
+    val elementDeclaration: KSClassDeclaration,
     private val elementDeclaredAlignment: Int,
     private val computeStructSize: (KSClassDeclaration, Layout) -> Int,
     private val checkLayoutDependent: (KSClassDeclaration) -> Boolean,

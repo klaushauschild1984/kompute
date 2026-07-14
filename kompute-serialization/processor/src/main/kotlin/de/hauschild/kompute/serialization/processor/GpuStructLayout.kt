@@ -7,12 +7,14 @@ import de.hauschild.kompute.serialization.annotation.Layout
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.KSType
 
 /**
  * Computes the memory layout of [GpuStruct] annotated classes according to std140 and std430 rules.
  *
  * @param logger used to report unsupported field types as compiler errors
  */
+@Suppress("TooManyFunctions")
 class GpuStructLayout(private val logger: KSPLogger) {
     private val primitiveArrayTypes = setOf("kotlin.FloatArray", "kotlin.IntArray", "kotlin.BooleanArray")
     private val genericArrayType = "kotlin.Array"
@@ -102,11 +104,46 @@ class GpuStructLayout(private val logger: KSPLogger) {
     fun isLayoutDependent(properties: List<KSPropertyDeclaration>): Boolean =
         properties.any { descriptorFor(it).isLayoutDependent() }
 
-    private fun computeStructSizeOf(declaration: KSClassDeclaration, layout: Layout): Int {
+    /**
+     * Computes the total serialized size in bytes of [declaration] under [layout], including trailing padding.
+     *
+     * Returns 0 for the dynamic portion of a trailing array field, since its length is only known at runtime;
+     * see [SizeOfCodeGenerator] for how the array case is handled at the call site.
+     *
+     * @param declaration the struct's class declaration
+     * @param layout the memory layout standard to apply
+     * @return total size in bytes
+     */
+    fun structSizeOf(declaration: KSClassDeclaration, layout: Layout): Int {
         val innerProperties = gpuFields(declaration)
         val innerLayout = computeLayout(innerProperties, layout)
         val rawSize = innerLayout.lastOrNull()?.let { it.offset + it.size } ?: 0
         return rawSize + trailingPadding(rawSize, innerProperties, layout)
+    }
+
+    /**
+     * Validates that every [GpuField]-annotated property in [properties] is a primary constructor
+     * parameter of [classDeclaration], reporting a compiler error otherwise.
+     *
+     * Required by `fromByteArray()`, which constructs instances via a named-argument constructor call.
+     *
+     * @param classDeclaration the struct's class declaration
+     * @param properties the struct's [GpuField]-annotated properties
+     */
+    fun validateConstructorFields(classDeclaration: KSClassDeclaration, properties: List<KSPropertyDeclaration>) {
+        val constructorParamNames = classDeclaration.primaryConstructor
+            ?.parameters
+            ?.mapNotNull { it.name?.asString() }
+            ?.toSet()
+            ?: emptySet()
+        properties.forEach { property ->
+            if (property.simpleName.asString() !in constructorParamNames) {
+                logger.error(
+                    "@GpuField '${property.simpleName.asString()}' must be a primary constructor parameter",
+                    property,
+                )
+            }
+        }
     }
 
     private fun descriptorFor(property: KSPropertyDeclaration): GpuTypeDescriptor {
@@ -121,49 +158,66 @@ class GpuStructLayout(private val logger: KSPLogger) {
                 ScalarDescriptor
             qualifiedName in primitiveArrayTypes ->
                 PrimitiveArrayDescriptor
-            qualifiedName == genericArrayType -> {
-                val elemType = type.arguments.firstOrNull()
-                    ?.type
-                    ?.resolve()
-                val elemDecl = elemType?.declaration as? KSClassDeclaration
-                if (elemDecl != null && isGpuStruct(elemDecl)) {
-                    val alignment = alignAnnotationOf(elemDecl)
-                        ?: run {
-                            logger.error(
-                                "@GpuStruct array element without @Align: ${elemDecl.simpleName.asString()}",
-                                property,
-                            )
-                            4
-                        }
-                    StructArrayDescriptor(elemDecl, alignment, ::computeStructSizeOf) {
-                        isLayoutDependent(gpuFields(it))
-                    }
-                } else {
-                    logger.error("Unsupported array element type: ${property.type}", property)
-                    ScalarDescriptor
-                }
-            }
-            else -> {
-                val decl = type.declaration as? KSClassDeclaration
-                if (decl != null && isGpuStruct(decl)) {
-                    val alignment = alignAnnotationOf(decl)
-                        ?: run {
-                            logger.error(
-                                "@GpuStruct field without @Align: ${decl.simpleName.asString()}",
-                                property,
-                            )
-                            4
-                        }
-                    GpuStructDescriptor(decl, alignment, ::computeStructSizeOf) {
-                        isLayoutDependent(gpuFields(it))
-                    }
-                } else {
-                    logger.error("Unsupported type: ${property.type}", property)
-                    ScalarDescriptor
-                }
-            }
+            qualifiedName == genericArrayType -> structArrayDescriptorFor(property, type)
+            else -> nestedStructDescriptorFor(property, type)
         }
     }
+
+    private fun structArrayDescriptorFor(property: KSPropertyDeclaration, type: KSType): GpuTypeDescriptor {
+        val elemType = type.arguments.firstOrNull()
+            ?.type
+            ?.resolve()
+        val elemDecl = elemType?.declaration as? KSClassDeclaration
+        if (elemDecl == null || !isGpuStruct(elemDecl)) {
+            logger.error("Unsupported array element type: ${property.type}", property)
+            return ScalarDescriptor
+        }
+        if (hasDynamicArrayField(elemDecl)) {
+            logger.error("Array element '${elemDecl.simpleName.asString()}' has a dynamic array field", property)
+        }
+        val alignment = alignAnnotationOf(elemDecl)
+            ?: run {
+                logger.error(
+                    "@GpuStruct array element without @Align: ${elemDecl.simpleName.asString()}",
+                    property,
+                )
+                4
+            }
+        return StructArrayDescriptor(elemDecl, alignment, ::structSizeOf) {
+            isLayoutDependent(gpuFields(it))
+        }
+    }
+
+    private fun nestedStructDescriptorFor(property: KSPropertyDeclaration, type: KSType): GpuTypeDescriptor {
+        val decl = type.declaration as? KSClassDeclaration
+        if (decl == null || !isGpuStruct(decl)) {
+            logger.error("Unsupported type: ${property.type}", property)
+            return ScalarDescriptor
+        }
+        if (hasDynamicArrayField(decl)) {
+            logger.error("Nested struct '${decl.simpleName.asString()}' has a dynamic array field", property)
+        }
+        val alignment = alignAnnotationOf(decl)
+            ?: run {
+                logger.error("@GpuStruct field without @Align: ${decl.simpleName.asString()}", property)
+                4
+            }
+        return GpuStructDescriptor(decl, alignment, ::structSizeOf) {
+            isLayoutDependent(gpuFields(it))
+        }
+    }
+
+    /**
+     * Returns true if [declaration]'s last [GpuField] is a dynamically sized array.
+     *
+     * A struct in that shape has no statically known total size, so it cannot be embedded inside
+     * another struct — neither as a plain field nor as an array element (see [descriptorFor]).
+     *
+     * @param declaration the struct's class declaration to check
+     * @return true if the struct has a dynamically sized trailing array field
+     */
+    private fun hasDynamicArrayField(declaration: KSClassDeclaration): Boolean =
+        gpuFields(declaration).lastOrNull()?.let { descriptorFor(it).isArray() } ?: false
 
     private fun alignAnnotationOf(declaration: KSClassDeclaration): Int? {
         val annotation = declaration.annotations

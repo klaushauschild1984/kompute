@@ -6,7 +6,6 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
-import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
@@ -17,14 +16,14 @@ import com.squareup.kotlinpoet.asClassName
  *
  * @param layout used to compute field offsets, sizes, and padding
  */
-class GpuStructCodeGenerator(private val layout: GpuStructLayout) {
+class ToByteArrayCodeGenerator(private val layout: GpuStructLayout) {
     /**
-     * Generates the `toByteArray()` extension function source for [classDeclaration].
+     * Generates the `toByteArray()` extension function for [classDeclaration].
      *
      * @param classDeclaration the [de.hauschild.kompute.serialization.annotation.GpuStruct] annotated class
-     * @return Kotlin source code of the generated extension function
+     * @return the generated extension function
      */
-    fun generate(classDeclaration: KSClassDeclaration): String {
+    fun generate(classDeclaration: KSClassDeclaration): FunSpec {
         val packageName = classDeclaration.packageName.asString()
         val className = classDeclaration.simpleName.asString()
         val properties = layout.gpuFields(classDeclaration)
@@ -64,14 +63,9 @@ class GpuStructCodeGenerator(private val layout: GpuStructLayout) {
             bodyBuilder.endControlFlow()
         }
 
-        return FileSpec.builder(packageName, className)
-            .addFunction(
-                funSpecBuilder
-                    .addCode(bodyBuilder.build())
-                    .build()
-            )
+        return funSpecBuilder
+            .addCode(bodyBuilder.build())
             .build()
-            .toString()
     }
 
     private fun generateBody(
