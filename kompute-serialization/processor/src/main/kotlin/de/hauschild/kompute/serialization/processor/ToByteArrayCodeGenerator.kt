@@ -78,6 +78,14 @@ class ToByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                 codeBlockBuilder.addStatement("writer.skip(%L)", field.padding)
             }
             if (field.isArray()) {
+                field.fixedElementCount()?.let { fixedElementCount ->
+                    val fieldName = field.property.simpleName.asString()
+                    codeBlockBuilder.addStatement(
+                        "require(this.%L.size == %L) " +
+                                "{ \"Expected %L elements for '%L', but was \${this.%L.size}\" }",
+                        fieldName, fixedElementCount, fixedElementCount, fieldName, fieldName,
+                    )
+                }
                 codeBlockBuilder.beginControlFlow("for (element in this.%L)", field.property.simpleName.asString())
                 if (field.isElementGpuStruct()) {
                     codeBlockBuilder.addStatement("writer.write(element.toByteArray())")
@@ -105,10 +113,10 @@ class ToByteArrayCodeGenerator(private val layout: GpuStructLayout) {
         properties: List<KSPropertyDeclaration>,
         memoryLayout: Layout,
     ): BufferSizing {
-        val arrayField = fieldLayouts.lastOrNull { it.isArray() }
-        val staticSize = fieldLayouts.lastOrNull { !it.isArray() }?.let { it.offset + it.size } ?: 0
+        val dynamicField = fieldLayouts.lastOrNull { it.isDynamicArray() }
+        val staticSize = fieldLayouts.lastOrNull { !it.isDynamicArray() }?.let { it.offset + it.size } ?: 0
         val trailing = layout.trailingPadding(staticSize, properties, memoryLayout)
-        val sizeExpr = arrayField?.let {
+        val sizeExpr = dynamicField?.let {
             val dynamic = "this.${it.property.simpleName.asString()}.size * ${it.elementStride}"
             if (it.offset > 0) "${it.offset} + $dynamic" else dynamic
         } ?: "${staticSize + trailing}"

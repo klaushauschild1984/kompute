@@ -16,11 +16,23 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
  */
 interface GpuTypeDescriptor {
     /**
-     * Returns true when this type is a GPU array with a dynamic element count.
+     * Returns true when this type is a GPU array, whether its element count is fixed
+     * (see [de.hauschild.kompute.serialization.annotation.FixedSize]) or dynamic.
      *
      * @return true if this is an array type
      */
     fun isArray(): Boolean = false
+
+    /**
+     * Returns true when this is an array type whose element count is only known at runtime.
+     *
+     * A dynamic array may only be the last field of a struct serialized at the top level;
+     * an array with a declared [de.hauschild.kompute.serialization.annotation.FixedSize] is not
+     * dynamic and may appear anywhere.
+     *
+     * @return true if this is an array type with no statically known element count
+     */
+    fun isDynamic(): Boolean = isArray()
 
     /**
      * Returns true when array elements are themselves [de.hauschild.kompute.serialization.annotation.GpuStruct]s.
@@ -106,11 +118,15 @@ class GpuStructDescriptor(
 
 /**
  * Descriptor for primitive GPU array types: [FloatArray], [IntArray], [BooleanArray].
+ *
+ * @param fixedCount the declared element count from
+ * [de.hauschild.kompute.serialization.annotation.FixedSize], or null for a dynamically sized array
  */
-object PrimitiveArrayDescriptor : GpuTypeDescriptor {
+class PrimitiveArrayDescriptor(private val fixedCount: Int? = null) : GpuTypeDescriptor {
     override fun isArray() = true
+    override fun isDynamic() = fixedCount == null
     override fun alignment(layout: Layout) = if (layout == Layout.STD140) 16 else 4
-    override fun size(layout: Layout) = 0
+    override fun size(layout: Layout) = fixedCount?.let { it * elementStride(layout) } ?: 0
     override fun elementSize(layout: Layout) = 4
     override fun elementStride(layout: Layout) = alignment(layout)
     override fun isLayoutDependent() = true
@@ -122,6 +138,8 @@ object PrimitiveArrayDescriptor : GpuTypeDescriptor {
  * @param elementDeclaredAlignment alignment in bytes, from [de.hauschild.kompute.serialization.annotation.Align]
  * @param computeStructSize computes the serialized size of the element declaration for a given layout
  * @param checkLayoutDependent
+ * @param fixedCount the declared element count from
+ * [de.hauschild.kompute.serialization.annotation.FixedSize], or null for a dynamically sized array
  * @property elementDeclaration the element struct's class declaration
  */
 class StructArrayDescriptor(
@@ -129,12 +147,14 @@ class StructArrayDescriptor(
     private val elementDeclaredAlignment: Int,
     private val computeStructSize: (KSClassDeclaration, Layout) -> Int,
     private val checkLayoutDependent: (KSClassDeclaration) -> Boolean,
+    private val fixedCount: Int? = null,
 ) : GpuTypeDescriptor {
     override fun isArray() = true
+    override fun isDynamic() = fixedCount == null
     override fun isElementGpuStruct() = true
     override fun alignment(layout: Layout) =
         if (layout == Layout.STD140) maxOf(elementDeclaredAlignment, 16) else elementDeclaredAlignment
-    override fun size(layout: Layout) = 0
+    override fun size(layout: Layout) = fixedCount?.let { it * elementStride(layout) } ?: 0
     override fun elementSize(layout: Layout) = computeStructSize(elementDeclaration, layout)
     override fun elementStride(layout: Layout): Int {
         val elemSize = elementSize(layout)

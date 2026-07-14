@@ -1,6 +1,7 @@
 package de.hauschild.kompute.serialization.processor
 
 import de.hauschild.kompute.serialization.annotation.Align
+import de.hauschild.kompute.serialization.annotation.FixedSize
 import de.hauschild.kompute.serialization.annotation.GpuField
 import de.hauschild.kompute.serialization.annotation.GpuStruct
 import de.hauschild.kompute.serialization.annotation.Layout
@@ -45,8 +46,10 @@ class GpuStructLayout(private val logger: KSPLogger) {
      * Computes the [FieldLayout] for each property, respecting alignment and inter-field padding
      * according to [layout].
      *
-     * Array fields must appear last; a compiler error is emitted otherwise.
-     * Array fields have [FieldLayout.size] of 0 (dynamic at runtime) and carry [FieldLayout.elementStride].
+     * A dynamically sized array field (no [FixedSize]) must appear last; a compiler error is
+     * emitted otherwise. Such a field has [FieldLayout.size] of 0 (dynamic at runtime) but still
+     * carries [FieldLayout.elementStride]. A [FixedSize] array field has a real, statically known
+     * [FieldLayout.size] and may appear anywhere in the struct.
      *
      * @param properties the [GpuField]-annotated properties to lay out
      * @param layout the memory layout standard to apply
@@ -56,15 +59,16 @@ class GpuStructLayout(private val logger: KSPLogger) {
         var offset = 0
         return properties.mapIndexed { index, property ->
             val descriptor = descriptorFor(property)
-            if (descriptor.isArray() && index != properties.lastIndex) {
-                logger.error("Array fields must be the last field in a @GpuStruct", property)
+            if (descriptor.isDynamic() && index != properties.lastIndex) {
+                logger.error("Dynamically sized array fields must be the last field in a @GpuStruct", property)
             }
             val alignment = descriptor.alignment(layout)
             val padding = (alignment - (offset % alignment)) % alignment
             offset += padding
             if (descriptor.isArray()) {
-                FieldLayout(property, offset, 0, padding, descriptor, descriptor.elementSize(layout),
-                    descriptor.elementStride(layout))
+                val size = descriptor.size(layout)
+                FieldLayout(property, offset, size, padding, descriptor, descriptor.elementSize(layout),
+                    descriptor.elementStride(layout)).also { offset += size }
             } else {
                 val size = descriptor.size(layout)
                 FieldLayout(property, offset, size, padding, descriptor).also { offset += size }
@@ -76,12 +80,13 @@ class GpuStructLayout(private val logger: KSPLogger) {
      * Returns the number of trailing padding bytes needed to align [rawSize] to the struct's
      * base alignment (maximum member alignment).
      *
-     * Returns 0 when the last property is an array field, since array size is dynamic.
+     * Returns 0 when the last property is a dynamically sized array field, since its size is
+     * only known at runtime.
      *
      * @param rawSize the unpadded size of the struct in bytes
      * @param properties the struct's [GpuField]-annotated properties
      * @param layout the memory layout standard to apply
-     * @return number of trailing padding bytes, 0 if already aligned or last field is an array
+     * @return number of trailing padding bytes, 0 if already aligned or last field is a dynamic array
      */
     fun trailingPadding(
         rawSize: Int,
@@ -89,7 +94,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
         layout: Layout
     ): Int {
         val descriptors = properties.map { descriptorFor(it) }
-        if (descriptors.lastOrNull()?.isArray() == true) {
+        if (descriptors.lastOrNull()?.isDynamic() == true) {
             return 0
         }
         val alignment = descriptors.maxOfOrNull { it.alignment(layout) } ?: 1
@@ -149,6 +154,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
     private fun descriptorFor(property: KSPropertyDeclaration): GpuTypeDescriptor {
         val type = property.type.resolve()
         val qualifiedName = type.declaration.qualifiedName?.asString()
+        val fixedCount = fixedSizeAnnotationOf(property)
         return when {
             qualifiedName in setOf(
                 Int::class.qualifiedName,
@@ -157,13 +163,17 @@ class GpuStructLayout(private val logger: KSPLogger) {
             ) ->
                 ScalarDescriptor
             qualifiedName in primitiveArrayTypes ->
-                PrimitiveArrayDescriptor
-            qualifiedName == genericArrayType -> structArrayDescriptorFor(property, type)
+                PrimitiveArrayDescriptor(fixedCount)
+            qualifiedName == genericArrayType -> structArrayDescriptorFor(property, type, fixedCount)
             else -> nestedStructDescriptorFor(property, type)
         }
     }
 
-    private fun structArrayDescriptorFor(property: KSPropertyDeclaration, type: KSType): GpuTypeDescriptor {
+    private fun structArrayDescriptorFor(
+        property: KSPropertyDeclaration,
+        type: KSType,
+        fixedCount: Int?,
+    ): GpuTypeDescriptor {
         val elemType = type.arguments.firstOrNull()
             ?.type
             ?.resolve()
@@ -183,9 +193,13 @@ class GpuStructLayout(private val logger: KSPLogger) {
                 )
                 4
             }
-        return StructArrayDescriptor(elemDecl, alignment, ::structSizeOf) {
-            isLayoutDependent(gpuFields(it))
-        }
+        return StructArrayDescriptor(
+            elemDecl,
+            alignment,
+            ::structSizeOf,
+            { isLayoutDependent(gpuFields(it)) },
+            fixedCount,
+        )
     }
 
     private fun nestedStructDescriptorFor(property: KSPropertyDeclaration, type: KSType): GpuTypeDescriptor {
@@ -208,16 +222,16 @@ class GpuStructLayout(private val logger: KSPLogger) {
     }
 
     /**
-     * Returns true if [declaration]'s last [GpuField] is a dynamically sized array.
+     * Returns true if [declaration] has a dynamically sized (i.e. not [FixedSize]) array field.
      *
      * A struct in that shape has no statically known total size, so it cannot be embedded inside
      * another struct — neither as a plain field nor as an array element (see [descriptorFor]).
      *
      * @param declaration the struct's class declaration to check
-     * @return true if the struct has a dynamically sized trailing array field
+     * @return true if the struct has a dynamically sized array field
      */
     private fun hasDynamicArrayField(declaration: KSClassDeclaration): Boolean =
-        gpuFields(declaration).lastOrNull()?.let { descriptorFor(it).isArray() } ?: false
+        gpuFields(declaration).any { descriptorFor(it).isDynamic() }
 
     private fun alignAnnotationOf(declaration: KSClassDeclaration): Int? {
         val annotation = declaration.annotations
@@ -225,10 +239,16 @@ class GpuStructLayout(private val logger: KSPLogger) {
         return annotation?.arguments?.first()?.value as? Int
     }
 
+    private fun fixedSizeAnnotationOf(property: KSPropertyDeclaration): Int? {
+        val annotation = property.annotations
+            .firstOrNull { it.shortName.asString() == FixedSize::class.simpleName!! }
+        return annotation?.arguments?.first()?.value as? Int
+    }
+
     /**
      * @property property the property declaration
      * @property offset the offset in bytes from the start of the struct
-     * @property size the size in bytes of the field; 0 for array fields (dynamic at runtime)
+     * @property size the size in bytes of the field; 0 for a dynamically sized array field
      * @property padding the number of bytes of padding before the field
      * @property descriptor the type descriptor resolving alignment and size for this field
      * @property elementSize the size in bytes of a single array element; 0 for non-array fields
@@ -249,6 +269,21 @@ class GpuStructLayout(private val logger: KSPLogger) {
          * @return true if this is an array field
          */
         fun isArray(): Boolean = elementStride > 0
+
+        /**
+         * Returns true when this field is an array whose element count is only known at runtime.
+         *
+         * @return true if this is a dynamically sized array field
+         */
+        fun isDynamicArray(): Boolean = isArray() && descriptor.isDynamic()
+
+        /**
+         * Returns the declared element count for a [de.hauschild.kompute.serialization.annotation.FixedSize]
+         * array field, or null for a non-array or dynamically sized array field.
+         *
+         * @return the fixed element count, or null
+         */
+        fun fixedElementCount(): Int? = if (isArray() && !isDynamicArray()) size / elementStride else null
 
         /**
          * Returns true when this scalar field is itself a [GpuStruct].

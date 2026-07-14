@@ -2,8 +2,11 @@ package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
 import de.hauschild.kompute.serialization.fixture.DirectionalLight
+import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
+import de.hauschild.kompute.serialization.fixture.Particle
+import de.hauschild.kompute.serialization.fixture.ParticleSystem
 import de.hauschild.kompute.serialization.fixture.SingleFloat
 import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
@@ -82,5 +85,50 @@ class FromByteArrayTest {
         val restored = original.toByteArray().fromByteArray(Vector3fArray::class)
 
         assertThat(restored.buffer).containsExactly(Vector3f(1f, 2f, 3f), Vector3f(4f, 5f, 6f))
+    }
+
+    @Test
+    fun `fixed size struct array not last field roundtrip`() {
+        val original = Particle(
+            history = Array(8) { i -> Vector3f(i * 10f, i * 10f + 1f, i * 10f + 2f) },
+            velocity = Vector3f(100f, 200f, 300f),
+        )
+
+        val restored = original.toByteArray().fromByteArray(Particle::class)
+
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `fixed size primitive array std140 roundtrip`() {
+        val original = FixedFloatBuffer(floatArrayOf(1f, 2f, 3f), scale = 4f)
+
+        val restored = original.toByteArray().fromByteArray(FixedFloatBuffer::class)
+
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `fixed size primitive array std430 roundtrip`() {
+        val original = FixedFloatBuffer(floatArrayOf(1f, 2f, 3f), scale = 4f)
+
+        val restored = original.toByteArray(Layout.STD430).fromByteArray(FixedFloatBuffer::class, Layout.STD430)
+
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `struct with fixed size array field nested inside another struct roundtrip`() {
+        val original = ParticleSystem(
+            particle = Particle(
+                history = Array(8) { i -> Vector3f(i.toFloat(), i.toFloat(), i.toFloat()) },
+                velocity = Vector3f(1f, 2f, 3f),
+            ),
+            count = 5,
+        )
+
+        val restored = original.toByteArray().fromByteArray(ParticleSystem::class)
+
+        assertThat(restored).isEqualTo(original)
     }
 }

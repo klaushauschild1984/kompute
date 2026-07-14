@@ -2,8 +2,11 @@ package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
 import de.hauschild.kompute.serialization.fixture.DirectionalLight
+import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
+import de.hauschild.kompute.serialization.fixture.Particle
+import de.hauschild.kompute.serialization.fixture.ParticleSystem
 import de.hauschild.kompute.serialization.fixture.SingleFloat
 import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
@@ -45,5 +48,25 @@ class SizeOfTest {
     @Test
     fun `vec3 array std140`() {
         assertThat(Vector3fArray::class.sizeOf(2)).isEqualTo(32)
+    }
+
+    @Test
+    fun `fixed size struct array not last field`() {
+        assertThat(Particle::class.sizeOf()).isEqualTo(144)
+    }
+
+    @Test
+    fun `fixed size primitive array std140`() {
+        assertThat(FixedFloatBuffer::class.sizeOf()).isEqualTo(64)
+    }
+
+    @Test
+    fun `fixed size primitive array std430`() {
+        assertThat(FixedFloatBuffer::class.sizeOf(Layout.STD430)).isEqualTo(16)
+    }
+
+    @Test
+    fun `struct with fixed size array field nested inside another struct`() {
+        assertThat(ParticleSystem::class.sizeOf()).isEqualTo(160)
     }
 }

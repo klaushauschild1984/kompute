@@ -33,7 +33,8 @@ class SizeOfCodeGenerator(private val layout: GpuStructLayout) {
         val className = classDeclaration.simpleName.asString()
         val properties = layout.gpuFields(classDeclaration)
         val layoutDependent = layout.isLayoutDependent(properties)
-        val arrayTerminated = layout.computeLayout(properties, Layout.STD140).lastOrNull()?.isArray() == true
+        val dynamicArrayTerminated =
+            layout.computeLayout(properties, Layout.STD140).lastOrNull()?.isDynamicArray() == true
 
         val receiverClass = ClassName(packageName, className)
         val typeToken = KClass::class.asClassName().parameterizedBy(receiverClass)
@@ -43,7 +44,7 @@ class SizeOfCodeGenerator(private val layout: GpuStructLayout) {
             .receiver(typeToken)
             .returns(Int::class)
 
-        if (arrayTerminated) {
+        if (dynamicArrayTerminated) {
             funSpecBuilder.addParameter("elementCount", Int::class)
         }
 
@@ -76,10 +77,10 @@ class SizeOfCodeGenerator(private val layout: GpuStructLayout) {
         properties: List<KSPropertyDeclaration>,
         memoryLayout: Layout,
     ): String {
-        val arrayField = fieldLayouts.lastOrNull { it.isArray() }
-        val staticSize = fieldLayouts.lastOrNull { !it.isArray() }?.let { it.offset + it.size } ?: 0
+        val dynamicField = fieldLayouts.lastOrNull { it.isDynamicArray() }
+        val staticSize = fieldLayouts.lastOrNull { !it.isDynamicArray() }?.let { it.offset + it.size } ?: 0
         val trailing = layout.trailingPadding(staticSize, properties, memoryLayout)
-        return arrayField?.let {
+        return dynamicField?.let {
             val dynamic = "elementCount * ${it.elementStride}"
             if (it.offset > 0) "${it.offset} + $dynamic" else dynamic
         } ?: "${staticSize + trailing}"
