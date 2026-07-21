@@ -10,25 +10,25 @@ import de.hauschild.kompute.serialization.annotation.GpuStruct
  * @property z z coordinate
  */
 @GpuStruct
-@Align(16)
-data class Vector3f(
-    @GpuField val x: Float,
-    @GpuField val y: Float,
-    @GpuField val z: Float,
+@Align(32)
+data class Vector3d(
+    @GpuField val x: Double,
+    @GpuField val y: Double,
+    @GpuField val z: Double,
 ) {
     /**
-     * @return the vector as 3-element [FloatArray] in `[x,y,z]` order
+     * @return the vector as a 3-element [DoubleArray] in `[x,y,z]` order
      */
-    fun toFloatArray(): FloatArray = floatArrayOf(x, y, z)
+    fun toDoubleArray(): DoubleArray = doubleArrayOf(x, y, z)
 
     companion object {
         /**
-         * @param array a 3-element [FloatArray] in `[x,y,z]` order
-         * @return the constructed [Vector3f]
+         * @param array a 3-element [DoubleArray] in `[x,y,z]` order
+         * @return the constructed [Vector3d]
          */
-        fun of(array: FloatArray): Vector3f {
+        fun of(array: DoubleArray): Vector3d {
             require(array.size == 3) { "Expected 3 elements, but was ${array.size}" }
-            return Vector3f(array[0], array[1], array[2])
+            return Vector3d(array[0], array[1], array[2])
         }
     }
 }
