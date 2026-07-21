@@ -3,6 +3,7 @@ rootProject.name = "kompute"
 include(
     "kompute-core",
     "kompute-opengl",
+    "kompute-vulkan",
     "kompute-benchmark",
     "kompute-showcase",
     "kompute-coroutines",
