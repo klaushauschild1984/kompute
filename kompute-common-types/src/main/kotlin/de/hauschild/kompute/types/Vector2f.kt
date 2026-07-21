@@ -5,6 +5,14 @@ import de.hauschild.kompute.serialization.annotation.GpuField
 import de.hauschild.kompute.serialization.annotation.GpuStruct
 
 /**
+ * Matches GLSL's `vec2`.
+ *
+ * ```glsl
+ * layout(std140, binding = 0) uniform Params {
+ *     vec2 value;
+ * };
+ * ```
+ *
  * @property x x coordinate
  * @property y y coordinate
  */

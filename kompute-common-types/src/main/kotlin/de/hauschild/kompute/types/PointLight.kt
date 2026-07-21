@@ -5,6 +5,24 @@ import de.hauschild.kompute.serialization.annotation.GpuField
 import de.hauschild.kompute.serialization.annotation.GpuStruct
 
 /**
+ * ```glsl
+ * struct PointLight {
+ *     vec3 position;
+ *     vec3 color;
+ *     float intensity;
+ *     float constantAttenuation;
+ *     float linearAttenuation;
+ *     float quadraticAttenuation;
+ * };
+ *
+ * layout(std140, binding = 0) uniform Lighting {
+ *     PointLight light;
+ * };
+ * ```
+ *
+ * The GLSL struct's member order must match the declaration order above — std140 packs members
+ * positionally, so reordering them on the shader side would no longer match the generated layout.
+ *
  * @property position the light's position
  * @property color the light's color
  * @property intensity the light's intensity

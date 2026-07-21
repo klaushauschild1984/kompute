@@ -6,6 +6,18 @@ import de.hauschild.kompute.serialization.annotation.GpuField
 import de.hauschild.kompute.serialization.annotation.GpuStruct
 
 /**
+ * Matches GLSL's `mat4`, stored column-major exactly as GLSL does.
+ *
+ * ```glsl
+ * layout(std140, binding = 0) uniform Params {
+ *     mat4 value;
+ * };
+ * ```
+ *
+ * Use [ofColumnMajor] (or [of], its alias) when the source data is already column-major, e.g.
+ * copied straight out of a shader or another GLSL-facing library. Use [ofRowMajor] when building
+ * from row-major data, the layout most math textbooks and some other engines use.
+ *
  * @property columns the 4 column vectors, GLSL's own `mat4` storage order
  */
 @GpuStruct

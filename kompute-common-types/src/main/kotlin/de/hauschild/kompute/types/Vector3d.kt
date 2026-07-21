@@ -5,6 +5,16 @@ import de.hauschild.kompute.serialization.annotation.GpuField
 import de.hauschild.kompute.serialization.annotation.GpuStruct
 
 /**
+ * Matches GLSL's `dvec3`.
+ *
+ * ```glsl
+ * layout(std140, binding = 0) uniform Params {
+ *     dvec3 value;
+ * };
+ * ```
+ *
+ * `dvec3` requires GLSL 4.00+ or the `GL_ARB_gpu_shader_fp64` extension — not available in GLSL ES/WebGL.
+ *
  * @property x x coordinate
  * @property y y coordinate
  * @property z z coordinate
