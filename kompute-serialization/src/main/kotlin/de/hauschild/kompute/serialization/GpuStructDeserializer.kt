@@ -38,4 +38,12 @@ class GpuStructDeserializer(bytes: ByteArray) {
      */
     @Suppress("FUNCTION_BOOLEAN_PREFIX")
     fun readBoolean(offset: Int): Boolean = buffer.getInt(offset) != 0
+
+    /**
+     * Reads a double at the given offset.
+     *
+     * @param offset the byte offset to read from
+     * @return the double read
+     */
+    fun readDouble(offset: Int): Double = buffer.getDouble(offset)
 }

@@ -89,11 +89,28 @@ interface GpuTypeDescriptor {
 }
 
 /**
- * Descriptor for scalar GPU types: [Int], [Float], [Boolean].
+ * Descriptor for scalar GPU types: [Int], [Float], [Boolean], [Double].
+ *
+ * A scalar's base alignment equals its own byte width under both std140 and std430 — unlike
+ * arrays, scalars are never rounded up to a vec4 boundary.
+ *
+ * @param byteWidth the size in bytes of a single value of this scalar type
  */
-object ScalarDescriptor : GpuTypeDescriptor {
-    override fun alignment(layout: Layout) = 4
-    override fun size(layout: Layout) = 4
+class ScalarDescriptor(private val byteWidth: Int) : GpuTypeDescriptor {
+    override fun alignment(layout: Layout) = byteWidth
+    override fun size(layout: Layout) = byteWidth
+
+    companion object {
+        /**
+         * Descriptor shared by the 4-byte scalar types [Int], [Float], [Boolean].
+         */
+        val INT_FLOAT_BOOLEAN = ScalarDescriptor(4)
+
+        /**
+         * Descriptor for the 8-byte scalar type [Double].
+         */
+        val DOUBLE = ScalarDescriptor(8)
+    }
 }
 
 /**
@@ -117,17 +134,21 @@ class GpuStructDescriptor(
 }
 
 /**
- * Descriptor for primitive GPU array types: [FloatArray], [IntArray], [BooleanArray].
+ * Descriptor for primitive GPU array types: [FloatArray], [IntArray], [BooleanArray], [DoubleArray].
  *
  * @param fixedCount the declared element count from
  * [de.hauschild.kompute.serialization.annotation.FixedSize], or null for a dynamically sized array
+ * @param elementByteWidth the size in bytes of a single element of this array's type
  */
-class PrimitiveArrayDescriptor(private val fixedCount: Int? = null) : GpuTypeDescriptor {
+class PrimitiveArrayDescriptor(
+    private val fixedCount: Int? = null,
+    private val elementByteWidth: Int = 4,
+) : GpuTypeDescriptor {
     override fun isArray() = true
     override fun isDynamic() = fixedCount == null
-    override fun alignment(layout: Layout) = if (layout == Layout.STD140) 16 else 4
+    override fun alignment(layout: Layout) = if (layout == Layout.STD140) 16 else elementByteWidth
     override fun size(layout: Layout) = fixedCount?.let { it * elementStride(layout) } ?: 0
-    override fun elementSize(layout: Layout) = 4
+    override fun elementSize(layout: Layout) = elementByteWidth
     override fun elementStride(layout: Layout) = alignment(layout)
     override fun isLayoutDependent() = true
 }

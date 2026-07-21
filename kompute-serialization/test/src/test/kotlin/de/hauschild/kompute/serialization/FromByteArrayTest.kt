@@ -1,17 +1,20 @@
 package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
-import de.hauschild.kompute.serialization.fixture.DirectionalLight
+import de.hauschild.kompute.serialization.fixture.FixedDoubleBuffer
 import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
 import de.hauschild.kompute.serialization.fixture.Particle
 import de.hauschild.kompute.serialization.fixture.ParticleSystem
 import de.hauschild.kompute.serialization.fixture.SingleFloat
-import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.fromByteArray
 import de.hauschild.kompute.serialization.fixture.toByteArray
+import de.hauschild.kompute.types.DirectionalLight
+import de.hauschild.kompute.types.Vector3f
+import de.hauschild.kompute.types.fromByteArray
+import de.hauschild.kompute.types.toByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -38,9 +41,8 @@ class FromByteArrayTest {
     fun `light with vec3 position roundtrip`() {
         val original = DirectionalLight(
             direction = Vector3f(1f, 2f, 3f),
-            intensity = 0.5f,
             color = Vector3f(4f, 5f, 6f),
-            ambient = 1f,
+            intensity = 0.7f,
         )
 
         val restored = original.toByteArray().fromByteArray(DirectionalLight::class)
@@ -113,6 +115,24 @@ class FromByteArrayTest {
         val original = FixedFloatBuffer(floatArrayOf(1f, 2f, 3f), scale = 4f)
 
         val restored = original.toByteArray(Layout.STD430).fromByteArray(FixedFloatBuffer::class, Layout.STD430)
+
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `fixed size double array std140 roundtrip`() {
+        val original = FixedDoubleBuffer(doubleArrayOf(1.0, 2.0, 3.0), scale = 4.0)
+
+        val restored = original.toByteArray().fromByteArray(FixedDoubleBuffer::class)
+
+        assertThat(restored).isEqualTo(original)
+    }
+
+    @Test
+    fun `fixed size double array std430 roundtrip`() {
+        val original = FixedDoubleBuffer(doubleArrayOf(1.0, 2.0, 3.0), scale = 4.0)
+
+        val restored = original.toByteArray(Layout.STD430).fromByteArray(FixedDoubleBuffer::class, Layout.STD430)
 
         assertThat(restored).isEqualTo(original)
     }

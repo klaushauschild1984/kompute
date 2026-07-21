@@ -39,6 +39,15 @@ class GpuStructSerializer(size: Int) {
     }
 
     /**
+     * Writes a double to the buffer.
+     *
+     * @param value the double to write
+     */
+    fun write(value: Double) {
+        buffer.putDouble(value)
+    }
+
+    /**
      * Writes a byte array to the buffer.
      *
      * @param value the byte array to write
