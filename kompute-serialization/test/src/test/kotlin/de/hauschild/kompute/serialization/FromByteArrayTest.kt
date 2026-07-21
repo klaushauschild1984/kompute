@@ -1,7 +1,6 @@
 package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
-import de.hauschild.kompute.serialization.fixture.DirectionalLight
 import de.hauschild.kompute.serialization.fixture.FixedDoubleBuffer
 import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
@@ -12,6 +11,7 @@ import de.hauschild.kompute.serialization.fixture.SingleFloat
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.fromByteArray
 import de.hauschild.kompute.serialization.fixture.toByteArray
+import de.hauschild.kompute.types.DirectionalLight
 import de.hauschild.kompute.types.Vector3f
 import de.hauschild.kompute.types.fromByteArray
 import de.hauschild.kompute.types.toByteArray
@@ -41,9 +41,8 @@ class FromByteArrayTest {
     fun `light with vec3 position roundtrip`() {
         val original = DirectionalLight(
             direction = Vector3f(1f, 2f, 3f),
-            intensity = 0.5f,
             color = Vector3f(4f, 5f, 6f),
-            ambient = 1f,
+            intensity = 0.7f,
         )
 
         val restored = original.toByteArray().fromByteArray(DirectionalLight::class)

@@ -1,7 +1,6 @@
 package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
-import de.hauschild.kompute.serialization.fixture.DirectionalLight
 import de.hauschild.kompute.serialization.fixture.FixedDoubleBuffer
 import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
@@ -11,6 +10,7 @@ import de.hauschild.kompute.serialization.fixture.ParticleSystem
 import de.hauschild.kompute.serialization.fixture.SingleFloat
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.sizeOf
+import de.hauschild.kompute.types.DirectionalLight
 import de.hauschild.kompute.types.Vector3f
 import de.hauschild.kompute.types.sizeOf
 import org.assertj.core.api.Assertions.assertThat
