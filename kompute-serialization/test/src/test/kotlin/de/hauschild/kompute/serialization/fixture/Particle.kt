@@ -4,6 +4,7 @@ import de.hauschild.kompute.serialization.annotation.Align
 import de.hauschild.kompute.serialization.annotation.FixedSize
 import de.hauschild.kompute.serialization.annotation.GpuField
 import de.hauschild.kompute.serialization.annotation.GpuStruct
+import de.hauschild.kompute.types.Vector3f
 
 /**
  * @property history the particle's last 8 positions, fixed size so it need not be the last field

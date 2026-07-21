@@ -2,15 +2,17 @@ package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
 import de.hauschild.kompute.serialization.fixture.DirectionalLight
+import de.hauschild.kompute.serialization.fixture.FixedDoubleBuffer
 import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
 import de.hauschild.kompute.serialization.fixture.Particle
 import de.hauschild.kompute.serialization.fixture.ParticleSystem
 import de.hauschild.kompute.serialization.fixture.SingleFloat
-import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.sizeOf
+import de.hauschild.kompute.types.Vector3f
+import de.hauschild.kompute.types.sizeOf
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -63,6 +65,16 @@ class SizeOfTest {
     @Test
     fun `fixed size primitive array std430`() {
         assertThat(FixedFloatBuffer::class.sizeOf(Layout.STD430)).isEqualTo(16)
+    }
+
+    @Test
+    fun `fixed size double array std140`() {
+        assertThat(FixedDoubleBuffer::class.sizeOf()).isEqualTo(64)
+    }
+
+    @Test
+    fun `fixed size double array std430`() {
+        assertThat(FixedDoubleBuffer::class.sizeOf(Layout.STD430)).isEqualTo(32)
     }
 
     @Test
