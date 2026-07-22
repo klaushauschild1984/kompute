@@ -203,9 +203,11 @@ jobs:
                   Invoke-WebRequest -Uri $url -OutFile mesa.7z
                   7z x mesa.7z -omesa
                   Add-Content $env:GITHUB_PATH "${{ github.workspace }}\mesa\x64"
-                  # PATH alone doesn't register a Vulkan ICD - the loader needs the manifest path
-                  # explicitly, either via the registry or this environment variable.
-                  Add-Content $env:GITHUB_ENV "VK_DRIVER_FILES=${{ github.workspace }}\mesa\x64\lvp_icd.x86_64.json"
+                  # PATH alone doesn't register a Vulkan ICD. The loader's primary Windows discovery
+                  # mechanism is the registry, not an environment variable - this is also what
+                  # Microsoft's DirectXShaderCompiler CI does for the same Mesa package.
+                  $lvpIcd = (Get-ChildItem "${{ github.workspace }}\mesa" -Recurse -Filter "lvp_icd.x86_64.json" | Select-Object -First 1).FullName
+                  reg add "HKLM\SOFTWARE\Khronos\Vulkan\Drivers" /v "$lvpIcd" /t REG_DWORD /d 0 /f /reg:64
 
             - name: Run checks
               run: ./gradlew :kompute-vulkan:check
