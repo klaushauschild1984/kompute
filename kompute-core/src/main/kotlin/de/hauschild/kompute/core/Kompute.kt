@@ -37,6 +37,15 @@ object Kompute {
     @JvmStatic
     fun openGL(): Backend = load(Type.OpenGL)
 
+    /**
+     * Creates and initializes a Vulkan compute backend.
+     *
+     * @return an initialized [de.hauschild.kompute.core.backend.Backend] for Vulkan compute operations
+     * @throws KomputeBackendInitializationException if no Vulkan backend is found or initialization fails
+     */
+    @JvmStatic
+    fun vulkan(): Backend = load(Type.Vulkan)
+
     @OptIn(InternalApi::class)
     private fun load(type: Type): Backend {
         val backend = (

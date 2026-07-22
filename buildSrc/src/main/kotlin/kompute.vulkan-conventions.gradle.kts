@@ -13,6 +13,7 @@ val lwjglNatives = when {
 
 dependencies {
     "implementation"(platform(libs.lwjgl.bom))
+    "runtimeOnly"("org.lwjgl:lwjgl::$lwjglNatives")
     // lwjgl-vulkan only ships natives for macOS (MoltenVK loader); on Windows/Linux the
     // Vulkan loader is provided by the GPU driver / Vulkan SDK already present on the system.
     if (operatingSystem.isMacOsX) {
