@@ -43,7 +43,7 @@ class VulkanAllocator(
             val allocatorPointer = stack.mallocPointer(1)
             val result = vmaCreateAllocator(createInfo, allocatorPointer)
             requireBackendInitialization(result == VK13.VK_SUCCESS) {
-                "Failed to create Vulkan Memory Allocator (VkResult=$result)"
+                "Failed to create Vulkan Memory Allocator: ${vkResultName(result)}"
             }
             allocator = allocatorPointer.get(0)
         }

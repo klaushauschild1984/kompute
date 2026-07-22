@@ -32,7 +32,7 @@ class VulkanCommandPool(
             val commandPoolPointer = stack.mallocLong(1)
             val result = vkCreateCommandPool(vulkanDevice.device, createInfo, null, commandPoolPointer)
             requireBackendInitialization(result == VK10.VK_SUCCESS) {
-                "Failed to create Vulkan command pool (VkResult=$result)"
+                "Failed to create Vulkan command pool: ${vkResultName(result)}"
             }
             commandPool = commandPoolPointer.get(0)
         }

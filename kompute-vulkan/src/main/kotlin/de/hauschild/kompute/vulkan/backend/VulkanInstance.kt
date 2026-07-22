@@ -49,7 +49,7 @@ class VulkanInstance : AutoCloseable {
             val instancePointer = stack.mallocPointer(1)
             val result = vkCreateInstance(instanceCreateInfo, null, instancePointer)
             requireBackendInitialization(result == VK13.VK_SUCCESS) {
-                "Failed to create Vulkan instance (VkResult=$result)"
+                "Failed to create Vulkan instance: ${vkResultName(result)}"
             }
 
             return VkInstance(instancePointer.get(0), instanceCreateInfo)

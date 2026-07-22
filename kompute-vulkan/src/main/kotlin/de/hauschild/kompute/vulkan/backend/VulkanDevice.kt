@@ -41,7 +41,7 @@ class VulkanDevice(
             val devicePointer = stack.mallocPointer(1)
             val result = vkCreateDevice(physicalDevice.physicalDevice, deviceCreateInfo, null, devicePointer)
             requireBackendInitialization(result == VK10.VK_SUCCESS) {
-                "Failed to create Vulkan device (VkResult=$result)"
+                "Failed to create Vulkan device: ${vkResultName(result)}"
             }
             device = VkDevice(devicePointer.get(0), physicalDevice.physicalDevice, deviceCreateInfo)
             val queuePointer = stack.mallocPointer(1)
