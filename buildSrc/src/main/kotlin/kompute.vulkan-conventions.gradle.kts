@@ -7,7 +7,8 @@ val operatingSystem: OperatingSystem = OperatingSystem.current()
 val lwjglNatives = when {
     operatingSystem.isWindows -> "natives-windows"
     operatingSystem.isLinux   -> "natives-linux"
-    operatingSystem.isMacOsX  -> "natives-macos"
+    operatingSystem.isMacOsX  ->
+        if (System.getProperty("os.arch").startsWith("aarch64")) "natives-macos-arm64" else "natives-macos"
     else -> throw GradleException("Unsupported platform: ${operatingSystem.name}")
 }
 
