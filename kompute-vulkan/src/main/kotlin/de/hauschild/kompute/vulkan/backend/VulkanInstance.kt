@@ -3,9 +3,6 @@ package de.hauschild.kompute.vulkan.backend
 import de.hauschild.kompute.core.BuildInfo
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import org.lwjgl.system.MemoryStack
-import org.lwjgl.system.Platform
-import org.lwjgl.vulkan.KHRPortabilityEnumeration.VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR
-import org.lwjgl.vulkan.KHRPortabilityEnumeration.VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME
 import org.lwjgl.vulkan.VK10.VK_MAKE_API_VERSION
 import org.lwjgl.vulkan.VK10.vkCreateInstance
 import org.lwjgl.vulkan.VK10.vkDestroyInstance
@@ -37,14 +34,6 @@ class VulkanInstance : AutoCloseable {
             val instanceCreateInfo = VkInstanceCreateInfo.calloc(stack)
                 .sType(VK13.VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                 .pApplicationInfo(applicationInfo)
-
-            if (Platform.get() == Platform.MACOSX) {
-                // MoltenVK is a portability implementation, not a fully conformant Vulkan driver;
-                // the loader refuses to enumerate it unless this extension/flag is explicitly set.
-                instanceCreateInfo
-                    .flags(VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR)
-                    .ppEnabledExtensionNames(stack.pointers(stack.UTF8(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)))
-            }
 
             val instancePointer = stack.mallocPointer(1)
             val result = vkCreateInstance(instanceCreateInfo, null, instancePointer)
