@@ -203,6 +203,9 @@ jobs:
                   Invoke-WebRequest -Uri $url -OutFile mesa.7z
                   7z x mesa.7z -omesa
                   Add-Content $env:GITHUB_PATH "${{ github.workspace }}\mesa\x64"
+                  # PATH alone doesn't register a Vulkan ICD - the loader needs the manifest path
+                  # explicitly, either via the registry or this environment variable.
+                  Add-Content $env:GITHUB_ENV "VK_DRIVER_FILES=${{ github.workspace }}\mesa\x64\lvp_icd.x86_64.json"
 
             - name: Run checks
               run: ./gradlew :kompute-vulkan:check
