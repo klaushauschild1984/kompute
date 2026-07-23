@@ -15,6 +15,12 @@ import org.lwjgl.vulkan.VK13
  * device with a dedicated compute queue and command pool. Buffer and image memory is managed via
  * the Vulkan Memory Allocator (VMA). An opt-in validation layer enables detailed API usage
  * checking during development.
+ *
+ * System property `kompute.backend.vulkan.dedicatedComputeQueue`: if set, prefers a compute queue
+ * family without graphics capabilities, falling back to a combined family if none is found.
+ *
+ * System property `kompute.backend.vulkan.device`: if set, only physical devices whose name
+ * contains this value (case-insensitive) are considered; initialization fails if none match.
  */
 class VulkanBackend : AbstractBackend() {
     private lateinit var vulkanInstance: VulkanInstance
@@ -27,7 +33,9 @@ class VulkanBackend : AbstractBackend() {
     override fun type(): Type = Type.Vulkan
     override fun doInitialize() {
         vulkanInstance = VulkanInstance()
-        vulkanPhysicalDevice = VulkanPhysicalDevice(vulkanInstance)
+        val dedicatedComputeQueue = System.getProperty(DEDICATED_COMPUTE_QUEUE_PROPERTY).toBoolean()
+        val deviceName = System.getProperty(DEVICE_NAME_PROPERTY)
+        vulkanPhysicalDevice = VulkanPhysicalDevice(dedicatedComputeQueue, deviceName, vulkanInstance)
         vulkanDevice = VulkanDevice(vulkanPhysicalDevice)
         vulkanCommandPool = VulkanCommandPool(vulkanDevice, vulkanPhysicalDevice)
         vulkanAllocator = VulkanAllocator(vulkanInstance, vulkanPhysicalDevice, vulkanDevice)
@@ -41,7 +49,8 @@ class VulkanBackend : AbstractBackend() {
     }
 
     override fun compileSource(source: ShaderSource): CompiledShader {
-        TODO("Not yet implemented")
+        val vulkanShaderModule = VulkanShaderModule(source)
+        return VulkanCompiledShader()
     }
 
     override fun close() {
@@ -62,6 +71,8 @@ class VulkanBackend : AbstractBackend() {
     }
 
     companion object {
+        private const val DEDICATED_COMPUTE_QUEUE_PROPERTY = "kompute.backend.vulkan.dedicatedComputeQueue"
+        private const val DEVICE_NAME_PROPERTY = "kompute.backend.vulkan.device"
         private const val BYTES_PER_GB = 1_024 * 1_024 * 1_024
         private val logger = KotlinLogging.logger {}
 
