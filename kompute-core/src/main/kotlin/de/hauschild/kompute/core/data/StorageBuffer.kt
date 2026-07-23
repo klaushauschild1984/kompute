@@ -108,7 +108,7 @@ OutputCapable<T> {
      * - [Mode.Output]: [size] set, no [data], [asOutput] called
      * - [Mode.ReadWrite]: [data] set, no [size], [asOutput] called
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if the index is negative,
+     * @throws KomputeConfigurationException if the index is negative,
      * the type is unsupported,
      * neither [data] nor [size] is provided, both are provided, or [size] is used without [asOutput]
      */

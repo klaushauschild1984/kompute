@@ -14,7 +14,7 @@ interface IndexedBinding : Binding {
     /**
      * Validates the binding index.
      *
-     * @throws [KomputeConfigurationException] if the index is negative
+     * @throws KomputeConfigurationException if the index is negative
      */
     override fun validate() {
         requireConfiguration(index >= 0) {
@@ -27,7 +27,7 @@ interface IndexedBinding : Binding {
          * Validates that no two indexed bindings share the same binding index.
          *
          * @param indexedBindings the list of indexed bindings to cross-validate
-         * @throws [KomputeConfigurationException] if duplicate indices are found
+         * @throws KomputeConfigurationException if duplicate indices are found
          */
         fun crossValidate(indexedBindings: List<IndexedBinding>) {
             indexedBindings.crossValidate("index") { it.index }

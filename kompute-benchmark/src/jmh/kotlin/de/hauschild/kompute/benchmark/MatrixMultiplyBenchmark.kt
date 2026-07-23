@@ -2,7 +2,7 @@ package de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark
 
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.CompiledShader
-import de.hauschild.kompute.core.shader.ShaderSource.Stream
+import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Stream
 import org.openjdk.jmh.annotations.Benchmark
 import org.openjdk.jmh.annotations.BenchmarkMode
 import org.openjdk.jmh.annotations.Level

@@ -45,7 +45,7 @@ class UniformBufferObject(override val index: Int) : ShaderData, IndexedBinding 
     /**
      * Validates the buffer configuration.
      *
-     * @throws [KomputeConfigurationException] if the index is negative, [data] not provided
+     * @throws KomputeConfigurationException if the index is negative, [data] not provided
      */
     override fun validate() {
         super.validate()

@@ -10,4 +10,9 @@ sealed interface Type {
      * OpenGL compute backend.
      */
     data object OpenGL : Type
+
+    /**
+     * Vulkan compute backend.
+     */
+    data object Vulkan : Type
 }

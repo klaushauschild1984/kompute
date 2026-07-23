@@ -1,0 +1,57 @@
+name: 'Upload Backend Reports'
+description: 'Detekt/Diktat SARIF, JUnit test report, test results and coverage badge for a backend module'
+inputs:
+    module:
+        description: 'Gradle module directory, e.g. kompute-vulkan'
+        required: true
+    backend:
+        description: 'Backend label used in report categories and badge names, e.g. vulkan'
+        required: true
+    os:
+        description: 'Matrix OS label used for unique artifact/report names'
+        required: true
+runs:
+    using: 'composite'
+    steps:
+        - name: Upload Detekt results
+          uses: github/codeql-action/upload-sarif@v4
+          if: always() && runner.os == 'Linux' && hashFiles(format('{0}/build/reports/detekt/detekt.sarif', inputs.module)) != ''
+          with:
+              sarif_file: ${{ inputs.module }}/build/reports/detekt/detekt.sarif
+              category: detekt-${{ inputs.backend }}
+
+        - name: Upload Diktat results
+          uses: github/codeql-action/upload-sarif@v4
+          if: always() && runner.os == 'Linux' && hashFiles(format('{0}/build/reports/diktat/diktat.sarif', inputs.module)) != ''
+          with:
+              sarif_file: ${{ inputs.module }}/build/reports/diktat/diktat.sarif
+              category: diktat-${{ inputs.backend }}
+
+        - name: Test Report
+          uses: dorny/test-reporter@v1
+          if: always()
+          with:
+              name: Tests (${{ inputs.backend }} / ${{ inputs.os }})
+              path: ${{ inputs.module }}/build/test-results/test/*.xml
+              reporter: java-junit
+
+        - name: Upload test results
+          uses: actions/upload-artifact@v4
+          if: always()
+          with:
+              name: test-results-${{ inputs.backend }}-${{ inputs.os }}
+              path: ${{ inputs.module }}/build/test-results/test/*.xml
+
+        - name: Generate Coverage Badge
+          uses: cicirello/jacoco-badge-generator@v2
+          if: runner.os == 'Linux'
+          with:
+              jacoco-csv-file: ${{ inputs.module }}/build/reports/jacoco/test/jacocoTestReport.csv
+              coverage-badge-filename: jacoco-${{ inputs.backend }}.svg
+
+        - name: Commit Badge
+          uses: stefanzweifel/git-auto-commit-action@v5
+          if: runner.os == 'Linux'
+          with:
+              commit_message: "Update ${{ inputs.backend }} coverage badge"
+              file_pattern: .github/badges/jacoco-${{ inputs.backend }}.svg

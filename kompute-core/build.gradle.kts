@@ -18,7 +18,7 @@ val generateBuildInfo by tasks.registering {
             """
             package de.hauschild.kompute.core
 
-            internal object BuildInfo {
+            object BuildInfo {
                 const val VERSION: String = "$projectVersion"
             }
 
