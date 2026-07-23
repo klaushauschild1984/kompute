@@ -3,7 +3,7 @@ package de.hauschild.kompute.opengl.pipeline
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.pipeline.Pipeline
 import de.hauschild.kompute.core.pipeline.Stage
-import de.hauschild.kompute.core.shader.ShaderSource.Code
+import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.junit.jupiter.api.Assertions.assertArrayEquals

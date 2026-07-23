@@ -28,7 +28,7 @@ abstract class AbstractBackend : Backend {
      *
      * Delegates to [doInitialize] for backend-specific setup.
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if called more than once
+     * @throws KomputeBackendInitializationException if called more than once
      */
     @InternalApi
     override fun initialize() {
@@ -51,7 +51,7 @@ abstract class AbstractBackend : Backend {
      * Called once by [initialize]. Implementations should validate GPU capabilities
      * and set up required resources.
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if GPU resources are
+     * @throws KomputeBackendInitializationException if GPU resources are
      * unavailable or initialization fails
      */
     abstract fun doInitialize()

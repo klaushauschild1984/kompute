@@ -111,7 +111,7 @@ class NamedUniform<T: Any>(
     /**
      * Validates the uniform configuration.
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if the name is blank, the type is
+     * @throws KomputeConfigurationException if the name is blank, the type is
      * unsupported, [asUnsigned] is set on a non-[Int] type, or no value has been provided
      */
     override fun validate() {

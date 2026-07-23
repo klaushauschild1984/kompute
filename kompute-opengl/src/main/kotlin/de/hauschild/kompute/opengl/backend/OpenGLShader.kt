@@ -1,5 +1,6 @@
 package de.hauschild.kompute.opengl.backend
 
+import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import de.hauschild.kompute.core.logging.debugTimed
 import de.hauschild.kompute.core.shader.ShaderSource
@@ -23,23 +24,17 @@ class OpenGLShader(
     /**
      * Compiles the shader source into an OpenGL compute shader.
      *
-     * @throws [KomputeBackendInitializationException] if compilation fails
+     * @throws KomputeBackendInitializationException if compilation fails
+     * @throws KomputeConfigurationException if the shader source format is not supported
+     * @throws KomputeShaderSourceException if the shader source cannot be read
      */
     fun compile() {
         val glsl =
             when (source) {
-                is ShaderSource.Code -> {
-                    logger.debug { "Reading shader from code" }
-                    source.glsl
-                }
-                is ShaderSource.File -> {
-                    logger.debug { "Reading shader from file ${source.path}" }
-                    source.path.toFile().readText()
-                }
-                is ShaderSource.Stream -> {
-                    logger.debug { "Reading shader from stream" }
-                    source.inputStream.use { it.reader().readText() }
-                }
+                is ShaderSource.Glsl -> source.resolve()
+                is ShaderSource.Spirv -> throw KomputeConfigurationException(
+                    "Precompiled SPIR-V shaders are currently not supported by the OpenGL backend",
+                )
             }
         logger.trace { glsl }
         // TODO: cache compiled shader handles by source hash to avoid redundant recompilation

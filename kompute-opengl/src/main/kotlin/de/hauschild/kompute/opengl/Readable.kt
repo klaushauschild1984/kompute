@@ -23,7 +23,7 @@ internal interface Readable<T: Any> {
      * Reads the buffer contents from the GPU back to host memory.
      *
      * @return the data read from the GPU buffer
-     * @throws [KomputeConfigurationException] if the data type is not supported
+     * @throws KomputeConfigurationException if the data type is not supported
      */
     fun read(): T
 }

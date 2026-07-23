@@ -26,7 +26,7 @@ class OpenGLProgram(
     /**
      * Links the attached shader into an executable OpenGL compute program.
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if linking fails
+     * @throws KomputeBackendInitializationException if linking fails
      */
     fun link() {
         glHandle = GL43.glCreateProgram()

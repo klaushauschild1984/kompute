@@ -16,7 +16,7 @@ import java.util.ServiceLoader
  * Kompute.openGL().use { openGL ->
  *     val output = StorageBuffer<FloatArray>(1).size(128).asOutput()
  *     val result = openGL
- *         .shader(ShaderSource.Code(glslCode))
+ *         .shader(ShaderSource.Glsl.Code(glslCode))
  *         .data(
  *             StorageBuffer<FloatArray>(0).data(input),
  *             output,
