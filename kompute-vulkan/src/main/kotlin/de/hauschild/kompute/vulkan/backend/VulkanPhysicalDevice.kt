@@ -183,7 +183,6 @@ class VulkanPhysicalDevice(
         val queueFamilies = VkQueueFamilyProperties.malloc(queueFamilyCount.get(0), stack)
         vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, queueFamilyCount, queueFamilies)
 
-        // TODO force device via system property
         return (0 until queueFamilies.capacity())
             .firstOrNull { index ->
                 isComputeRequirementSatisfied(queueFamilies[index].queueFlags(), dedicatedComputeQueue)
