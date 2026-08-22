@@ -17,7 +17,12 @@ import com.google.devtools.ksp.symbol.KSType
  */
 @Suppress("TooManyFunctions")
 class GpuStructLayout(private val logger: KSPLogger) {
-    private val primitiveArrayTypes = setOf("kotlin.FloatArray", "kotlin.IntArray", "kotlin.BooleanArray")
+    private val primitiveArrayElementByteWidths = mapOf(
+        "kotlin.FloatArray" to 4,
+        "kotlin.IntArray" to 4,
+        "kotlin.BooleanArray" to 4,
+        "kotlin.DoubleArray" to 8,
+    )
     private val genericArrayType = "kotlin.Array"
 
     /**
@@ -161,9 +166,10 @@ class GpuStructLayout(private val logger: KSPLogger) {
                 Float::class.qualifiedName,
                 Boolean::class.qualifiedName,
             ) ->
-                ScalarDescriptor
-            qualifiedName in primitiveArrayTypes ->
-                PrimitiveArrayDescriptor(fixedCount)
+                ScalarDescriptor.INT_FLOAT_BOOLEAN
+            qualifiedName == Double::class.qualifiedName -> ScalarDescriptor.DOUBLE
+            primitiveArrayElementByteWidths.containsKey(qualifiedName) ->
+                PrimitiveArrayDescriptor(fixedCount, primitiveArrayElementByteWidths.getValue(qualifiedName!!))
             qualifiedName == genericArrayType -> structArrayDescriptorFor(property, type, fixedCount)
             else -> nestedStructDescriptorFor(property, type)
         }
@@ -180,7 +186,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
         val elemDecl = elemType?.declaration as? KSClassDeclaration
         if (elemDecl == null || !isGpuStruct(elemDecl)) {
             logger.error("Unsupported array element type: ${property.type}", property)
-            return ScalarDescriptor
+            return ScalarDescriptor.INT_FLOAT_BOOLEAN
         }
         if (hasDynamicArrayField(elemDecl)) {
             logger.error("Array element '${elemDecl.simpleName.asString()}' has a dynamic array field", property)
@@ -206,7 +212,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
         val decl = type.declaration as? KSClassDeclaration
         if (decl == null || !isGpuStruct(decl)) {
             logger.error("Unsupported type: ${property.type}", property)
-            return ScalarDescriptor
+            return ScalarDescriptor.INT_FLOAT_BOOLEAN
         }
         if (hasDynamicArrayField(decl)) {
             logger.error("Nested struct '${decl.simpleName.asString()}' has a dynamic array field", property)

@@ -7,10 +7,16 @@ import de.hauschild.kompute.core.exception.requireConfiguration
  *
  * UBOs are ideal for shader parameters like viewport dimensions, zoom levels, or transformation
  * matrices. Unlike [StorageBuffer], the shader cannot write to a uniform buffer object. Each buffer is
- * bound to a binding index declared in the shader source with `layout(std140, binding = N)`.
+ * bound to a binding index declared in the shader source with `layout(std140, binding = N)` or
+ * `layout(std430, binding = N)`.
  *
- * UBOs follow the std140 memory layout — `vec3` fields are aligned to 16 bytes and require
- * manual padding in the [ByteArray]. A typed builder with automatic alignment is planned for v0.7.0.
+ * The bytes passed to [data] must already match the memory layout declared by the shader —
+ * this class performs no layout validation or conversion. Under std140, for example, `vec3`
+ * fields are aligned to 16 bytes and require manual padding in the [ByteArray], as shown below.
+ *
+ * For straightforward serialization, prefer annotating a data class with `@GpuStruct`/`@GpuField`/
+ * `@Align` from `kompute-serialization` and passing its generated `toByteArray()` result to [data]
+ * instead of assembling the layout by hand.
  *
  * ```kotlin
  * val data = ByteBuffer.allocate(Float.SIZE_BYTES * 4 + Float.SIZE_BYTES)

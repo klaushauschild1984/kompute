@@ -25,3 +25,9 @@ target/
 # OS
 .DS_Store
 Thumbs.db
+
+# Java Preferences API (dateibasiertes Backend, z.B. von der Groovy-Shell in Gradle)
+.java/
+
+# Python
+__pycache__/

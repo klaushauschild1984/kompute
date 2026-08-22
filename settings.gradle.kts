@@ -8,7 +8,8 @@ include(
     "kompute-coroutines",
     "kompute-serialization",
     "kompute-serialization:processor",
-    "kompute-serialization:test"
+    "kompute-serialization:test",
+    "kompute-common-types"
 )
 
 // OpenGL requires 4.3, unsupported on macOS - excluded there so the whole build doesn't fail to

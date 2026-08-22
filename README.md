@@ -117,6 +117,27 @@ val bytes = DirectionalLight(
 ).toByteArray()
 ```
 
+### Optional: Common GPU types
+
+`kompute-common-types` provides ready-made `@GpuStruct` types matching GLSL's built-in vector/matrix types
+(`Vector2f`/`Vector3f`/`Vector4f`, their `d`-suffixed `double` counterparts, `Matrix3f`/`Matrix4f`/`Matrix3d`/`Matrix4d`)
+plus common lighting structs (`DirectionalLight`, `PointLight`, `SpotLight`), so you don't need to redeclare them
+in every project:
+
+```kotlin
+dependencies {
+    implementation("com.github.klaushauschild1984.kompute:kompute-common-types:x.y.z")
+}
+```
+
+```xml
+<dependency>
+    <groupId>com.github.klaushauschild1984.kompute</groupId>
+    <artifactId>kompute-common-types</artifactId>
+    <version>x.y.z</version>
+</dependency>
+```
+
 ## Usage
 
 Select a backend, attach a compute shader, configure storage buffers, dispatch, and read results.

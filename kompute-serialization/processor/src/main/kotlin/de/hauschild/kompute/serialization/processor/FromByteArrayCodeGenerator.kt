@@ -7,6 +7,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.asClassName
@@ -18,7 +19,7 @@ import kotlin.reflect.KClass
  *
  * Mirrors [ToByteArrayCodeGenerator] in reverse: reads fields at their statically known offsets
  * and constructs the target type via its primary constructor. No runtime reflection is used —
- * `@GpuField`/`@GpuStruct` have `SOURCE` retention and would be invisible at runtime regardless.
+ * `@GpuField`/`@GpuStruct` have `BINARY` retention and would be invisible at runtime regardless.
  *
  * @param layout used to compute field offsets, sizes, and padding
  */
@@ -100,10 +101,11 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                     elementDeclaration.simpleName.asString(),
                 )
                 CodeBlock.of(
-                    "Array(%L) { i -> this.copyOfRange(%L, %L).fromByteArray(%T::class) }",
+                    "Array(%L) { i -> this.copyOfRange(%L, %L).%M(%T::class) }",
                     elementCountExpr(field),
                     "${field.offset} + i * ${field.elementStride}",
                     "${field.offset} + i * ${field.elementStride} + ${field.elementSize}",
+                    MemberName(elementDeclaration.packageName.asString(), "fromByteArray"),
                     elementType,
                 )
             }
@@ -121,9 +123,10 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                 val declaration = (field.descriptor as GpuStructDescriptor).declaration
                 val nestedType = ClassName(declaration.packageName.asString(), declaration.simpleName.asString())
                 CodeBlock.of(
-                    "this.copyOfRange(%L, %L).fromByteArray(%T::class)",
+                    "this.copyOfRange(%L, %L).%M(%T::class)",
                     field.offset,
                     field.offset + field.size,
+                    MemberName(declaration.packageName.asString(), "fromByteArray"),
                     nestedType,
                 )
             }
@@ -148,6 +151,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
             Int::class.qualifiedName -> "readInt"
             Float::class.qualifiedName -> "readFloat"
             Boolean::class.qualifiedName -> "readBoolean"
+            Double::class.qualifiedName -> "readDouble"
             else -> error("Unsupported scalar type for field '${property.simpleName.asString()}'")
         }
     }
@@ -159,6 +163,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
             "kotlin.FloatArray" -> FloatArray::class.asClassName() to "readFloat"
             "kotlin.IntArray" -> IntArray::class.asClassName() to "readInt"
             "kotlin.BooleanArray" -> BooleanArray::class.asClassName() to "readBoolean"
+            "kotlin.DoubleArray" -> DoubleArray::class.asClassName() to "readDouble"
             else -> error("Unsupported array type for field '${property.simpleName.asString()}'")
         }
     }

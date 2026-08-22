@@ -10,5 +10,5 @@ package de.hauschild.kompute.serialization.annotation
  * @property value the fixed element count
  */
 @Target(AnnotationTarget.PROPERTY)
-@Retention(AnnotationRetention.SOURCE)
+@Retention(AnnotationRetention.BINARY)
 annotation class FixedSize(val value: Int)
