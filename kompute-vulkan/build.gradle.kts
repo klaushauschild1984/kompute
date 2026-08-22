@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.lwjgl)
     implementation(libs.lwjgl.vulkan)
     implementation(libs.lwjgl.shaderc)
+    implementation(libs.lwjgl.spvc)
     implementation(libs.lwjgl.vma)
 
     testFixturesImplementation(platform(libs.junit.bom))

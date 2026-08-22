@@ -49,8 +49,14 @@ class VulkanBackend : AbstractBackend() {
     }
 
     override fun compileSource(source: ShaderSource): CompiledShader {
-        val vulkanShaderModule = VulkanShaderModule(source)
-        return VulkanCompiledShader()
+        val vulkanShaderModule = VulkanShaderModule(source, vulkanDevice)
+        val vulkanPipeline = try {
+            VulkanPipeline(vulkanDevice, vulkanShaderModule)
+        } catch (t: Throwable) {
+            vulkanShaderModule.close()
+            throw t
+        }
+        return VulkanCompiledShader(vulkanShaderModule, vulkanPipeline)
     }
 
     override fun close() {

@@ -21,5 +21,6 @@ dependencies {
         "runtimeOnly"("org.lwjgl:lwjgl-vulkan::$lwjglNatives")
     }
     "runtimeOnly"("org.lwjgl:lwjgl-shaderc::$lwjglNatives")
+    "runtimeOnly"("org.lwjgl:lwjgl-spvc::$lwjglNatives")
     "runtimeOnly"("org.lwjgl:lwjgl-vma::$lwjglNatives")
 }
