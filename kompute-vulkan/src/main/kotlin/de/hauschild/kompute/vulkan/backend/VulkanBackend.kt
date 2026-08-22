@@ -5,6 +5,7 @@ import de.hauschild.kompute.core.backend.AbstractBackend
 import de.hauschild.kompute.core.backend.Type
 import de.hauschild.kompute.core.shader.CompiledShader
 import de.hauschild.kompute.core.shader.ShaderSource
+import de.hauschild.kompute.vulkan.shader.VulkanCompiledShader
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.lwjgl.vulkan.VK13
 
