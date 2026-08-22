@@ -7,7 +7,7 @@ dependencies {
     testImplementation(kotlin("reflect"))
 }
 
-val generateBuildInfo by tasks.registering {
+val generateBuildInfo = tasks.register("generateBuildInfo") {
     val outputDir = layout.buildDirectory.dir("generated/buildInfo")
     val projectVersion = project.version
     outputs.dir(outputDir)
