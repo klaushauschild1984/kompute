@@ -7,6 +7,7 @@ import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
+import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.asClassName
 
@@ -88,7 +89,12 @@ class ToByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                 }
                 codeBlockBuilder.beginControlFlow("for (element in this.%L)", field.property.simpleName.asString())
                 if (field.isElementGpuStruct()) {
-                    codeBlockBuilder.addStatement("writer.write(element.toByteArray())")
+                    val elementPackage = (field.descriptor as StructArrayDescriptor)
+                        .elementDeclaration.packageName.asString()
+                    codeBlockBuilder.addStatement(
+                        "writer.write(element.%M())",
+                        MemberName(elementPackage, "toByteArray"),
+                    )
                 } else {
                     codeBlockBuilder.addStatement("writer.write(element)")
                 }
@@ -97,8 +103,12 @@ class ToByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                 }
                 codeBlockBuilder.endControlFlow()
             } else if (field.isGpuStructField()) {
-                codeBlockBuilder.addStatement("writer.write(this.%L.toByteArray())",
-                    field.property.simpleName.asString())
+                val nestedPackage = (field.descriptor as GpuStructDescriptor).declaration.packageName.asString()
+                codeBlockBuilder.addStatement(
+                    "writer.write(this.%L.%M())",
+                    field.property.simpleName.asString(),
+                    MemberName(nestedPackage, "toByteArray"),
+                )
             } else {
                 codeBlockBuilder.addStatement("writer.write(this.%L)", field.property.simpleName.asString())
             }

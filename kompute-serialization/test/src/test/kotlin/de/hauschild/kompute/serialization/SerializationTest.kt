@@ -1,15 +1,17 @@
 package de.hauschild.kompute.serialization
 
 import de.hauschild.kompute.serialization.annotation.Layout
-import de.hauschild.kompute.serialization.fixture.DirectionalLight
+import de.hauschild.kompute.serialization.fixture.FixedDoubleBuffer
 import de.hauschild.kompute.serialization.fixture.FixedFloatBuffer
 import de.hauschild.kompute.serialization.fixture.FloatBuffer
 import de.hauschild.kompute.serialization.fixture.Line
 import de.hauschild.kompute.serialization.fixture.Particle
 import de.hauschild.kompute.serialization.fixture.SingleFloat
-import de.hauschild.kompute.serialization.fixture.Vector3f
 import de.hauschild.kompute.serialization.fixture.Vector3fArray
 import de.hauschild.kompute.serialization.fixture.toByteArray
+import de.hauschild.kompute.types.DirectionalLight
+import de.hauschild.kompute.types.Vector3f
+import de.hauschild.kompute.types.toByteArray
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -40,9 +42,8 @@ class SerializationTest {
     fun `light with vec3 position std140`() {
         val bytes = DirectionalLight(
             direction = Vector3f(1f, 2f, 3f),
-            intensity = 0.5f,
             color = Vector3f(4f, 5f, 6f),
-            ambient = 1f,
+            intensity = 0.7f,
         ).toByteArray()
 
         assertThat(bytes).hasSize(32)
@@ -50,11 +51,11 @@ class SerializationTest {
         assertThat(buffer.float).isEqualTo(1f)
         assertThat(buffer.float).isEqualTo(2f)
         assertThat(buffer.float).isEqualTo(3f)
-        assertThat(buffer.float).isEqualTo(0.5f)
+        buffer.position(16)
         assertThat(buffer.float).isEqualTo(4f)
         assertThat(buffer.float).isEqualTo(5f)
         assertThat(buffer.float).isEqualTo(6f)
-        assertThat(buffer.float).isEqualTo(1f)
+        assertThat(buffer.float).isEqualTo(0.7f)
     }
 
     @Test
@@ -169,5 +170,32 @@ class SerializationTest {
         assertThat(buffer.float).isEqualTo(2f)
         assertThat(buffer.float).isEqualTo(3f)
         assertThat(buffer.float).isEqualTo(4f)
+    }
+
+    @Test
+    fun `fixed size double array std140`() {
+        val bytes = FixedDoubleBuffer(doubleArrayOf(1.0, 2.0, 3.0), scale = 4.0).toByteArray()
+
+        assertThat(bytes).hasSize(64)
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        assertThat(buffer.double).isEqualTo(1.0)
+        buffer.position(16)
+        assertThat(buffer.double).isEqualTo(2.0)
+        buffer.position(32)
+        assertThat(buffer.double).isEqualTo(3.0)
+        buffer.position(48)
+        assertThat(buffer.double).isEqualTo(4.0)
+    }
+
+    @Test
+    fun `fixed size double array std430`() {
+        val bytes = FixedDoubleBuffer(doubleArrayOf(1.0, 2.0, 3.0), scale = 4.0).toByteArray(Layout.STD430)
+
+        assertThat(bytes).hasSize(32)
+        val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        assertThat(buffer.double).isEqualTo(1.0)
+        assertThat(buffer.double).isEqualTo(2.0)
+        assertThat(buffer.double).isEqualTo(3.0)
+        assertThat(buffer.double).isEqualTo(4.0)
     }
 }

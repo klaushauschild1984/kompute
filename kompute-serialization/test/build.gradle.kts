@@ -5,5 +5,6 @@ plugins {
 
 dependencies {
     implementation(project(":kompute-serialization"))
+    implementation(project(":kompute-common-types"))
     ksp(project(":kompute-serialization:processor"))
 }

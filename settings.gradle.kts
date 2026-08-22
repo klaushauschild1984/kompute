@@ -8,5 +8,6 @@ include(
     "kompute-coroutines",
     "kompute-serialization",
     "kompute-serialization:processor",
-    "kompute-serialization:test"
+    "kompute-serialization:test",
+    "kompute-common-types"
 )

@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `sizeOf()` and `fromByteArray()` code generators for `@GpuStruct` annotated classes — round-trip deserialization without runtime reflection — [docs](https://github.com/klaushauschild1984/kompute/wiki/Gpu-Struct-Serialization)
 - Validation for constructor field alignment and dynamic array constraints in `GpuStruct` layout computation
 - `@FixedSize(n)` annotation for statically-sized array fields — no longer limited to being the last field in a `@GpuStruct`, and may be nested inside another struct — [docs](https://github.com/klaushauschild1984/kompute/wiki/Gpu-Struct-Serialization)
+- `kompute-common-types` module — `Vector2f`/`Vector3f`/`Vector4f`, `Vector2d`/`Vector3d`/`Vector4d`, `Matrix3f`/`Matrix4f`, `Matrix3d`/`Matrix4d` and `DirectionalLight`/`PointLight`/`SpotLight`, all annotated with `@GpuStruct` and matching GLSL's std140 layout
 
 ## [v0.10.2] — 2026-07-06
 
