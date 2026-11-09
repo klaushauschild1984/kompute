@@ -15,6 +15,8 @@ interface VulkanReadable<T : Any> {
 
     /**
      * Reads the buffer contents from the GPU back to host memory.
+     *
+     * @return the buffer contents
      */
     fun read(): T
 }

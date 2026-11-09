@@ -49,6 +49,7 @@ class VulkanBackend : AbstractBackend() {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
     override fun compileSource(source: ShaderSource): CompiledShader {
         val vulkanShaderModule = VulkanShaderModule(source, vulkanDevice)
         val vulkanPipeline = try {

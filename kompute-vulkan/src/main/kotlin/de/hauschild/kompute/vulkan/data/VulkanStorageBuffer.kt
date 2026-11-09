@@ -15,7 +15,6 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkBufferCopy
 import org.lwjgl.vulkan.VkCommandBuffer
-import java.nio.ByteBuffer
 
 /**
  * Wraps a Vulkan shader storage buffer (SSBO) for a [StorageBuffer].
@@ -59,7 +58,7 @@ VulkanReadable<T> {
      * @throws KomputeConfigurationException if the buffer is empty or larger than 2 GiB
      */
     override fun bind() {
-        val byteSize = elementCount().toLong() * elementSizeInBytes()
+        val byteSize = elementCount().toLong() * StorageBufferCodec.elementSizeInBytes(source.type)
         requireConfiguration(byteSize in 1L..Int.MAX_VALUE) {
             "StorageBuffer must be between 1 byte and 2 GiB, was $byteSize bytes"
         }
@@ -87,7 +86,7 @@ VulkanReadable<T> {
     ) {
         context.allocator.createBuffer(target.size, VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
             VulkanMemoryKind.STAGING_UPLOAD).use { staging ->
-            write(data, staging.mapped())
+            StorageBufferCodec.write(data, staging.mapped())
             staging.flush()
             context.commandPool.executeOneTime { commandBuffer ->
                 copy(commandBuffer, staging.buffer, target.buffer, target.size)
@@ -129,7 +128,8 @@ VulkanReadable<T> {
                 )
             }
             staging.invalidate()
-            return readArray(staging.mapped())
+            @Suppress("UNCHECKED_CAST")
+            return StorageBufferCodec.read(source.type, elementCount(), staging.mapped()) as T
         }
     }
 
@@ -157,57 +157,10 @@ VulkanReadable<T> {
     }
 
     private fun elementCount(): Int = when (val mode = source.mode()) {
-        is StorageBuffer.Mode.Input -> countOf(mode.data)
-        is StorageBuffer.Mode.ReadWrite -> countOf(mode.data)
+        is StorageBuffer.Mode.Input -> StorageBufferCodec.elementCount(mode.data)
+        is StorageBuffer.Mode.ReadWrite -> StorageBufferCodec.elementCount(mode.data)
         is StorageBuffer.Mode.Output -> mode.size
     }
-
-    private fun countOf(data: T): Int = when (data) {
-        is IntArray -> data.size
-        is LongArray -> data.size
-        is FloatArray -> data.size
-        is DoubleArray -> data.size
-        is ByteArray -> data.size
-        else -> throw unsupportedType()
-    }
-
-    private fun elementSizeInBytes(): Int = when (source.type) {
-        IntArray::class -> Int.SIZE_BYTES
-        LongArray::class -> Long.SIZE_BYTES
-        FloatArray::class -> Float.SIZE_BYTES
-        DoubleArray::class -> Double.SIZE_BYTES
-        ByteArray::class -> 1
-        else -> throw unsupportedType()
-    }
-
-    private fun write(
-        data: T,
-        target: ByteBuffer,
-    ) {
-        when (data) {
-            is IntArray -> target.asIntBuffer().put(data)
-            is LongArray -> target.asLongBuffer().put(data)
-            is FloatArray -> target.asFloatBuffer().put(data)
-            is DoubleArray -> target.asDoubleBuffer().put(data)
-            is ByteArray -> target.put(data)
-            else -> throw unsupportedType()
-        }
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun readArray(bytes: ByteBuffer): T {
-        val count = elementCount()
-        return when (source.type) {
-            IntArray::class -> IntArray(count).also { bytes.asIntBuffer().get(it) }
-            LongArray::class -> LongArray(count).also { bytes.asLongBuffer().get(it) }
-            FloatArray::class -> FloatArray(count).also { bytes.asFloatBuffer().get(it) }
-            DoubleArray::class -> DoubleArray(count).also { bytes.asDoubleBuffer().get(it) }
-            ByteArray::class -> ByteArray(count).also { bytes.get(it) }
-            else -> throw unsupportedType()
-        } as T
-    }
-
-    private fun unsupportedType() = KomputeConfigurationException("Unsupported StorageBuffer type: ${source.type}")
 
     companion object {
         private const val TRANSFER_USAGE =

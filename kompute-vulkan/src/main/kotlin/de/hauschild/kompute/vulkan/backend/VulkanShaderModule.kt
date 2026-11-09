@@ -1,3 +1,7 @@
+/**
+ * Bundles the [VulkanShaderModule] and the [VulkanShaderBinding] reflected from its SPIR-V bytecode.
+ */
+
 package de.hauschild.kompute.vulkan.backend
 
 import de.hauschild.kompute.core.exception.KomputeShaderSourceException
@@ -43,16 +47,11 @@ data class VulkanShaderBinding(
  * @param source the [ShaderSource]
  * @param device the [VulkanDevice]
  */
+@Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
 class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice) : AutoCloseable {
     private val compiler = shaderc_compiler_initialize()
     private var result: Long = -1
     private var shaderModule: Long = VK10.VK_NULL_HANDLE
-
-    /**
-     * The raw `VkShaderModule` handle.
-     */
-    val handle: Long
-        get() = shaderModule
 
     /**
      * The descriptor bindings reflected from the shader's SPIR-V bytecode.
@@ -79,6 +78,13 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
         }
     }
 
+    /**
+     * Returns the raw `VkShaderModule` handle.
+     *
+     * @return the `VkShaderModule` handle (non-dispatchable, hence a plain [Long])
+     */
+    fun handle(): Long = shaderModule
+
     private fun reflectBindings(shaderBytecode: ByteArray): List<VulkanShaderBinding> =
         MemoryStack.stackPush().use { stack ->
             val contextPointer = stack.mallocPointer(1)
@@ -88,7 +94,10 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
             }
             val context = contextPointer.get(0)
             try {
-                val spirvWords = stack.malloc(shaderBytecode.size).put(shaderBytecode).flip().asIntBuffer()
+                val spirvWords = stack.malloc(shaderBytecode.size)
+                    .put(shaderBytecode)
+                    .flip()
+                    .asIntBuffer()
                 val parsedIrPointer = stack.mallocPointer(1)
                 spvcResult = Spvc.spvc_context_parse_spirv(
                     context, spirvWords, spirvWords.remaining().toLong(), parsedIrPointer,
@@ -150,7 +159,9 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
                 descriptorSet = Spvc.spvc_compiler_get_decoration(
                     reflectionCompiler, resource.id(), Spv.SpvDecorationDescriptorSet,
                 ),
-                binding = Spvc.spvc_compiler_get_decoration(reflectionCompiler, resource.id(), Spv.SpvDecorationBinding),
+                binding = Spvc.spvc_compiler_get_decoration(
+                    reflectionCompiler, resource.id(), Spv.SpvDecorationBinding,
+                ),
                 descriptorType = descriptorType,
             )
         }
@@ -178,8 +189,8 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
             val errorMessage = shaderc_result_get_error_message(result)
             throw KomputeShaderSourceException("Failed to compile shader: $errorMessage")
         }
-        val byteBuffer = shaderc_result_get_bytes(result)!!
-        return ByteArray(byteBuffer.remaining()).also { byteBuffer.get(it)}
+        val byteBuffer = checkNotNull(shaderc_result_get_bytes(result)) { "shaderc returned no bytecode" }
+        return ByteArray(byteBuffer.remaining()).also { byteBuffer.get(it) }
     }
 
     override fun close() {

@@ -115,7 +115,7 @@ class VulkanPhysicalDevice(
                 }
 
             requireBackendInitialization(candidate != null) { "No compute-capable Vulkan device found" }
-            return candidate!!
+            return candidate
         }
     }
 

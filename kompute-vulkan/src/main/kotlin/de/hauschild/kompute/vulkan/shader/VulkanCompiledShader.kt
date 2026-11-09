@@ -52,16 +52,16 @@ class VulkanCompiledShader(
         val reflectedByIndex = vulkanShaderModule.bindings.associateBy { it.binding }
 
         requireConfiguration(suppliedByIndex.keys == reflectedByIndex.keys) {
-            "ShaderData bindings ${suppliedByIndex.keys} do not match the shader's declared bindings " +
-                "${reflectedByIndex.keys}"
+            "ShaderData bindings ${suppliedByIndex.keys} do not match the shader's bindings ${reflectedByIndex.keys}"
         }
 
         reflectedByIndex.forEach { (index, reflected) ->
             val supplied = suppliedByIndex.getValue(index)
             val actualDescriptorType = descriptorTypeOf(supplied)
+            val declared = DESCRIPTOR_TYPE_NAMES[reflected.descriptorType]
+            val provided = supplied::class.simpleName
             requireConfiguration(actualDescriptorType == reflected.descriptorType) {
-                "Binding $index: shader declares ${DESCRIPTOR_TYPE_NAMES[reflected.descriptorType]}, " +
-                    "but ${supplied::class.simpleName} was provided"
+                "Binding $index: shader declares $declared, but $provided was provided"
             }
         }
     }
@@ -82,10 +82,12 @@ class VulkanCompiledShader(
         z: Int,
         data: List<ShaderData>
     ): ShaderResult {
+        @Suppress("UnusedVariable") // consumed by the dispatch once it is implemented
         val bindables = bind(data)
         TODO("Not yet implemented")
     }
 
+    @Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
     private fun bind(data: List<ShaderData>): List<VulkanBindable> {
         val bindables = mutableListOf<VulkanBindable>()
         try {

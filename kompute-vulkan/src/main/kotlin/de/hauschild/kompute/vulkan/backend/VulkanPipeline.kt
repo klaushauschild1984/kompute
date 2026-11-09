@@ -19,6 +19,7 @@ import org.lwjgl.vulkan.VkPipelineShaderStageCreateInfo
  * @param device the [VulkanDevice]
  * @param shaderModule the compiled [VulkanShaderModule]
  */
+@Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
 class VulkanPipeline(
     private val device: VulkanDevice,
     shaderModule: VulkanShaderModule,
@@ -31,7 +32,7 @@ class VulkanPipeline(
         try {
             descriptorSetLayout = createDescriptorSetLayout(shaderModule.bindings)
             pipelineLayout = createPipelineLayout(descriptorSetLayout)
-            pipeline = createPipeline(shaderModule.handle, pipelineLayout)
+            pipeline = createPipeline(shaderModule.handle(), pipelineLayout)
         } catch (t: Throwable) {
             close()
             throw t
