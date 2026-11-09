@@ -7,6 +7,7 @@ import de.hauschild.kompute.core.backend.Backend
  * @param closeBackend whether to close the backend after use - defaults to true
  * @property backend the [Backend] to be used for rendering - defaults to [Kompute.openGL]
  */
+@Suppress("AbstractClassCanBeConcreteClass") // base class for renderers, not meant to be instantiated
 abstract class BackendUser(
     protected val backend: Backend = Kompute.openGL(),
     private val closeBackend: Boolean = true,

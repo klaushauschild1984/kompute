@@ -33,30 +33,33 @@ Readable<Image2DResult> {
      * @param maxTextureSize maximum texture size
      */
     fun validateTextureSize(maxTextureSize: Int) {
-        requireConfiguration(source.width!! <= maxTextureSize&&
-                source.height!! <= maxTextureSize){
-            "Image2D size (${source.width}x${source.height}) exceeds maximum texture size ($maxTextureSize)"
+        val width = checkNotNull(source.width) { "Image2D width must be set" }
+        val height = checkNotNull(source.height) { "Image2D height must be set" }
+        requireConfiguration(width <= maxTextureSize && height <= maxTextureSize) {
+            "Image2D size (${width}x$height) exceeds maximum texture size ($maxTextureSize)"
         }
     }
 
     override fun bind() {
+        val width = checkNotNull(source.width) { "Image2D width must be set" }
+        val height = checkNotNull(source.height) { "Image2D height must be set" }
         glHandle = GL11.glGenTextures()
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, glHandle)
 
         GL11.glTexImage2D(
             GL11.GL_TEXTURE_2D, 0,
             openGLFormat.internalFormat,
-            source.width!!,
-            source.height!!,
+            width,
+            height,
             0,
             openGLFormat.pixelFormat,
             GL11.GL_UNSIGNED_BYTE,
             null as ByteBuffer?
         )
-        val zeros = MemoryUtil.memCalloc(source.width!! * source.height!! * source.format.bytesPerPixel)
+        val zeros = MemoryUtil.memCalloc(width * height * source.format.bytesPerPixel)
         try {
             GL11.glTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0,
-                source.width!!, source.height!!,
+                width, height,
                 openGLFormat.pixelFormat, GL11.GL_UNSIGNED_BYTE, zeros)
         } finally {
             MemoryUtil.memFree(zeros)
@@ -74,8 +77,10 @@ Readable<Image2DResult> {
     }
 
     override fun read(): Image2DResult {
+        val width = checkNotNull(source.width) { "Image2D width must be set" }
+        val height = checkNotNull(source.height) { "Image2D height must be set" }
         GL11.glBindTexture(GL11.GL_TEXTURE_2D, glHandle)
-        val bytes = ByteArray(source.width!! * source.height!! * source.format.bytesPerPixel)
+        val bytes = ByteArray(width * height * source.format.bytesPerPixel)
         val buffer = MemoryUtil.memAlloc(bytes.size)
         try {
             GL11.glGetTexImage(GL11.GL_TEXTURE_2D,
@@ -88,7 +93,7 @@ Readable<Image2DResult> {
         } finally {
             MemoryUtil.memFree(buffer)
         }
-        return Image2DResult(bytes, source.width!!, source.height!!, source.format)
+        return Image2DResult(bytes, width, height, source.format)
     }
 
     override fun close() {

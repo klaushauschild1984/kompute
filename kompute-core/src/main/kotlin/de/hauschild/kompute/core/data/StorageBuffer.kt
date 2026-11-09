@@ -55,10 +55,13 @@ OutputCapable<T> {
      *
      * @return [Mode] the [StorageBuffer] operates in
      */
-    fun mode(): Mode<T> = when {
-        isOutput && data != null -> Mode.ReadWrite(data!!)
-        isOutput -> Mode.Output(size!!)
-        else -> Mode.Input(data!!)
+    fun mode(): Mode<T> {
+        val data = data
+        return when {
+            isOutput && data != null -> Mode.ReadWrite(data)
+            isOutput -> Mode.Output(checkNotNull(size) { "Output buffer size must be set" })
+            else -> Mode.Input(checkNotNull(data) { "Input buffer data must be set" })
+        }
     }
 
     /**
@@ -151,14 +154,14 @@ OutputCapable<T> {
      *
      * @param T the buffer data type (e.g. [FloatArray], [IntArray])
      */
-    sealed class Mode<out T> {
+    sealed interface Mode<out T> {
         /**
          * Input data to upload to the GPU.
          *
          * @param T the buffer data type
          * @property data the data to upload
          */
-        data class Input<T>(val data: T) : Mode<T>()
+        data class Input<T>(val data: T) : Mode<T>
 
         /**
          * Output buffer that is allocated on the GPU.
@@ -166,7 +169,7 @@ OutputCapable<T> {
          * @param T the buffer data type
          * @property size the number of elements to allocate
          */
-        data class Output<T>(val size: Int) : Mode<T>()
+        data class Output<T>(val size: Int) : Mode<T>
 
         /**
          * Read-write buffer that is allocated on the GPU.
@@ -174,7 +177,7 @@ OutputCapable<T> {
          * @param T the buffer data type
          * @property data the initial data to upload
          */
-        data class ReadWrite<T>(val data: T) : Mode<T>()
+        data class ReadWrite<T>(val data: T) : Mode<T>
     }
 
     companion object {

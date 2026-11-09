@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.ben.manes.versions)
 }
 
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
 allprojects {
     version = "0.13.0-SNAPSHOT"
 }

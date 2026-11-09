@@ -28,7 +28,7 @@ runs:
               category: diktat-${{ inputs.backend }}
 
         - name: Test Report
-          uses: dorny/test-reporter@v1
+          uses: dorny/test-reporter@v3
           if: always()
           with:
               name: Tests (${{ inputs.backend }} / ${{ inputs.os }})
@@ -36,7 +36,7 @@ runs:
               reporter: java-junit
 
         - name: Upload test results
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v7
           if: always()
           with:
               name: test-results-${{ inputs.backend }}-${{ inputs.os }}
@@ -50,7 +50,7 @@ runs:
               coverage-badge-filename: jacoco-${{ inputs.backend }}.svg
 
         - name: Commit Badge
-          uses: stefanzweifel/git-auto-commit-action@v5
+          uses: stefanzweifel/git-auto-commit-action@v7
           if: runner.os == 'Linux'
           with:
               commit_message: "Update ${{ inputs.backend }} coverage badge"

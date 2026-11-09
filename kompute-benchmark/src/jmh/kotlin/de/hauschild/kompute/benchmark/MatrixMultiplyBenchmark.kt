@@ -1,4 +1,10 @@
-package de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark
+/**
+ * Diktat expects the jmh source set directory as part of the package name, the JVM and detekt do not.
+ */
+
+@file:Suppress("PACKAGE_NAME_INCORRECT_PATH")
+
+package de.hauschild.kompute.benchmark
 
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.shader.CompiledShader
@@ -33,6 +39,7 @@ open class MatrixMultiplyBenchmark {
      * @param cpu
      */
     @Benchmark
+    @Suppress("UnusedParameter") // injected so JMH runs the CpuState setup, not read in the benchmark body
     fun kotlin(
         matrix: MatrixState,
         cpu: CpuState,
