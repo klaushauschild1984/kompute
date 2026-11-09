@@ -9,10 +9,10 @@ import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedImage
 import de.hauschild.kompute.vulkan.backend.VulkanContext
+import de.hauschild.kompute.vulkan.backend.VulkanTransferBatch
 import de.hauschild.kompute.vulkan.backend.checkVk
-import de.hauschild.kompute.vulkan.backend.downloadImage
 import de.hauschild.kompute.vulkan.backend.imageBarrier
-import de.hauschild.kompute.vulkan.backend.memoryBarrier
+import de.hauschild.kompute.vulkan.backend.submitRead
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkClearColorValue
@@ -36,21 +36,22 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet
  */
 class VulkanImage2D(
     source: Image2D,
-    private val context: VulkanContext,
-) : VulkanBuffer<Image2D>(source),
+    context: VulkanContext,
+) : VulkanBuffer<Image2D>(source, context),
 OutputCapable<Image2D.Image2DResult> by source,
 VulkanReadable<Image2D.Image2DResult> {
     private var image: VulkanAllocatedImage? = null
     private var imageView: Long = VK10.VK_NULL_HANDLE
 
     /**
-     * Allocates a new image and view for the configured dimension and format and clears the image.
+     * Allocates a new image and view for the configured dimension and format and schedules clearing
+     * the image.
      *
      * Calling [bind] again releases the previous image and creates a new one.
      *
      * @throws KomputeConfigurationException if the dimension is not set, not positive or exceeds the device limit
      */
-    override fun bind() {
+    override fun scheduleBind(batch: VulkanTransferBatch) {
         close()
         val width = checkNotNull(source.width) { "Image2D width must be set" }
         val height = checkNotNull(source.height) { "Image2D height must be set" }
@@ -64,24 +65,27 @@ VulkanReadable<Image2D.Image2DResult> {
         val newImage = context.allocator.createImage(width, height, format, IMAGE_USAGE)
         image = newImage
         imageView = createImageView(newImage, format)
-        clear(newImage)
+        clear(batch, newImage)
     }
 
     /**
-     * Copies the image back to host memory.
+     * Copies the image back to host memory in a submission of its own.
      *
      * @return the pixels together with dimension and format
      * @throws KomputeBackendInitializationException if [bind] was not called before
      */
-    override fun read(): Image2D.Image2DResult {
+    override fun read(): Image2D.Image2DResult = context.submitRead { batch -> scheduleRead(batch) }
+
+    override fun scheduleRead(batch: VulkanTransferBatch): () -> Image2D.Image2DResult {
         val boundImage = checkNotNull(image) { "bind() must be called before read()" }
         val width = checkNotNull(source.width) { "Image2D width must be set" }
         val height = checkNotNull(source.height) { "Image2D height must be set" }
         val byteSize = width.toLong() * height * source.format.bytesPerPixel
-        val bytes = context.downloadImage(boundImage, width, height, byteSize) { staging ->
-            ByteArray(byteSize.toInt()).also { staging.get(it) }
+        val download = batch.downloadImage(boundImage, width, height, byteSize)
+        return {
+            val bytes = ByteArray(byteSize.toInt()).also { download.bytes().get(it) }
+            Image2D.Image2DResult(bytes, width, height, source.format)
         }
-        return Image2D.Image2DResult(bytes, width, height, source.format)
     }
 
     override fun describe(
@@ -129,8 +133,11 @@ VulkanReadable<Image2D.Image2DResult> {
         viewPointer.get(0)
     }
 
-    private fun clear(boundImage: VulkanAllocatedImage) {
-        context.commandPool.executeOneTime { commandBuffer ->
+    private fun clear(
+        batch: VulkanTransferBatch,
+        boundImage: VulkanAllocatedImage,
+    ) {
+        batch.recordTransfer { commandBuffer ->
             commandBuffer.imageBarrier(
                 boundImage.image,
                 VK10.VK_IMAGE_LAYOUT_UNDEFINED,
@@ -155,12 +162,6 @@ VulkanReadable<Image2D.Image2DResult> {
                     range,
                 )
             }
-            commandBuffer.memoryBarrier(
-                VK10.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK10.VK_ACCESS_TRANSFER_WRITE_BIT,
-                VK10.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK10.VK_ACCESS_SHADER_READ_BIT or VK10.VK_ACCESS_SHADER_WRITE_BIT,
-            )
         }
     }
 

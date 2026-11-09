@@ -35,6 +35,12 @@ class VulkanCommandPool(
     private val fenceTimeoutNanos: Long = NO_TIMEOUT,
 ) : AutoCloseable {
     private var faulted = false
+
+    /**
+     * The number of submissions executed so far, which tests use to check that work is bundled.
+     */
+    internal var submitCount = 0L
+        private set
     private var reusableCommandBuffer: VkCommandBuffer? = null
     private var reusableFence: Long = VK10.VK_NULL_HANDLE
 
@@ -96,6 +102,7 @@ class VulkanCommandPool(
                 .sType(VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO)
                 .pCommandBuffers(stack.pointers(commandBuffer))
             checkVk(vkQueueSubmit(vulkanDevice.queue, submitInfo, fence)) { "Failed to submit command buffer" }
+            submitCount++
             waitForFence(fence, stack)
         }
     }

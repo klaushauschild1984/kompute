@@ -7,8 +7,8 @@ import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanMemoryKind
+import de.hauschild.kompute.vulkan.backend.VulkanTransferBatch
 import de.hauschild.kompute.vulkan.backend.describeBuffer
-import de.hauschild.kompute.vulkan.backend.upload
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkWriteDescriptorSet
@@ -24,18 +24,19 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet
  */
 class VulkanUniformBufferObject(
     source: UniformBufferObject,
-    private val context: VulkanContext,
-) : VulkanBuffer<UniformBufferObject>(source) {
+    context: VulkanContext,
+) : VulkanBuffer<UniformBufferObject>(source, context) {
     private var deviceBuffer: VulkanAllocatedBuffer? = null
 
     /**
-     * Allocates the device buffer (or reallocates it if the data size changed) and uploads the data.
+     * Allocates the device buffer (or reallocates it if the data size changed) and schedules uploading
+     * the data.
      *
      * Calling [bind] again re-uploads the current source data.
      *
      * @throws KomputeConfigurationException if no data is set, the data is empty or exceeds the device limit
      */
-    override fun bind() {
+    override fun scheduleBind(batch: VulkanTransferBatch) {
         val data = checkNotNull(source.data) { "UniformBufferObject data must be set" }
         requireConfiguration(data.isNotEmpty()) { "UniformBufferObject data must not be empty" }
         val maxRange = context.limits.maxUniformBufferRange
@@ -52,7 +53,7 @@ class VulkanUniformBufferObject(
             context.allocator.createBuffer(data.size.toLong(), BUFFER_USAGE, VulkanMemoryKind.DEVICE)
                 .also { deviceBuffer = it }
         }
-        context.upload(buffer) { staging -> staging.put(data) }
+        batch.upload(buffer) { staging -> staging.put(data) }
     }
 
     override fun describe(

@@ -7,9 +7,9 @@ import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
+import de.hauschild.kompute.vulkan.backend.VulkanTransferBatch
 import de.hauschild.kompute.vulkan.backend.describeBuffer
-import de.hauschild.kompute.vulkan.backend.download
-import de.hauschild.kompute.vulkan.backend.upload
+import de.hauschild.kompute.vulkan.backend.submitRead
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkWriteDescriptorSet
@@ -28,16 +28,16 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet
  */
 class VulkanAtomicCounter(
     source: AtomicCounter,
-    private val context: VulkanContext,
-) : VulkanBuffer<AtomicCounter>(source),
+    context: VulkanContext,
+) : VulkanBuffer<AtomicCounter>(source, context),
 OutputCapable<Int> by source,
 VulkanReadable<Int> {
     private var deviceBuffer: VulkanAllocatedBuffer? = null
 
-    override fun bind() {
+    override fun scheduleBind(batch: VulkanTransferBatch) {
         val (buffer, _) = context.bufferCache.getOrAllocate(source, Int.SIZE_BYTES.toLong(), BUFFER_USAGE)
         deviceBuffer = buffer
-        context.upload(buffer) { staging -> staging.putInt(source.start) }
+        batch.upload(buffer) { staging -> staging.putInt(source.start) }
     }
 
     /**
@@ -46,7 +46,12 @@ VulkanReadable<Int> {
      * @return the counter value after shader execution
      * @throws KomputeBackendInitializationException if [bind] was not called before
      */
-    override fun read(): Int = context.download(requireBound()) { bytes -> bytes.getInt(0) }
+    override fun read(): Int = context.submitRead { batch -> scheduleRead(batch) }
+
+    override fun scheduleRead(batch: VulkanTransferBatch): () -> Int {
+        val download = batch.download(requireBound())
+        return { download.bytes().getInt(0) }
+    }
 
     override fun describe(
         write: VkWriteDescriptorSet,

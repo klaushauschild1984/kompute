@@ -9,9 +9,9 @@ import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
+import de.hauschild.kompute.vulkan.backend.VulkanTransferBatch
 import de.hauschild.kompute.vulkan.backend.describeBuffer
-import de.hauschild.kompute.vulkan.backend.download
-import de.hauschild.kompute.vulkan.backend.upload
+import de.hauschild.kompute.vulkan.backend.submitRead
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkWriteDescriptorSet
@@ -38,8 +38,8 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet
  */
 class VulkanStorageBuffer<T : Any>(
     source: StorageBuffer<T>,
-    private val context: VulkanContext,
-) : VulkanBuffer<StorageBuffer<T>>(source),
+    context: VulkanContext,
+) : VulkanBuffer<StorageBuffer<T>>(source, context),
 OutputCapable<T> by source,
 VulkanReadable<T> {
     private var deviceBuffer: VulkanAllocatedBuffer? = null
@@ -54,12 +54,12 @@ VulkanReadable<T> {
 
     /**
      * Looks up the persistent device buffer of the source, allocating it if it does not exist yet (or
-     * if the source size changed), and uploads the source data into a newly allocated buffer for
-     * [StorageBuffer.Mode.Input] and [StorageBuffer.Mode.ReadWrite] buffers.
+     * if the source size changed), and schedules uploading the source data into a newly allocated
+     * buffer for [StorageBuffer.Mode.Input] and [StorageBuffer.Mode.ReadWrite] buffers.
      *
      * @throws KomputeConfigurationException if the buffer is empty or exceeds the device limits
      */
-    override fun bind() {
+    override fun scheduleBind(batch: VulkanTransferBatch) {
         val byteSize = elementCount().toLong() * StorageBufferCodec.elementSizeInBytes(source.type)
         requireConfiguration(byteSize in 1L..Int.MAX_VALUE) {
             "StorageBuffer must be between 1 byte and 2 GiB, was $byteSize bytes"
@@ -72,32 +72,34 @@ VulkanReadable<T> {
         deviceBuffer = buffer
         if (isNew) {
             when (val mode = source.mode()) {
-                is StorageBuffer.Mode.Input -> upload(mode.data, buffer)
-                is StorageBuffer.Mode.ReadWrite -> upload(mode.data, buffer)
+                is StorageBuffer.Mode.Input -> upload(batch, mode.data, buffer)
+                is StorageBuffer.Mode.ReadWrite -> upload(batch, mode.data, buffer)
                 is StorageBuffer.Mode.Output -> Unit
             }
         }
     }
 
     private fun upload(
+        batch: VulkanTransferBatch,
         data: T,
         target: VulkanAllocatedBuffer,
-    ) = context.upload(target) { staging -> StorageBufferCodec.write(data, staging) }
+    ) = batch.upload(target) { staging -> StorageBufferCodec.write(data, staging) }
 
     /**
-     * Copies the device buffer back to host memory.
+     * Copies the device buffer back to host memory in a submission of its own.
      *
      * @return a new array of type [T] with the current buffer contents
      * @throws KomputeConfigurationException if the buffer is input-only
      * @throws KomputeBackendInitializationException if [bind] was not called before
      */
-    override fun read(): T {
+    override fun read(): T = context.submitRead { batch -> scheduleRead(batch) }
+
+    override fun scheduleRead(batch: VulkanTransferBatch): () -> T {
         requireConfiguration(source.isOutput) { "Cannot read an input-only buffer" }
         val count = elementCount()
+        val download = batch.download(requireBound())
         @Suppress("UNCHECKED_CAST")
-        return context.download(requireBound()) { bytes ->
-            StorageBufferCodec.read(source.type, count, bytes)
-        } as T
+        return { StorageBufferCodec.read(source.type, count, download.bytes()) as T }
     }
 
     override fun describe(
