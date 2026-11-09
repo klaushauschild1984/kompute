@@ -18,6 +18,9 @@ import org.lwjgl.vulkan.VK13
  * the Vulkan Memory Allocator (VMA). An opt-in validation layer enables detailed API usage
  * checking during development.
  *
+ * Closing the backend releases everything that belongs to it: the compiled shaders and the results
+ * that were not closed, and the persistent buffers.
+ *
  * System property `kompute.backend.vulkan.dedicatedComputeQueue`: if set, prefers a compute queue
  * family without graphics capabilities, falling back to a combined family if none is found.
  *
@@ -93,6 +96,7 @@ class VulkanBackend : AbstractBackend() {
             throw t
         }
         return VulkanCompiledShader(vulkanShaderModule, vulkanPipeline, vulkanContext)
+            .also { vulkanContext.resources.register(it) }
     }
 
     override fun close() {

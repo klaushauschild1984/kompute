@@ -18,7 +18,9 @@ import org.lwjgl.vulkan.VkWriteDescriptorSet
  * Wraps an [AtomicCounter] as a persistent storage buffer holding a single `Int`.
  *
  * Vulkan has no dedicated atomic-counter resource type - the shader-side equivalent is a regular
- * storage buffer with an atomic operation on one of its members (see `VULKAN-TODO.md`). Like the
+ * storage buffer with an atomic operation on one of its members, e.g.
+ * `layout(std430, binding = 0) buffer Counter { uint counter; }` and `atomicAdd(counter, 1u)`, because
+ * OpenGL's `atomic_uint` is not valid GLSL for Vulkan. Like the
  * OpenGL backend's `OpenGLAtomicCounter`, the buffer is allocated once per [AtomicCounter] instance
  * and reused, but the counter is reset to [AtomicCounter.start] on every [bind], preserving
  * per-dispatch reset semantics. [close] only drops this instance's reference.

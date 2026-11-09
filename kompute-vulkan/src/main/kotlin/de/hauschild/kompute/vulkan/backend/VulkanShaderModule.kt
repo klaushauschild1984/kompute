@@ -53,6 +53,7 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
     private val compiler = shaderc_compiler_initialize()
     private var result: Long = -1
     private var shaderModule: Long = VK10.VK_NULL_HANDLE
+    private var closed = false
 
     /**
      * The descriptor bindings reflected from the shader's SPIR-V bytecode.
@@ -221,11 +222,17 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
     }
 
     override fun close() {
+        if (closed) {
+            return
+        }
+        closed = true
         if (shaderModule != VK10.VK_NULL_HANDLE) {
             VK10.vkDestroyShaderModule(device.device, shaderModule, null)
+            shaderModule = VK10.VK_NULL_HANDLE
         }
         if (result != -1L) {
             shaderc_result_release(result)
+            result = -1
         }
         shaderc_compiler_release(compiler)
     }

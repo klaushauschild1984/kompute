@@ -21,6 +21,13 @@ class VulkanBackendCloseTest {
         }
     }
 
+    @Test
+    fun `closing the backend releases compiled shaders that were never closed`() {
+        Kompute.vulkan().use { backend ->
+            backend.shader(Code(SHADER)).compile()
+        }
+    }
+
     companion object {
         private val SHADER = """
             #version 450

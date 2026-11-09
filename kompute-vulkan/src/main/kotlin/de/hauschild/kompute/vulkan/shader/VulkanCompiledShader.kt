@@ -181,6 +181,7 @@ class VulkanCompiledShader(
     }
 
     override fun close() {
+        context.resources.unregister(this)
         descriptorSets.close()
         vulkanPipeline.close()
         vulkanShaderModule.close()
