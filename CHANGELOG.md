@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [v0.13.0]
 
+### Changed
+- **Requires JDK 25** — the library is built for and targets Java 25 (was 21)
+- `StorageBuffer.Mode` is now a `sealed interface` instead of a `sealed class`
+- `requireConfiguration()` and `requireBackendInitialization()` now carry Kotlin contracts, so the checked condition smart-casts in the caller
+- Generated `@GpuStruct` serializers no longer contain unused variables and wrap long expressions
+- Kotlin updated to 2.4.21, Gradle to 9.9.0, LWJGL to 3.4.3, JUnit to 6.1.3, kotlinpoet to 2.4.0, KSP to 2.3.13
+
+### Fixed
+- `kompute-benchmark` — package declarations pointed to `de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark`
+
 ## [v0.12.0] — 2026-08-22
 
 ### Added

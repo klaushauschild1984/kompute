@@ -35,7 +35,7 @@ class InteractiveMandelbrotRenderer: JFrame("") {
             graphics.drawImage(image, 0, 0, null)
         }
     }
-    private var resizeTimer = Timer(200) {
+    private val resizeTimer = Timer(200) {
         config = config.copy(width = contentPane.width, height = contentPane.height)
         panel.preferredSize = Dimension(config.width, config.height)
         render()

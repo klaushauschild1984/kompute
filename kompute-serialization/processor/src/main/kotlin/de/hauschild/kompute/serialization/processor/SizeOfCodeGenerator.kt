@@ -3,6 +3,7 @@ package de.hauschild.kompute.serialization.processor
 import de.hauschild.kompute.serialization.annotation.Layout
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -47,6 +48,14 @@ class SizeOfCodeGenerator(private val layout: GpuStructLayout) {
         if (dynamicArrayTerminated) {
             funSpecBuilder.addParameter("elementCount", Int::class)
         }
+        if (!layoutDependent && !dynamicArrayTerminated) {
+            // the size is a compile-time constant, but the extension function on KClass is the public API
+            funSpecBuilder.addAnnotation(
+                AnnotationSpec.builder(Suppress::class)
+                    .addMember("%S", "FunctionOnlyReturningConstant")
+                    .build()
+            )
+        }
 
         val bodyBuilder = CodeBlock.builder()
         if (!layoutDependent) {
@@ -58,7 +67,8 @@ class SizeOfCodeGenerator(private val layout: GpuStructLayout) {
                     .defaultValue("%T.STD140", layoutClass)
                     .build()
             )
-            bodyBuilder.beginControlFlow("return when (layout)")
+            // %L keeps KotlinPoet from folding `return when` into a very long expression body signature
+            bodyBuilder.beginControlFlow("%L when (layout)", "return")
             for (memLayout in Layout.entries) {
                 val fieldLayouts = layout.computeLayout(properties, memLayout)
                 val expr = sizeExpr(fieldLayouts, properties, memLayout)

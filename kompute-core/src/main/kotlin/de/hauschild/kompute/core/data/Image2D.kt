@@ -80,10 +80,12 @@ OutputCapable<Image2DResult>{
 
     override fun validate() {
         super.validate()
+        val width = width
+        val height = height
         requireConfiguration(width != null && height != null) {
             "Image dimensions must be set"
         }
-        requireConfiguration(width!! > 0 && height!! > 0) {
+        requireConfiguration(width > 0 && height > 0) {
             "Image dimensions must be positive"
         }
     }

@@ -45,7 +45,8 @@ class MandelbrotRenderer(
             NamedUniform<Double>("centerY").value(config.centerY),
             NamedUniform<Double>("zoom").value(config.zoom),
             image2D
-        ).use { it[image2D] }.toBufferedImage()!!
+        ).use { it[image2D] }.toBufferedImage()
+        checkNotNull(bufferedImage) { "Rendered image could not be converted" }
         logger.info { "Rendering done in ${start.elapsedNow()}" }
         return bufferedImage
     }

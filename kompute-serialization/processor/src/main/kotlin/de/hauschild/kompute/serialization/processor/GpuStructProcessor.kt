@@ -28,7 +28,7 @@ class GpuStructProcessor(
     private val fromByteArrayGenerator = FromByteArrayCodeGenerator(layout)
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
-        val symbols = resolver.getSymbolsWithAnnotation(GpuStruct::class.qualifiedName!!)
+        val symbols = resolver.getSymbolsWithAnnotation(GpuStruct::class.java.name)
             .filterIsInstance<KSClassDeclaration>()
 
         val (ready, deferred) = symbols.partition { it.validate() }
@@ -51,8 +51,9 @@ class GpuStructProcessor(
             logger.warn("Skipping codegen for '$className': ${exception.message}")
             return
         }
+        val containingFile = checkNotNull(classDeclaration.containingFile) { "$className has no containing file" }
         codeGenerator.createNewFile(
-            dependencies = Dependencies(aggregating = false, classDeclaration.containingFile!!),
+            dependencies = Dependencies(aggregating = false, containingFile),
             packageName = packageName,
             fileName = "${className}Serializer",
         ).use { output ->

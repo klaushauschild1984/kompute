@@ -70,12 +70,13 @@ class OpenGLBackend : AbstractBackend() {
     }
 
     override fun compileSource(source: ShaderSource): CompiledShader {
+        val limits = limits
         requireBackendInitialization(limits != null) { "OpenGL backend is not initialized" }
         val openGLShader = OpenGLShader(source)
         openGLShader.compile()
         val openGLProgram = OpenGLProgram(openGLShader)
         openGLProgram.link()
-        return OpenGLCompiledShader(openGLProgram, limits!!)
+        return OpenGLCompiledShader(openGLProgram, limits)
     }
 
     override fun close() {
