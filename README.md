@@ -200,3 +200,5 @@ configuration with `DEBUG` enabled.
 ## Contributing
 
 Contributions are welcome. If you face a bug or see the need for an enhancement, feel free to open an issue. For changes, please open an issue first to discuss what you would like to change.
+
+You do not need to write code to help: if you can run the tests on hardware that is not yet listed on the [Tested Setups](https://github.com/klaushauschild1984/kompute/wiki/Tested-Setups) wiki page, open an issue with your results and your setup.
