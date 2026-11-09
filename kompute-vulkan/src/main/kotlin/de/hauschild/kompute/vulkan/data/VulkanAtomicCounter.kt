@@ -5,6 +5,7 @@ import de.hauschild.kompute.core.data.OutputCapable
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
+import de.hauschild.kompute.vulkan.backend.VulkanContext
 
 /**
  * Wraps [AtomicCounter] as a thin adapter around a [VulkanStorageBuffer].
@@ -16,14 +17,16 @@ import de.hauschild.kompute.vulkan.VulkanReadable
  * the reset-per-dispatch semantics of the OpenGL backend's `OpenGLAtomicCounter`.
  *
  * @param source the [AtomicCounter] configuration this counter is based on
+ * @param context the [VulkanContext] used for memory allocation and transfer commands
  */
 class VulkanAtomicCounter(
     source: AtomicCounter,
+    context: VulkanContext,
 ) : VulkanBuffer<AtomicCounter>(source),
 OutputCapable<Int> by source,
 VulkanReadable<Int> {
     private val wrappedSource = StorageBuffer(source.index, IntArray::class).asOutput()
-    private val wrapped = VulkanStorageBuffer(wrappedSource)
+    private val wrapped = VulkanStorageBuffer(wrappedSource, context)
 
     override fun bind() {
         wrappedSource.data(intArrayOf(source.start))

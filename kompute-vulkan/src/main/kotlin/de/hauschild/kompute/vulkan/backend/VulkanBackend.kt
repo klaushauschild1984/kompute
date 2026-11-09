@@ -57,7 +57,11 @@ class VulkanBackend : AbstractBackend() {
             vulkanShaderModule.close()
             throw t
         }
-        return VulkanCompiledShader(vulkanShaderModule, vulkanPipeline)
+        return VulkanCompiledShader(
+            vulkanShaderModule,
+            vulkanPipeline,
+            VulkanContext(vulkanDevice, vulkanAllocator, vulkanCommandPool),
+        )
     }
 
     override fun close() {

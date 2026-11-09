@@ -4,6 +4,7 @@
 
 package de.hauschild.kompute.vulkan.backend
 
+import de.hauschild.kompute.core.exception.KomputeBackendDispatchException
 import org.lwjgl.vulkan.VK10
 
 private val VK_RESULT_NAMES = mapOf(
@@ -39,4 +40,20 @@ private val VK_RESULT_NAMES = mapOf(
 fun vkResultName(result: Int): String {
     val name = VK_RESULT_NAMES[result] ?: "UNKNOWN_VK_RESULT"
     return "$name ($result)"
+}
+
+/**
+ * Throws if a Vulkan call made while executing work on the device did not succeed.
+ *
+ * @param result the raw `VkResult` value returned by a Vulkan call
+ * @param message lazily built description of the failed operation
+ * @throws KomputeBackendDispatchException if [result] is not `VK_SUCCESS`
+ */
+internal fun checkVk(
+    result: Int,
+    message: () -> String,
+) {
+    if (result != VK10.VK_SUCCESS) {
+        throw KomputeBackendDispatchException("${message()}: ${vkResultName(result)}")
+    }
 }

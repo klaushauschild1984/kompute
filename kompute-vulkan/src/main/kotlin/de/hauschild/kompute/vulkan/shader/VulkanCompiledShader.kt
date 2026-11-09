@@ -12,6 +12,7 @@ import de.hauschild.kompute.core.exception.requireConfiguration
 import de.hauschild.kompute.core.result.ShaderResult
 import de.hauschild.kompute.core.shader.AbstractCompiledShader
 import de.hauschild.kompute.vulkan.VulkanBindable
+import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanPipeline
 import de.hauschild.kompute.vulkan.backend.VulkanShaderModule
 import de.hauschild.kompute.vulkan.data.VulkanAtomicCounter
@@ -25,10 +26,12 @@ import org.lwjgl.vulkan.VK10
  *
  * @param vulkanShaderModule the compiled [VulkanShaderModule]
  * @param vulkanPipeline the [VulkanPipeline] built from [vulkanShaderModule]
+ * @param context the [VulkanContext] handed to the buffers created for a dispatch
  */
 class VulkanCompiledShader(
     private val vulkanShaderModule: VulkanShaderModule,
     private val vulkanPipeline: VulkanPipeline,
+    private val context: VulkanContext,
 ) : AbstractCompiledShader() {
     /**
      * Validates [data] against [AbstractCompiledShader], then checks that the supplied bindings
@@ -84,19 +87,25 @@ class VulkanCompiledShader(
     }
 
     private fun bind(data: List<ShaderData>): List<VulkanBindable> {
-        val bindables = data.map { shaderData ->
-            val bindable: VulkanBindable = when (shaderData) {
-                is StorageBuffer<*> -> VulkanStorageBuffer(shaderData)
-                is UniformBufferObject -> VulkanUniformBufferObject(shaderData)
-                is Image2D -> VulkanImage2D(shaderData)
-                is AtomicCounter -> VulkanAtomicCounter(shaderData)
-                is NamedUniform<*> -> throw KomputeConfigurationException(
-                    "${shaderData::class.simpleName} is not supported by the Vulkan backend",
-                )
+        val bindables = mutableListOf<VulkanBindable>()
+        try {
+            data.forEach { shaderData ->
+                val bindable: VulkanBindable = when (shaderData) {
+                    is StorageBuffer<*> -> VulkanStorageBuffer(shaderData, context)
+                    is UniformBufferObject -> VulkanUniformBufferObject(shaderData)
+                    is Image2D -> VulkanImage2D(shaderData)
+                    is AtomicCounter -> VulkanAtomicCounter(shaderData, context)
+                    is NamedUniform<*> -> throw KomputeConfigurationException(
+                        "${shaderData::class.simpleName} is not supported by the Vulkan backend",
+                    )
+                }
+                bindables += bindable
+                bindable.bind()
             }
-            bindable
+        } catch (t: Throwable) {
+            bindables.forEach { runCatching { it.close() }.onFailure(t::addSuppressed) }
+            throw t
         }
-        bindables.forEach { it.bind() }
         return bindables
     }
 
