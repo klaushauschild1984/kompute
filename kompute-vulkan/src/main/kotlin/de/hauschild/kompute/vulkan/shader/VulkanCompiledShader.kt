@@ -37,7 +37,8 @@ class VulkanCompiledShader(
     private val context: VulkanContext,
 ) : AbstractCompiledShader() {
     /**
-     * Validates [data] against [AbstractCompiledShader], then checks that the supplied bindings
+     * Validates the work group counts against the device limits and [data] against
+     * [AbstractCompiledShader], then checks that the supplied bindings
      * match exactly - by index and by descriptor type - what [vulkanShaderModule] reflected from
      * the shader's SPIR-V bytecode. The shader is the source of truth for its binding layout.
      *
@@ -50,6 +51,16 @@ class VulkanCompiledShader(
         vararg data: ShaderData
     ) {
         super.validateDispatch(x, y, z, *data)
+        val limits = context.limits
+        requireConfiguration(x <= limits.maxComputeWorkGroupCountX) {
+            "Work group count x must not exceed physical limit ${limits.maxComputeWorkGroupCountX}"
+        }
+        requireConfiguration(y <= limits.maxComputeWorkGroupCountY) {
+            "Work group count y must not exceed physical limit ${limits.maxComputeWorkGroupCountY}"
+        }
+        requireConfiguration(z <= limits.maxComputeWorkGroupCountZ) {
+            "Work group count z must not exceed physical limit ${limits.maxComputeWorkGroupCountZ}"
+        }
 
         val suppliedByIndex = data.filterIsInstance<IndexedBinding>().associateBy { it.index }
         val reflectedByIndex = vulkanShaderModule.bindings.associateBy { it.binding }

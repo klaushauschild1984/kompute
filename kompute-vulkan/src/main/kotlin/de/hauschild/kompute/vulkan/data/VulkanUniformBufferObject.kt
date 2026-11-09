@@ -33,11 +33,15 @@ class VulkanUniformBufferObject(
      *
      * Calling [bind] again re-uploads the current source data.
      *
-     * @throws KomputeConfigurationException if no data is set or the data is empty
+     * @throws KomputeConfigurationException if no data is set, the data is empty or exceeds the device limit
      */
     override fun bind() {
         val data = checkNotNull(source.data) { "UniformBufferObject data must be set" }
         requireConfiguration(data.isNotEmpty()) { "UniformBufferObject data must not be empty" }
+        val maxRange = context.limits.maxUniformBufferRange
+        requireConfiguration(data.size <= maxRange) {
+            "UniformBufferObject of ${data.size} bytes exceeds the device limit of $maxRange bytes"
+        }
 
         val existing = deviceBuffer
         val buffer = if (existing != null && existing.size == data.size.toLong()) {

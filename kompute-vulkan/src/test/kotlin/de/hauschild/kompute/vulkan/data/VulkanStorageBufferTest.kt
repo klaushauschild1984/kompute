@@ -91,6 +91,17 @@ class VulkanStorageBufferTest {
     }
 
     @Test
+    fun `buffer larger than the device limit is rejected`() {
+        testContext.contextWith(context.limits.copy(maxStorageBufferRange = 8)).use { limited ->
+            val buffer = VulkanStorageBuffer(StorageBuffer<ByteArray>(0).size(16).asOutput(), limited)
+
+            assertThatThrownBy { buffer.bind() }
+                .isInstanceOf(KomputeConfigurationException::class.java)
+                .hasMessageContaining("exceeds the device limit")
+        }
+    }
+
+    @Test
     fun `reading before bind fails`() {
         val buffer = VulkanStorageBuffer(StorageBuffer<IntArray>(0).data(intArrayOf(1)).asOutput(), context)
 

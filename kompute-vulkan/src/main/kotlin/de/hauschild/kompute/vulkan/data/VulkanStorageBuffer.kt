@@ -57,12 +57,15 @@ VulkanReadable<T> {
      * if the source size changed), and uploads the source data into a newly allocated buffer for
      * [StorageBuffer.Mode.Input] and [StorageBuffer.Mode.ReadWrite] buffers.
      *
-     * @throws KomputeConfigurationException if the buffer is empty or larger than 2 GiB
+     * @throws KomputeConfigurationException if the buffer is empty or exceeds the device limits
      */
     override fun bind() {
         val byteSize = elementCount().toLong() * StorageBufferCodec.elementSizeInBytes(source.type)
         requireConfiguration(byteSize in 1L..Int.MAX_VALUE) {
             "StorageBuffer must be between 1 byte and 2 GiB, was $byteSize bytes"
+        }
+        requireConfiguration(byteSize <= context.limits.maxStorageBufferRange) {
+            "StorageBuffer of $byteSize bytes exceeds the device limit of ${context.limits.maxStorageBufferRange} bytes"
         }
 
         val (buffer, isNew) = context.bufferCache.getOrAllocate(source, byteSize, DEVICE_BUFFER_USAGE)

@@ -48,13 +48,17 @@ VulkanReadable<Image2D.Image2DResult> {
      *
      * Calling [bind] again releases the previous image and creates a new one.
      *
-     * @throws KomputeConfigurationException if the dimension is not set or not positive
+     * @throws KomputeConfigurationException if the dimension is not set, not positive or exceeds the device limit
      */
     override fun bind() {
         close()
         val width = checkNotNull(source.width) { "Image2D width must be set" }
         val height = checkNotNull(source.height) { "Image2D height must be set" }
         requireConfiguration(width > 0 && height > 0) { "Image2D dimension must be positive" }
+        val maxDimension = context.limits.maxImageDimension2D
+        requireConfiguration(width <= maxDimension && height <= maxDimension) {
+            "Image2D size (${width}x$height) exceeds the device limit of $maxDimension"
+        }
 
         val format = vkFormatOf(source.format)
         val newImage = context.allocator.createImage(width, height, format, IMAGE_USAGE)
