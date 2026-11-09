@@ -8,6 +8,7 @@ import de.hauschild.kompute.core.exception.KomputeShaderSourceException
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import de.hauschild.kompute.core.shader.ShaderSource
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.MemoryUtil
 import org.lwjgl.util.shaderc.Shaderc.shaderc_compilation_status_success
 import org.lwjgl.util.shaderc.Shaderc.shaderc_compile_into_spv
 import org.lwjgl.util.shaderc.Shaderc.shaderc_compiler_initialize
@@ -70,7 +71,11 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
                     }
                 }
             }
-            bindings = reflectBindings(shaderBytecode)
+            val reflection = reflect(shaderBytecode)
+            VulkanShaderCapabilities.requireSupported(
+                reflection.capabilities, device.isFloat64Enabled, device.isInt64Enabled,
+            )
+            bindings = reflection.bindings
             shaderModule = createShaderModule(shaderBytecode)
         } catch (t: Throwable) {
             close()
@@ -85,7 +90,7 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
      */
     fun handle(): Long = shaderModule
 
-    private fun reflectBindings(shaderBytecode: ByteArray): List<VulkanShaderBinding> =
+    private fun reflect(shaderBytecode: ByteArray): Reflection =
         MemoryStack.stackPush().use { stack ->
             val contextPointer = stack.mallocPointer(1)
             var spvcResult = Spvc.spvc_context_create(contextPointer)
@@ -126,13 +131,35 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
                 }
                 val resources = resourcesPointer.get(0)
 
-                RESOURCE_TYPE_TO_DESCRIPTOR_TYPE.flatMap { (resourceType, descriptorType) ->
+                val bindings = RESOURCE_TYPE_TO_DESCRIPTOR_TYPE.flatMap { (resourceType, descriptorType) ->
                     reflectBindingsForResourceType(reflectionCompiler, resources, resourceType, descriptorType, stack)
                 }
+                Reflection(bindings, reflectCapabilities(reflectionCompiler, context, stack))
             } finally {
                 Spvc.spvc_context_destroy(context)
             }
         }
+
+    private fun reflectCapabilities(
+        reflectionCompiler: Long,
+        context: Long,
+        stack: MemoryStack,
+    ): Set<Int> {
+        val capabilitiesPointer = stack.mallocPointer(1)
+        val countPointer = stack.mallocPointer(1)
+        val spvcResult = Spvc.spvc_compiler_get_declared_capabilities(
+            reflectionCompiler, capabilitiesPointer, countPointer,
+        )
+        requireBackendInitialization(spvcResult == Spvc.SPVC_SUCCESS) {
+            "Failed to reflect shader capabilities: ${Spvc.spvc_context_get_last_error_string(context)}"
+        }
+        val count = countPointer.get(0).toInt()
+        if (count == 0) {
+            return emptySet()
+        }
+        val capabilities = MemoryUtil.memIntBuffer(capabilitiesPointer.get(0), count)
+        return (0 until count).map { capabilities.get(it) }.toSet()
+    }
 
     private fun reflectBindingsForResourceType(
         reflectionCompiler: Long,
@@ -211,3 +238,14 @@ class VulkanShaderModule(source: ShaderSource, private val device: VulkanDevice)
         )
     }
 }
+
+/**
+ * The descriptor bindings and the SPIR-V capabilities reflected from a shader.
+ *
+ * @property bindings the descriptor bindings
+ * @property capabilities the declared SPIR-V capabilities (`SpvCapability` values)
+ */
+private data class Reflection(
+    val bindings: List<VulkanShaderBinding>,
+    val capabilities: Set<Int>,
+)
