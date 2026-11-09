@@ -2,6 +2,7 @@ package de.hauschild.kompute.vulkan.shader
 
 import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import de.hauschild.kompute.vulkan.VulkanBackendExtension
@@ -10,6 +11,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 @ExtendWith(VulkanBackendExtension::class)
 class VulkanDispatchTest {
@@ -69,6 +72,35 @@ class VulkanDispatchTest {
 
         assertThat(result.first).containsExactly(1.0, 3.0, -4.5)
         assertThat(result.second).containsExactly((1L shl 40) + 1, -6L, 4L)
+    }
+
+    @Test
+    fun `uniform buffer object is visible to the shader`(backend: VulkanBackend) {
+        val factor = ByteBuffer.allocate(Float.SIZE_BYTES)
+            .order(ByteOrder.nativeOrder())
+            .putFloat(3f)
+            .array()
+        val params = UniformBufferObject(0).data(factor)
+        val input = StorageBuffer<FloatArray>(1).data(floatArrayOf(1f, 2f, 3f))
+        val output = StorageBuffer<FloatArray>(2).size(3).asOutput()
+
+        val result = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1) in;
+                layout(std140, binding = 0) uniform Params { float factor; };
+                layout(std430, binding = 1) readonly buffer In { float values[]; } inBuffer;
+                layout(std430, binding = 2) writeonly buffer Out { float values[]; } outBuffer;
+                void main() {
+                    uint i = gl_GlobalInvocationID.x;
+                    outBuffer.values[i] = inBuffer.values[i] * factor;
+                }
+                """.trimIndent(),
+            ),
+        ).compile().use { shader -> shader.dispatch(3, params, input, output).use { it[output] } }
+
+        assertThat(result).containsExactly(3f, 6f, 9f)
     }
 
     @Test
