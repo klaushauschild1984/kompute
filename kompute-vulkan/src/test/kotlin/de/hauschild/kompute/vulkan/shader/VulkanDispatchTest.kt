@@ -7,9 +7,11 @@ import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
 import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import de.hauschild.kompute.vulkan.VulkanBackendExtension
+import de.hauschild.kompute.vulkan.VulkanTestContext
 import de.hauschild.kompute.vulkan.backend.VulkanBackend
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.nio.ByteBuffer
@@ -49,9 +51,28 @@ class VulkanDispatchTest {
     }
 
     @Test
-    fun `64 bit storage buffers are processed on the gpu`(backend: VulkanBackend) {
-        val doubles = StorageBuffer<DoubleArray>(0).data(doubleArrayOf(0.5, 1.5, -2.25))
-        val longs = StorageBuffer<LongArray>(1).data(longArrayOf(1L shl 40, -7L, 3L))
+    fun `64 bit float storage buffer is processed on the gpu`(backend: VulkanBackend) {
+        assumeTrue(VulkanTestContext().use { it.device.isFloat64Enabled }, "the device has no 64 bit floats")
+        val doubles = StorageBuffer<DoubleArray>(0).data(doubleArrayOf(0.5, 1.5, -2.25)).asOutput()
+
+        val result = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1) in;
+                layout(std430, binding = 0) buffer Doubles { double values[]; } doubles;
+                void main() { doubles.values[gl_GlobalInvocationID.x] *= 2.0LF; }
+                """.trimIndent(),
+            ),
+        ).compile().use { shader -> shader.dispatch(3, doubles).use { it[doubles] } }
+
+        assertThat(result).containsExactly(1.0, 3.0, -4.5)
+    }
+
+    @Test
+    fun `64 bit integer storage buffer is processed on the gpu`(backend: VulkanBackend) {
+        assumeTrue(VulkanTestContext().use { it.device.isInt64Enabled }, "the device has no 64 bit integers")
+        val longs = StorageBuffer<LongArray>(0).data(longArrayOf(1L shl 40, -7L, 3L)).asOutput()
 
         val result = backend.shader(
             Code(
@@ -59,21 +80,13 @@ class VulkanDispatchTest {
                 #version 450
                 #extension GL_ARB_gpu_shader_int64 : enable
                 layout(local_size_x = 1) in;
-                layout(std430, binding = 0) buffer Doubles { double values[]; } doubles;
-                layout(std430, binding = 1) buffer Longs { int64_t values[]; } longs;
-                void main() {
-                    uint i = gl_GlobalInvocationID.x;
-                    doubles.values[i] *= 2.0LF;
-                    longs.values[i] += 1l;
-                }
+                layout(std430, binding = 0) buffer Longs { int64_t values[]; } longs;
+                void main() { longs.values[gl_GlobalInvocationID.x] += 1l; }
                 """.trimIndent(),
             ),
-        ).compile().use { shader ->
-            shader.dispatch(3, doubles.asOutput(), longs.asOutput()).use { it[doubles] to it[longs] }
-        }
+        ).compile().use { shader -> shader.dispatch(3, longs).use { it[longs] } }
 
-        assertThat(result.first).containsExactly(1.0, 3.0, -4.5)
-        assertThat(result.second).containsExactly((1L shl 40) + 1, -6L, 4L)
+        assertThat(result).containsExactly((1L shl 40) + 1, -6L, 4L)
     }
 
     @Test

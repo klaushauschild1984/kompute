@@ -30,16 +30,31 @@ class VulkanDevice(
      */
     val queue: VkQueue
 
+    /**
+     * Whether shaders can use 64 bit floating point types (`double`). Not available on every device,
+     * e.g. Metal, and with it MoltenVK on macOS, has no `double`.
+     */
+    val isFloat64Enabled: Boolean
+
+    /**
+     * Whether shaders can use 64 bit integer types (`int64_t`).
+     */
+    val isInt64Enabled: Boolean
+
     init {
         MemoryStack.stackPush().use { stack ->
             val queueCreateInfo = VkDeviceQueueCreateInfo.calloc(1, stack)
                 .sType(VK10.VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                 .queueFamilyIndex(physicalDevice.queueFamilyIndex)
                 .pQueuePriorities(stack.floats(1.0f))
+            val supported = VkPhysicalDeviceFeatures.calloc(stack)
+            VK10.vkGetPhysicalDeviceFeatures(physicalDevice.physicalDevice, supported)
+            isFloat64Enabled = supported.shaderFloat64()
+            isInt64Enabled = supported.shaderInt64()
             val deviceCreateInfo = VkDeviceCreateInfo.calloc(stack)
                 .sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .pQueueCreateInfos(queueCreateInfo)
-                .pEnabledFeatures(enabledFeatures(physicalDevice, stack))
+                .pEnabledFeatures(enabledFeatures(supported, stack))
             val devicePointer = stack.mallocPointer(1)
             val result = vkCreateDevice(physicalDevice.physicalDevice, deviceCreateInfo, null, devicePointer)
             requireBackendInitialization(result == VK10.VK_SUCCESS) {
@@ -58,16 +73,13 @@ class VulkanDevice(
      * the mandatory ones (e.g. `R8`) - as far as the physical device supports them.
      */
     private fun enabledFeatures(
-        physicalDevice: VulkanPhysicalDevice,
+        supported: VkPhysicalDeviceFeatures,
         stack: MemoryStack,
-    ): VkPhysicalDeviceFeatures {
-        val supported = VkPhysicalDeviceFeatures.calloc(stack)
-        VK10.vkGetPhysicalDeviceFeatures(physicalDevice.physicalDevice, supported)
-        return VkPhysicalDeviceFeatures.calloc(stack)
+    ): VkPhysicalDeviceFeatures =
+        VkPhysicalDeviceFeatures.calloc(stack)
             .shaderFloat64(supported.shaderFloat64())
             .shaderInt64(supported.shaderInt64())
             .shaderStorageImageExtendedFormats(supported.shaderStorageImageExtendedFormats())
-    }
 
     override fun close() {
         vkDestroyDevice(device, null)
