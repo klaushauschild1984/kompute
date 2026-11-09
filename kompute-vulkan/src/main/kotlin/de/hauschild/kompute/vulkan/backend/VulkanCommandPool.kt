@@ -11,8 +11,9 @@ import org.lwjgl.vulkan.VK10.vkCreateFence
 import org.lwjgl.vulkan.VK10.vkDestroyCommandPool
 import org.lwjgl.vulkan.VK10.vkDestroyFence
 import org.lwjgl.vulkan.VK10.vkEndCommandBuffer
-import org.lwjgl.vulkan.VK10.vkFreeCommandBuffers
 import org.lwjgl.vulkan.VK10.vkQueueSubmit
+import org.lwjgl.vulkan.VK10.vkResetCommandBuffer
+import org.lwjgl.vulkan.VK10.vkResetFences
 import org.lwjgl.vulkan.VK10.vkWaitForFences
 import org.lwjgl.vulkan.VkCommandBuffer
 import org.lwjgl.vulkan.VkCommandBufferAllocateInfo
@@ -34,6 +35,8 @@ class VulkanCommandPool(
     private val fenceTimeoutNanos: Long = NO_TIMEOUT,
 ) : AutoCloseable {
     private var faulted = false
+    private var reusableCommandBuffer: VkCommandBuffer? = null
+    private var reusableFence: Long = VK10.VK_NULL_HANDLE
 
     /**
      * The raw command pool handle (non-dispatchable, hence a plain [Long]).
@@ -58,7 +61,8 @@ class VulkanCommandPool(
 
     /**
      * Records a primary command buffer via [record], submits it to the compute queue and blocks
-     * until the GPU has finished executing it.
+     * until the GPU has finished executing it. The command buffer and the fence are reused by all
+     * submissions, which is possible because each one has finished before the next one starts.
      *
      * Access to the command pool and the queue is externally synchronized by this method; all
      * submissions to the compute queue must go through the pool.
@@ -74,54 +78,47 @@ class VulkanCommandPool(
             throw KomputeBackendDispatchException("The Vulkan backend is unusable after a timeout, close it")
         }
         MemoryStack.stackPush().use { stack ->
-            val allocateInfo = VkCommandBufferAllocateInfo.calloc(stack)
-                .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
-                .commandPool(commandPool)
-                .level(VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY)
-                .commandBufferCount(1)
-            val commandBufferPointer = stack.mallocPointer(1)
-            checkVk(vkAllocateCommandBuffers(vulkanDevice.device, allocateInfo, commandBufferPointer)) {
-                "Failed to allocate Vulkan command buffer"
-            }
-            val commandBuffer = VkCommandBuffer(commandBufferPointer.get(0), vulkanDevice.device)
-            var fence = VK10.VK_NULL_HANDLE
-            var timedOut = false
-            try {
-                val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
-                    .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
-                    .flags(VK10.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
-                checkVk(vkBeginCommandBuffer(commandBuffer, beginInfo)) { "Failed to begin command buffer" }
-                record(commandBuffer)
-                checkVk(vkEndCommandBuffer(commandBuffer)) { "Failed to end command buffer" }
+            val commandBuffer = reusableCommandBuffer
+                ?: allocateCommandBuffer(stack).also { reusableCommandBuffer = it }
+            val fence = reusableFence.takeIf { it != VK10.VK_NULL_HANDLE }
+                ?: createFence(stack).also { reusableFence = it }
 
-                val fenceInfo = VkFenceCreateInfo.calloc(stack)
-                    .sType(VK10.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
-                val fencePointer = stack.mallocLong(1)
-                checkVk(vkCreateFence(vulkanDevice.device, fenceInfo, null, fencePointer)) {
-                    "Failed to create fence"
-                }
-                fence = fencePointer.get(0)
+            checkVk(vkResetCommandBuffer(commandBuffer, 0)) { "Failed to reset command buffer" }
+            val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
+                .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
+                .flags(VK10.VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT)
+            checkVk(vkBeginCommandBuffer(commandBuffer, beginInfo)) { "Failed to begin command buffer" }
+            record(commandBuffer)
+            checkVk(vkEndCommandBuffer(commandBuffer)) { "Failed to end command buffer" }
 
-                val submitInfo = VkSubmitInfo.calloc(stack)
-                    .sType(VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO)
-                    .pCommandBuffers(stack.pointers(commandBuffer))
-                checkVk(vkQueueSubmit(vulkanDevice.queue, submitInfo, fence)) { "Failed to submit command buffer" }
-                try {
-                    waitForFence(fence, stack)
-                } catch (timeout: VulkanTimeoutException) {
-                    timedOut = true
-                    throw timeout
-                }
-            } finally {
-                // after a timeout the submission may still be running, fence and command buffer stay alive
-                if (!timedOut) {
-                    if (fence != VK10.VK_NULL_HANDLE) {
-                        vkDestroyFence(vulkanDevice.device, fence, null)
-                    }
-                    vkFreeCommandBuffers(vulkanDevice.device, commandPool, commandBuffer)
-                }
-            }
+            checkVk(vkResetFences(vulkanDevice.device, stack.longs(fence))) { "Failed to reset fence" }
+            val submitInfo = VkSubmitInfo.calloc(stack)
+                .sType(VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO)
+                .pCommandBuffers(stack.pointers(commandBuffer))
+            checkVk(vkQueueSubmit(vulkanDevice.queue, submitInfo, fence)) { "Failed to submit command buffer" }
+            waitForFence(fence, stack)
         }
+    }
+
+    private fun allocateCommandBuffer(stack: MemoryStack): VkCommandBuffer {
+        val allocateInfo = VkCommandBufferAllocateInfo.calloc(stack)
+            .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
+            .commandPool(commandPool)
+            .level(VK10.VK_COMMAND_BUFFER_LEVEL_PRIMARY)
+            .commandBufferCount(1)
+        val commandBufferPointer = stack.mallocPointer(1)
+        checkVk(vkAllocateCommandBuffers(vulkanDevice.device, allocateInfo, commandBufferPointer)) {
+            "Failed to allocate Vulkan command buffer"
+        }
+        return VkCommandBuffer(commandBufferPointer.get(0), vulkanDevice.device)
+    }
+
+    private fun createFence(stack: MemoryStack): Long {
+        val fenceInfo = VkFenceCreateInfo.calloc(stack)
+            .sType(VK10.VK_STRUCTURE_TYPE_FENCE_CREATE_INFO)
+        val fencePointer = stack.mallocLong(1)
+        checkVk(vkCreateFence(vulkanDevice.device, fenceInfo, null, fencePointer)) { "Failed to create fence" }
+        return fencePointer.get(0)
     }
 
     /**
@@ -147,6 +144,11 @@ class VulkanCommandPool(
     }
 
     override fun close() {
+        if (reusableFence != VK10.VK_NULL_HANDLE) {
+            vkDestroyFence(vulkanDevice.device, reusableFence, null)
+            reusableFence = VK10.VK_NULL_HANDLE
+        }
+        // destroying the pool frees the reusable command buffer
         vkDestroyCommandPool(vulkanDevice.device, commandPool, null)
     }
 
