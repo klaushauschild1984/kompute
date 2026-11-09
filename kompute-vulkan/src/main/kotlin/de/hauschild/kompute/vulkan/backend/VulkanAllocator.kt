@@ -6,6 +6,7 @@ import org.lwjgl.system.MemoryStack
 import org.lwjgl.util.vma.Vma
 import org.lwjgl.util.vma.Vma.vmaCreateAllocator
 import org.lwjgl.util.vma.Vma.vmaCreateBuffer
+import org.lwjgl.util.vma.Vma.vmaCreateImage
 import org.lwjgl.util.vma.Vma.vmaDestroyAllocator
 import org.lwjgl.util.vma.VmaAllocationCreateInfo
 import org.lwjgl.util.vma.VmaAllocationInfo
@@ -14,6 +15,7 @@ import org.lwjgl.util.vma.VmaVulkanFunctions
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VK13
 import org.lwjgl.vulkan.VkBufferCreateInfo
+import org.lwjgl.vulkan.VkImageCreateInfo
 
 /**
  * Wrapper around the Vulkan Memory Allocator (VMA), used for buffer/image memory management.
@@ -94,6 +96,51 @@ class VulkanAllocator(
             size,
             allocationInfo.pMappedData(),
         )
+    }
+
+    /**
+     * Creates a device-local, optimally tiled 2D image with a single mip level and binds VMA-managed
+     * memory to it. The image starts in `VK_IMAGE_LAYOUT_UNDEFINED`.
+     *
+     * @param width the image width in texels
+     * @param height the image height in texels
+     * @param format the `VkFormat` of the image
+     * @param usage the `VkImageUsageFlags` of the image
+     * @return the [VulkanAllocatedImage], to be closed by the caller
+     * @throws KomputeBackendDispatchException if the allocation fails
+     */
+    internal fun createImage(
+        width: Int,
+        height: Int,
+        format: Int,
+        usage: Int,
+    ): VulkanAllocatedImage = MemoryStack.stackPush().use { stack ->
+        val imageInfo = VkImageCreateInfo.calloc(stack)
+            .sType(VK10.VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO)
+            .imageType(VK10.VK_IMAGE_TYPE_2D)
+            .format(format)
+            .mipLevels(1)
+            .arrayLayers(1)
+            .samples(VK10.VK_SAMPLE_COUNT_1_BIT)
+            .tiling(VK10.VK_IMAGE_TILING_OPTIMAL)
+            .usage(usage)
+            .sharingMode(VK10.VK_SHARING_MODE_EXCLUSIVE)
+            .initialLayout(VK10.VK_IMAGE_LAYOUT_UNDEFINED)
+        imageInfo.extent()
+            .width(width)
+            .height(height)
+            .depth(1)
+        val allocationCreateInfo = VmaAllocationCreateInfo.calloc(stack)
+            .usage(Vma.VMA_MEMORY_USAGE_AUTO)
+        val imagePointer = stack.mallocLong(1)
+        val allocationPointer = stack.mallocPointer(1)
+
+        val result = vmaCreateImage(
+            allocator, imageInfo, allocationCreateInfo, imagePointer, allocationPointer, null,
+        )
+        checkVk(result) { "Failed to allocate Vulkan image of ${width}x$height" }
+
+        VulkanAllocatedImage(allocator, imagePointer.get(0), allocationPointer.get(0))
     }
 
     override fun close() {

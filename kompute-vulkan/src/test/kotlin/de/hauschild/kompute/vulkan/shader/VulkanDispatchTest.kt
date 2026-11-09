@@ -1,6 +1,7 @@
 package de.hauschild.kompute.vulkan.shader
 
 import de.hauschild.kompute.core.data.AtomicCounter
+import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.roundToInt
 
 @ExtendWith(VulkanBackendExtension::class)
 class VulkanDispatchTest {
@@ -101,6 +103,77 @@ class VulkanDispatchTest {
         ).compile().use { shader -> shader.dispatch(3, params, input, output).use { it[output] } }
 
         assertThat(result).containsExactly(3f, 6f, 9f)
+    }
+
+    @Test
+    fun `image is written by the shader and read back`(backend: VulkanBackend) {
+        val image = Image2D(0).dimension(4, 3)
+
+        val result = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1, local_size_y = 1) in;
+                layout(rgba8, binding = 0) writeonly uniform image2D img;
+                void main() {
+                    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+                    imageStore(img, p, vec4(float(p.x) / 3.0, float(p.y) / 2.0, 0.0, 1.0));
+                }
+                """.trimIndent(),
+            ),
+        ).compile().use { shader -> shader.dispatch(4, 3, image).use { it[image] } }
+
+        assertThat(result.width).isEqualTo(4)
+        assertThat(result.height).isEqualTo(3)
+        assertThat(result.data).hasSize(4 * 3 * 4)
+        for (y in 0 until 3) {
+            for (x in 0 until 4) {
+                val offset = (y * 4 + x) * 4
+                assertThat(result.data[offset].toInt() and 0xFF).isEqualTo((x / 3f * 255f).roundToInt())
+                assertThat(result.data[offset + 1].toInt() and 0xFF).isEqualTo((y / 2f * 255f).roundToInt())
+                assertThat(result.data[offset + 2].toInt()).isZero()
+                assertThat(result.data[offset + 3].toInt() and 0xFF).isEqualTo(255)
+            }
+        }
+    }
+
+    @Test
+    fun `single channel image is written by the shader and read back`(backend: VulkanBackend) {
+        val image = Image2D(0).dimension(4, 1).format(Image2D.Format.R8)
+
+        val result = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1) in;
+                layout(r8, binding = 0) writeonly uniform image2D img;
+                void main() {
+                    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+                    imageStore(img, p, vec4(float(p.x) / 3.0));
+                }
+                """.trimIndent(),
+            ),
+        ).compile().use { shader -> shader.dispatch(4, image).use { it[image] } }
+
+        assertThat(result.data.map { it.toInt() and 0xFF }).containsExactly(0, 85, 170, 255)
+    }
+
+    @Test
+    fun `untouched image is cleared to zero`(backend: VulkanBackend) {
+        val image = Image2D(0).dimension(2, 2)
+
+        val result = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1) in;
+                layout(rgba8, binding = 0) writeonly uniform image2D img;
+                void main() {}
+                """.trimIndent(),
+            ),
+        ).compile().use { shader -> shader.dispatch(1, image).use { it[image] } }
+
+        assertThat(result.data).containsOnly(0)
     }
 
     @Test

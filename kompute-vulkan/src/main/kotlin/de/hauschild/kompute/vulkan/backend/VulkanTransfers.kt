@@ -7,6 +7,7 @@ package de.hauschild.kompute.vulkan.backend
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkBufferCopy
+import org.lwjgl.vulkan.VkBufferImageCopy
 import org.lwjgl.vulkan.VkCommandBuffer
 import java.nio.ByteBuffer
 
@@ -75,6 +76,73 @@ internal fun <R> VulkanContext.download(
     }
     staging.invalidate()
     read(staging.mapped())
+}
+
+/**
+ * Copies a tightly packed 2D image in `VK_IMAGE_LAYOUT_GENERAL` to host memory and hands the bytes
+ * to [read]. Blocks until the GPU has finished all shader writes to the image and the copy.
+ *
+ * @receiver the [VulkanContext] providing allocator and queue
+ * @param image the image, must have been created with `TRANSFER_SRC` usage
+ * @param width the image width in texels
+ * @param height the image height in texels
+ * @param byteSize the size of the whole image in bytes
+ * @param read converts the bytes, only valid for the duration of the call
+ * @return the result of [read]
+ */
+@Suppress("LongParameterList") // describes one image region
+internal fun <R> VulkanContext.downloadImage(
+    image: VulkanAllocatedImage,
+    width: Int,
+    height: Int,
+    byteSize: Long,
+    read: (ByteBuffer) -> R,
+): R = allocator.createBuffer(
+    byteSize,
+    VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+    VulkanMemoryKind.STAGING_READBACK,
+).use { staging ->
+    commandPool.executeOneTime { commandBuffer ->
+        commandBuffer.memoryBarrier(
+            VK10.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            VK10.VK_ACCESS_SHADER_WRITE_BIT,
+            VK10.VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK10.VK_ACCESS_TRANSFER_READ_BIT,
+        )
+        commandBuffer.copyImageToBuffer(image.image, staging.buffer, width, height)
+        commandBuffer.memoryBarrier(
+            VK10.VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK10.VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK10.VK_PIPELINE_STAGE_HOST_BIT,
+            VK10.VK_ACCESS_HOST_READ_BIT,
+        )
+    }
+    staging.invalidate()
+    read(staging.mapped())
+}
+
+private fun VkCommandBuffer.copyImageToBuffer(
+    image: Long,
+    buffer: Long,
+    width: Int,
+    height: Int,
+) {
+    MemoryStack.stackPush().use { stack ->
+        val region = VkBufferImageCopy.calloc(1, stack)
+            .bufferOffset(0)
+            .bufferRowLength(0)
+            .bufferImageHeight(0)
+        region.imageSubresource()
+            .aspectMask(VK10.VK_IMAGE_ASPECT_COLOR_BIT)
+            .mipLevel(0)
+            .baseArrayLayer(0)
+            .layerCount(1)
+        region.imageExtent()
+            .width(width)
+            .height(height)
+            .depth(1)
+        VK10.vkCmdCopyImageToBuffer(this, image, VK10.VK_IMAGE_LAYOUT_GENERAL, buffer, region)
+    }
 }
 
 private fun VkCommandBuffer.copyBuffer(
