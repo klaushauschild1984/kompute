@@ -26,11 +26,15 @@ import org.lwjgl.vulkan.VkSubmitInfo
  *
  * @param vulkanDevice the [VulkanDevice]
  * @param physicalDevice the [VulkanPhysicalDevice]
+ * @param fenceTimeoutNanos how long to wait for a submission in nanoseconds, [NO_TIMEOUT] waits forever
  */
 class VulkanCommandPool(
     private val vulkanDevice: VulkanDevice,
     physicalDevice: VulkanPhysicalDevice,
+    private val fenceTimeoutNanos: Long = NO_TIMEOUT,
 ) : AutoCloseable {
+    private var faulted = false
+
     /**
      * The raw command pool handle (non-dispatchable, hence a plain [Long]).
      */
@@ -60,10 +64,15 @@ class VulkanCommandPool(
      * submissions to the compute queue must go through the pool.
      *
      * @param record records the commands into the given command buffer
-     * @throws KomputeBackendDispatchException if recording, submission or waiting fails
+     * @throws KomputeBackendDispatchException if recording, submission or waiting fails, or if the pool is
+     * unusable after an earlier timeout
+     * @throws VulkanTimeoutException if the GPU did not finish within the timeout
      */
     @Synchronized
     fun executeOneTime(record: (VkCommandBuffer) -> Unit) {
+        if (faulted) {
+            throw KomputeBackendDispatchException("The Vulkan backend is unusable after a timeout, close it")
+        }
         MemoryStack.stackPush().use { stack ->
             val allocateInfo = VkCommandBufferAllocateInfo.calloc(stack)
                 .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO)
@@ -76,6 +85,7 @@ class VulkanCommandPool(
             }
             val commandBuffer = VkCommandBuffer(commandBufferPointer.get(0), vulkanDevice.device)
             var fence = VK10.VK_NULL_HANDLE
+            var timedOut = false
             try {
                 val beginInfo = VkCommandBufferBeginInfo.calloc(stack)
                     .sType(VK10.VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO)
@@ -96,19 +106,59 @@ class VulkanCommandPool(
                     .sType(VK10.VK_STRUCTURE_TYPE_SUBMIT_INFO)
                     .pCommandBuffers(stack.pointers(commandBuffer))
                 checkVk(vkQueueSubmit(vulkanDevice.queue, submitInfo, fence)) { "Failed to submit command buffer" }
-                checkVk(vkWaitForFences(vulkanDevice.device, stack.longs(fence), true, Long.MAX_VALUE)) {
-                    "Failed to wait for command buffer completion"
+                try {
+                    waitForFence(fence, stack)
+                } catch (timeout: VulkanTimeoutException) {
+                    timedOut = true
+                    throw timeout
                 }
             } finally {
-                if (fence != VK10.VK_NULL_HANDLE) {
-                    vkDestroyFence(vulkanDevice.device, fence, null)
+                // after a timeout the submission may still be running, fence and command buffer stay alive
+                if (!timedOut) {
+                    if (fence != VK10.VK_NULL_HANDLE) {
+                        vkDestroyFence(vulkanDevice.device, fence, null)
+                    }
+                    vkFreeCommandBuffers(vulkanDevice.device, commandPool, commandBuffer)
                 }
-                vkFreeCommandBuffers(vulkanDevice.device, commandPool, commandBuffer)
             }
         }
     }
 
+    /**
+     * Waits for [fence] and marks the pool as unusable if the timeout elapses.
+     *
+     * @param fence the raw fence handle of a submission
+     * @param stack the stack to allocate the fence array on
+     * @throws VulkanTimeoutException if the fence was not signaled within the timeout
+     */
+    internal fun waitForFence(
+        fence: Long,
+        stack: MemoryStack,
+    ) {
+        val result = vkWaitForFences(vulkanDevice.device, stack.longs(fence), true, fenceTimeoutNanos)
+        if (result == VK10.VK_TIMEOUT) {
+            faulted = true
+            val seconds = fenceTimeoutNanos / NANOS_PER_SECOND
+            throw VulkanTimeoutException(
+                "A GPU submission did not finish within $seconds s (kompute.backend.vulkan.timeout), close the backend",
+            )
+        }
+        checkVk(result) { "Failed to wait for command buffer completion" }
+    }
+
     override fun close() {
         vkDestroyCommandPool(vulkanDevice.device, commandPool, null)
+    }
+
+    companion object {
+        /**
+         * Waits for a submission without a time limit.
+         */
+        const val NO_TIMEOUT = Long.MAX_VALUE
+
+        /**
+         * The number of nanoseconds in one second.
+         */
+        const val NANOS_PER_SECOND = 1_000_000_000L
     }
 }

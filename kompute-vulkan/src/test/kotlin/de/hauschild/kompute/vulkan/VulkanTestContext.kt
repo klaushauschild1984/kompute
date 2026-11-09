@@ -38,6 +38,15 @@ class VulkanTestContext : AutoCloseable {
      */
     fun contextWith(limits: VulkanLimits) = VulkanContext(vulkanDevice, allocator, commandPool, limits)
 
+    /**
+     * Creates a second command pool with a fence timeout. It has to be closed.
+     *
+     * @param fenceTimeoutNanos how long to wait for a submission in nanoseconds
+     * @return the new command pool
+     */
+    fun commandPoolWithTimeout(fenceTimeoutNanos: Long) =
+        VulkanCommandPool(vulkanDevice, physicalDevice, fenceTimeoutNanos)
+
     override fun close() {
         context.close()
         allocator.close()

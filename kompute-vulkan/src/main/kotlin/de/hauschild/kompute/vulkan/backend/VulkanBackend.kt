@@ -3,6 +3,7 @@ package de.hauschild.kompute.vulkan.backend
 import de.hauschild.kompute.core.InternalApi
 import de.hauschild.kompute.core.backend.AbstractBackend
 import de.hauschild.kompute.core.backend.Type
+import de.hauschild.kompute.core.exception.requireBackendInitialization
 import de.hauschild.kompute.core.shader.CompiledShader
 import de.hauschild.kompute.core.shader.ShaderSource
 import de.hauschild.kompute.vulkan.shader.VulkanCompiledShader
@@ -26,6 +27,10 @@ import org.lwjgl.vulkan.VK13
  * System property `kompute.backend.vulkan.validation`: if `true`, enables the Khronos validation
  * layer (`VK_LAYER_KHRONOS_validation`) and routes its messages to the logger; initialization fails
  * if the layer is not installed. Meant for development, the layer slows down every call.
+ *
+ * System property `kompute.backend.vulkan.timeout`: the number of seconds to wait for the GPU to
+ * finish a submission, `0` or unset waits forever. When it elapses a [VulkanTimeoutException] is
+ * thrown and the backend is unusable and has to be closed.
  */
 class VulkanBackend : AbstractBackend() {
     private lateinit var vulkanInstance: VulkanInstance
@@ -43,7 +48,7 @@ class VulkanBackend : AbstractBackend() {
         val deviceName = System.getProperty(DEVICE_NAME_PROPERTY)
         vulkanPhysicalDevice = VulkanPhysicalDevice(dedicatedComputeQueue, deviceName, vulkanInstance)
         vulkanDevice = VulkanDevice(vulkanPhysicalDevice)
-        vulkanCommandPool = VulkanCommandPool(vulkanDevice, vulkanPhysicalDevice)
+        vulkanCommandPool = VulkanCommandPool(vulkanDevice, vulkanPhysicalDevice, fenceTimeoutNanos())
         vulkanAllocator = VulkanAllocator(vulkanInstance, vulkanPhysicalDevice, vulkanDevice)
         vulkanContext = VulkanContext(
             vulkanDevice, vulkanAllocator, vulkanCommandPool, vulkanPhysicalDevice.limits(),
@@ -54,6 +59,19 @@ class VulkanBackend : AbstractBackend() {
                     "apiVersion: ${vulkanPhysicalDevice.apiVersion()}, " +
                     "deviceLocalMemory: ${vulkanPhysicalDevice.deviceLocalMemory() / BYTES_PER_GB} GB, " +
                     "driverVersion: ${vulkanPhysicalDevice.driverVersion()}"
+        }
+    }
+
+    private fun fenceTimeoutNanos(): Long {
+        val value = System.getProperty(TIMEOUT_PROPERTY) ?: return VulkanCommandPool.NO_TIMEOUT
+        val seconds = value.toLongOrNull()
+        requireBackendInitialization(seconds != null && seconds >= 0) {
+            "$TIMEOUT_PROPERTY must be a non-negative number of seconds, was '$value'"
+        }
+        return if (seconds == 0L) {
+            VulkanCommandPool.NO_TIMEOUT
+        } else {
+            seconds.coerceAtMost(MAX_TIMEOUT_SECONDS) * VulkanCommandPool.NANOS_PER_SECOND
         }
     }
 
@@ -93,6 +111,8 @@ class VulkanBackend : AbstractBackend() {
         private const val DEDICATED_COMPUTE_QUEUE_PROPERTY = "kompute.backend.vulkan.dedicatedComputeQueue"
         private const val DEVICE_NAME_PROPERTY = "kompute.backend.vulkan.device"
         private const val VALIDATION_PROPERTY = "kompute.backend.vulkan.validation"
+        private const val TIMEOUT_PROPERTY = "kompute.backend.vulkan.timeout"
+        private const val MAX_TIMEOUT_SECONDS = Long.MAX_VALUE / VulkanCommandPool.NANOS_PER_SECOND
         private const val BYTES_PER_GB = 1_024 * 1_024 * 1_024
         private val logger = KotlinLogging.logger {}
 

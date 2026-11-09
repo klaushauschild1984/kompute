@@ -16,6 +16,7 @@ import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanDescriptorSet
 import de.hauschild.kompute.vulkan.backend.VulkanPipeline
 import de.hauschild.kompute.vulkan.backend.VulkanShaderModule
+import de.hauschild.kompute.vulkan.backend.VulkanTimeoutException
 import de.hauschild.kompute.vulkan.data.VulkanAtomicCounter
 import de.hauschild.kompute.vulkan.data.VulkanImage2D
 import de.hauschild.kompute.vulkan.data.VulkanStorageBuffer
@@ -101,7 +102,7 @@ class VulkanCompiledShader(
         try {
             dispatch(x, y, z, bindables)
         } catch (t: Throwable) {
-            closeAfterFailure(bindables, t)
+            releaseAfterFailure(bindables, t)
             throw t
         }
         val reader = VulkanResultReader(bindables, context.resources)
@@ -119,14 +120,19 @@ class VulkanCompiledShader(
         } else {
             VulkanDescriptorSet(context.device, vulkanPipeline.descriptorSetLayout, vulkanShaderModule.bindings)
         }
-        descriptorSet.use {
+        try {
             descriptorSet?.update(bindables)
             context.commandPool.executeOneTime { commandBuffer ->
                 VK10.vkCmdBindPipeline(commandBuffer, VK10.VK_PIPELINE_BIND_POINT_COMPUTE, vulkanPipeline.pipeline)
                 descriptorSet?.let { bindDescriptorSet(commandBuffer, it) }
                 VK10.vkCmdDispatch(commandBuffer, x, y, z)
             }
+        } catch (timeout: VulkanTimeoutException) {
+            // the GPU may still use the descriptor set, it is released with the backend
+            descriptorSet?.let { context.resources.register(it) }
+            throw timeout
         }
+        descriptorSet?.close()
     }
 
     private fun bindDescriptorSet(
@@ -145,11 +151,16 @@ class VulkanCompiledShader(
         }
     }
 
-    private fun closeAfterFailure(
+    private fun releaseAfterFailure(
         bindables: List<VulkanBindable>,
         failure: Throwable,
     ) {
-        bindables.forEach { runCatching { it.close() }.onFailure(failure::addSuppressed) }
+        if (failure is VulkanTimeoutException) {
+            // the GPU may still use the resources, they are released with the backend
+            context.resources.register { bindables.forEach { it.close() } }
+        } else {
+            bindables.forEach { runCatching { it.close() }.onFailure(failure::addSuppressed) }
+        }
     }
 
     @Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
@@ -170,7 +181,7 @@ class VulkanCompiledShader(
                 bindable.bind()
             }
         } catch (t: Throwable) {
-            bindables.forEach { runCatching { it.close() }.onFailure(t::addSuppressed) }
+            releaseAfterFailure(bindables, t)
             throw t
         }
         return bindables
