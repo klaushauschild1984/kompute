@@ -22,6 +22,15 @@ interface VulkanBindable : AutoCloseable {
     fun scheduleBind(batch: VulkanTransferBatch)
 
     /**
+     * Identifies the persistent resource behind this one, so that a descriptor set pointing to it can be
+     * reused by later dispatches.
+     *
+     * @return a key that is equal as long as the resource is the same, `null` for transient resources
+     * (which are created for every dispatch, so no descriptor set can be reused)
+     */
+    fun descriptorKey(): Any?
+
+    /**
      * Describes this resource for a descriptor set update: fills binding index, descriptor type,
      * descriptor count and the buffer or image info. The caller sets `sType` and the target set.
      *

@@ -14,6 +14,7 @@ import de.hauschild.kompute.core.shader.AbstractCompiledShader
 import de.hauschild.kompute.vulkan.VulkanBindable
 import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanDescriptorSet
+import de.hauschild.kompute.vulkan.backend.VulkanDescriptorSetCache
 import de.hauschild.kompute.vulkan.backend.VulkanPipeline
 import de.hauschild.kompute.vulkan.backend.VulkanShaderModule
 import de.hauschild.kompute.vulkan.backend.VulkanTimeoutException
@@ -38,6 +39,14 @@ class VulkanCompiledShader(
     private val vulkanPipeline: VulkanPipeline,
     private val context: VulkanContext,
 ) : AbstractCompiledShader() {
+    /**
+     * Provides the descriptor set of each dispatch and reuses it for dispatches that bind the same
+     * persistent buffers.
+     */
+    internal val descriptorSets = VulkanDescriptorSetCache(
+        context.device, vulkanPipeline.descriptorSetLayout, vulkanShaderModule.bindings, context.resources,
+    )
+
     /**
      * Validates the work group counts against the device limits and [data] against
      * [AbstractCompiledShader], then checks that the supplied bindings
@@ -123,24 +132,13 @@ class VulkanCompiledShader(
     ) {
         VulkanTransferBatch(context).use { batch ->
             bindables.forEach { it.scheduleBind(batch) }
-            val descriptorSet = if (bindables.isEmpty()) {
-                null
-            } else {
-                VulkanDescriptorSet(context.device, vulkanPipeline.descriptorSetLayout, vulkanShaderModule.bindings)
-            }
-            try {
-                descriptorSet?.update(bindables)
+            descriptorSets.withDescriptorSet(bindables) { descriptorSet ->
                 batch.submit { commandBuffer ->
                     VK10.vkCmdBindPipeline(commandBuffer, VK10.VK_PIPELINE_BIND_POINT_COMPUTE, vulkanPipeline.pipeline)
                     descriptorSet?.let { bindDescriptorSet(commandBuffer, it) }
                     VK10.vkCmdDispatch(commandBuffer, x, y, z)
                 }
-            } catch (timeout: VulkanTimeoutException) {
-                // the GPU may still use the descriptor set, it is released with the backend
-                descriptorSet?.let { context.resources.register(it) }
-                throw timeout
             }
-            descriptorSet?.close()
         }
     }
 
@@ -183,6 +181,7 @@ class VulkanCompiledShader(
     }
 
     override fun close() {
+        descriptorSets.close()
         vulkanPipeline.close()
         vulkanShaderModule.close()
     }

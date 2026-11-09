@@ -102,6 +102,8 @@ VulkanReadable<T> {
         return { StorageBufferCodec.read(source.type, count, download.bytes()) as T }
     }
 
+    override fun descriptorKey(): Any = source.index to requireBound()
+
     override fun describe(
         write: VkWriteDescriptorSet,
         stack: MemoryStack,

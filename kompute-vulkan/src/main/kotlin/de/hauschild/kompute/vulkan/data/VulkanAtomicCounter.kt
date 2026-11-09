@@ -53,6 +53,8 @@ VulkanReadable<Int> {
         return { download.bytes().getInt(0) }
     }
 
+    override fun descriptorKey(): Any = source.index to requireBound()
+
     override fun describe(
         write: VkWriteDescriptorSet,
         stack: MemoryStack,

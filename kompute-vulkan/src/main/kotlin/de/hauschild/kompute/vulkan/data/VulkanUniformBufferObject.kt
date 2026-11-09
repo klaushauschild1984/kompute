@@ -56,6 +56,8 @@ class VulkanUniformBufferObject(
         batch.upload(buffer) { staging -> staging.put(data) }
     }
 
+    override fun descriptorKey(): Any? = null
+
     override fun describe(
         write: VkWriteDescriptorSet,
         stack: MemoryStack,

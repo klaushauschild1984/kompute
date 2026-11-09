@@ -88,6 +88,8 @@ VulkanReadable<Image2D.Image2DResult> {
         }
     }
 
+    override fun descriptorKey(): Any? = null
+
     override fun describe(
         write: VkWriteDescriptorSet,
         stack: MemoryStack,
