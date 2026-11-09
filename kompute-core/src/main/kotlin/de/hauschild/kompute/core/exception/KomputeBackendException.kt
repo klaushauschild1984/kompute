@@ -6,6 +6,7 @@ package de.hauschild.kompute.core.exception
  * @param message
  * @param cause
  */
+@Suppress("AbstractClassCanBeConcreteClass") // abstract on purpose: only the concrete subtypes are thrown
 abstract class KomputeBackendException(
     message: String,
     cause: Throwable? = null,

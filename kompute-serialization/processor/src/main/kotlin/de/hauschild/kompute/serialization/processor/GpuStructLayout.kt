@@ -34,7 +34,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
     fun gpuFields(classDeclaration: KSClassDeclaration): List<KSPropertyDeclaration> =
         classDeclaration.getAllProperties()
             .filter { property ->
-                property.annotations.any { it.shortName.asString() == GpuField::class.simpleName!! }
+                property.annotations.any { it.shortName.asString() == GpuField::class.java.simpleName }
             }
             .toList()
 
@@ -145,7 +145,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
             ?.parameters
             ?.mapNotNull { it.name?.asString() }
             ?.toSet()
-            ?: emptySet()
+            .orEmpty()
         properties.forEach { property ->
             if (property.simpleName.asString() !in constructorParamNames) {
                 logger.error(
@@ -160,6 +160,7 @@ class GpuStructLayout(private val logger: KSPLogger) {
         val type = property.type.resolve()
         val qualifiedName = type.declaration.qualifiedName?.asString()
         val fixedCount = fixedSizeAnnotationOf(property)
+        val primitiveArrayElementByteWidth = primitiveArrayElementByteWidths[qualifiedName]
         return when {
             qualifiedName in setOf(
                 Int::class.qualifiedName,
@@ -168,8 +169,8 @@ class GpuStructLayout(private val logger: KSPLogger) {
             ) ->
                 ScalarDescriptor.INT_FLOAT_BOOLEAN
             qualifiedName == Double::class.qualifiedName -> ScalarDescriptor.DOUBLE
-            primitiveArrayElementByteWidths.containsKey(qualifiedName) ->
-                PrimitiveArrayDescriptor(fixedCount, primitiveArrayElementByteWidths.getValue(qualifiedName!!))
+            primitiveArrayElementByteWidth != null ->
+                PrimitiveArrayDescriptor(fixedCount, primitiveArrayElementByteWidth)
             qualifiedName == genericArrayType -> structArrayDescriptorFor(property, type, fixedCount)
             else -> nestedStructDescriptorFor(property, type)
         }
@@ -241,13 +242,13 @@ class GpuStructLayout(private val logger: KSPLogger) {
 
     private fun alignAnnotationOf(declaration: KSClassDeclaration): Int? {
         val annotation = declaration.annotations
-            .firstOrNull { it.shortName.asString() == Align::class.simpleName!! }
+            .firstOrNull { it.shortName.asString() == Align::class.java.simpleName }
         return annotation?.arguments?.first()?.value as? Int
     }
 
     private fun fixedSizeAnnotationOf(property: KSPropertyDeclaration): Int? {
         val annotation = property.annotations
-            .firstOrNull { it.shortName.asString() == FixedSize::class.simpleName!! }
+            .firstOrNull { it.shortName.asString() == FixedSize::class.java.simpleName }
         return annotation?.arguments?.first()?.value as? Int
     }
 

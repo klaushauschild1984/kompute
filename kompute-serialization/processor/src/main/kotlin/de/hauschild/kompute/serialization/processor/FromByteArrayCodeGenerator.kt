@@ -4,6 +4,7 @@ import de.hauschild.kompute.serialization.GpuStructDeserializer
 import de.hauschild.kompute.serialization.annotation.Layout
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.squareup.kotlinpoet.AnnotationSpec
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FunSpec
@@ -43,6 +44,8 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
 
         val funSpecBuilder = FunSpec.builder("fromByteArray")
             .receiver(ByteArray::class)
+            // `type` is a type token that selects the overload for the target type, it is never read
+            .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "UnusedParameter").build())
             .addParameter("type", KClass::class.asClassName().parameterizedBy(targetClass))
             .returns(targetClass)
 
@@ -50,7 +53,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
 
         if (!layoutDependent) {
             val fieldLayouts = layout.computeLayout(properties, Layout.STD140)
-            bodyBuilder.addStatement("val reader = %T(this)", deserializerClass)
+            addReader(bodyBuilder, fieldLayouts, deserializerClass)
             bodyBuilder.add("return ")
             bodyBuilder.add(constructorCall(targetClass, fieldLayouts))
             bodyBuilder.add("\n")
@@ -60,11 +63,12 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                     .defaultValue("%T.STD140", layoutClass)
                     .build()
             )
-            bodyBuilder.beginControlFlow("return when (layout)")
+            // %L keeps KotlinPoet from folding `return when` into a very long expression body signature
+            bodyBuilder.beginControlFlow("%L when (layout)", "return")
             for (memLayout in Layout.entries) {
                 val fieldLayouts = layout.computeLayout(properties, memLayout)
                 bodyBuilder.beginControlFlow("%T.%L ->", layoutClass, memLayout)
-                bodyBuilder.addStatement("val reader = %T(this)", deserializerClass)
+                addReader(bodyBuilder, fieldLayouts, deserializerClass)
                 bodyBuilder.add(constructorCall(targetClass, fieldLayouts))
                 bodyBuilder.add("\n")
                 bodyBuilder.endControlFlow()
@@ -81,16 +85,30 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
         targetClass: ClassName,
         fieldLayouts: List<GpuStructLayout.FieldLayout>,
     ): CodeBlock {
-        val builder = CodeBlock.builder().add("%T(", targetClass)
-        fieldLayouts.forEachIndexed { index, field ->
-            if (index > 0) {
-                builder.add(", ")
-            }
+        val builder = CodeBlock.builder().add("%T(\n", targetClass).indent()
+        fieldLayouts.forEach { field ->
             builder.add("%L = ", field.property.simpleName.asString())
             builder.add(fieldExpr(field))
+            builder.add(",\n")
         }
-        return builder.add(")").build()
+        return builder.unindent().add(")").build()
     }
+
+    /**
+     * Declares the `reader` only if a field actually reads from it, so no unused variable is generated.
+     */
+    private fun addReader(
+        bodyBuilder: CodeBlock.Builder,
+        fieldLayouts: List<GpuStructLayout.FieldLayout>,
+        deserializerClass: ClassName,
+    ) {
+        if (fieldLayouts.any { hasReaderAccess(it) }) {
+            bodyBuilder.addStatement("val reader = %T(this)", deserializerClass)
+        }
+    }
+
+    private fun hasReaderAccess(field: GpuStructLayout.FieldLayout): Boolean =
+        if (field.isArray()) !field.isElementGpuStruct() else !field.isGpuStructField()
 
     private fun fieldExpr(field: GpuStructLayout.FieldLayout): CodeBlock =
         when {
@@ -101,7 +119,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
                     elementDeclaration.simpleName.asString(),
                 )
                 CodeBlock.of(
-                    "Array(%L) { i -> this.copyOfRange(%L, %L).%M(%T::class) }",
+                    "Array(%L) { i ->\n⇥this.copyOfRange(%L, %L).%M(%T::class)\n⇤}",
                     elementCountExpr(field),
                     "${field.offset} + i * ${field.elementStride}",
                     "${field.offset} + i * ${field.elementStride} + ${field.elementSize}",
@@ -112,7 +130,7 @@ class FromByteArrayCodeGenerator(private val layout: GpuStructLayout) {
             field.isArray() -> {
                 val (arrayType, readFunctionName) = primitiveArrayInfo(field.property)
                 CodeBlock.of(
-                    "%T(%L) { i -> reader.%L(%L) }",
+                    "%T(%L) { i ->\n⇥reader.%L(%L)\n⇤}",
                     arrayType,
                     elementCountExpr(field),
                     readFunctionName,

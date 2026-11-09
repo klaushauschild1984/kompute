@@ -67,7 +67,9 @@ class GameOfLife(
                 NamedUniform("height", Int::class).value(HEIGHT),
                 NamedUniform("displayOffset", Int::class).value(writeOffset),
             )),
-        ).use { it[canvas].toBufferedImage()!! }.also {
+        ).use { result ->
+            checkNotNull(result[canvas].toBufferedImage()) { "Canvas could not be converted to an image" }
+        }.also {
             val tmp = readOffset
             readOffset = writeOffset
             writeOffset = tmp

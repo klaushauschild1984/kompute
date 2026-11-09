@@ -7,4 +7,5 @@ style:
     active: false
 complexity:
   CyclomaticComplexMethod:
-    threshold: 20
+    # detekt 2.x reports when complexity > allowedComplexity (1.x: >= threshold of 20)
+    allowedComplexity: 19

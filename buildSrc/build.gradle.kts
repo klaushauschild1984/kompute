@@ -13,7 +13,7 @@ dependencies {
     fun version(alias: String) = catalog.findVersion(alias).get().requiredVersion
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:${version("kotlin")}")
     implementation("com.saveourtool.diktat:diktat-gradle-plugin:${version("diktat")}")
-    implementation("io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${version("detekt")}")
+    implementation("dev.detekt:detekt-gradle-plugin:${version("detekt")}")
 }
 
 tasks.named<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>("dependencyUpdates") {

@@ -1,4 +1,10 @@
-package de.hauschild.kompute.jmh.kotlin.de.hauschild.kompute.benchmark
+/**
+ * Diktat expects the jmh source set directory as part of the package name, the JVM and detekt do not.
+ */
+
+@file:Suppress("PACKAGE_NAME_INCORRECT_PATH")
+
+package de.hauschild.kompute.benchmark
 
 import de.hauschild.kompute.core.Kompute
 import de.hauschild.kompute.core.backend.Backend

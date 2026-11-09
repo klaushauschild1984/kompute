@@ -15,7 +15,7 @@ class OpenGLUniformBufferObject(
     source: UniformBufferObject
 ) : Buffer<UniformBufferObject>(source) {
     override fun bind() {
-        val data = source.data!!
+        val data = checkNotNull(source.data) { "UniformBufferObject data must be set" }
         glHandle = GL43.glGenBuffers()
         GL43.glBindBuffer(GL43.GL_UNIFORM_BUFFER, glHandle)
         MemoryUtil.memAlloc(data.size).useAndFree { bytes ->
