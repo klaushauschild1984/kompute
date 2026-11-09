@@ -9,6 +9,7 @@ import org.lwjgl.vulkan.VK10.vkGetDeviceQueue
 import org.lwjgl.vulkan.VkDevice
 import org.lwjgl.vulkan.VkDeviceCreateInfo
 import org.lwjgl.vulkan.VkDeviceQueueCreateInfo
+import org.lwjgl.vulkan.VkPhysicalDeviceFeatures
 import org.lwjgl.vulkan.VkQueue
 
 /**
@@ -38,6 +39,7 @@ class VulkanDevice(
             val deviceCreateInfo = VkDeviceCreateInfo.calloc(stack)
                 .sType(VK10.VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                 .pQueueCreateInfos(queueCreateInfo)
+                .pEnabledFeatures(enabledFeatures(physicalDevice, stack))
             val devicePointer = stack.mallocPointer(1)
             val result = vkCreateDevice(physicalDevice.physicalDevice, deviceCreateInfo, null, devicePointer)
             requireBackendInitialization(result == VK10.VK_SUCCESS) {
@@ -49,6 +51,24 @@ class VulkanDevice(
             queue = VkQueue(queuePointer.get(0), device)
         }
     }
+
+    /**
+     * Enables the optional features that shaders can need for the data types Kompute supports -
+     * 64 bit floats and integers (`DoubleArray`, `LongArray`) and storage images with formats beyond
+     * the mandatory ones (e.g. `R8`) - as far as the physical device supports them.
+     */
+    private fun enabledFeatures(
+        physicalDevice: VulkanPhysicalDevice,
+        stack: MemoryStack,
+    ): VkPhysicalDeviceFeatures {
+        val supported = VkPhysicalDeviceFeatures.calloc(stack)
+        VK10.vkGetPhysicalDeviceFeatures(physicalDevice.physicalDevice, supported)
+        return VkPhysicalDeviceFeatures.calloc(stack)
+            .shaderFloat64(supported.shaderFloat64())
+            .shaderInt64(supported.shaderInt64())
+            .shaderStorageImageExtendedFormats(supported.shaderStorageImageExtendedFormats())
+    }
+
     override fun close() {
         vkDestroyDevice(device, null)
     }
