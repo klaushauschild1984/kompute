@@ -194,7 +194,7 @@ jobs:
 
             - name: Install Vulkan dependencies (Linux)
               if: runner.os == 'Linux'
-              run: sudo apt-get install -y mesa-vulkan-drivers libvulkan1
+              run: sudo apt-get install -y mesa-vulkan-drivers libvulkan1 vulkan-validationlayers
 
             - name: Install Mesa (Windows)
               if: runner.os == 'Windows'
@@ -213,6 +213,9 @@ jobs:
 
             - name: Run checks
               run: ./gradlew :kompute-vulkan:check
+              env:
+                  # the Khronos validation layer is only installed on Linux; its errors fail the tests
+                  ORG_GRADLE_PROJECT_vulkanValidation: ${{ runner.os == 'Linux' && 'true' || 'false' }}
 
             - name: Upload backend reports
               if: always()
