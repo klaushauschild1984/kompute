@@ -9,24 +9,26 @@ import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
-import de.hauschild.kompute.vulkan.backend.VulkanMemoryKind
+import de.hauschild.kompute.vulkan.backend.describeBuffer
 import de.hauschild.kompute.vulkan.backend.download
 import de.hauschild.kompute.vulkan.backend.upload
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
-import org.lwjgl.vulkan.VkDescriptorBufferInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 
 /**
  * Wraps a Vulkan shader storage buffer (SSBO) for a [StorageBuffer].
  *
- * The buffer lives in device-local memory. Data is moved between host and device through
- * temporary staging buffers: [bind] uploads the source data, [read] copies the device buffer into
- * a host-visible staging buffer and converts it back into [T]. Both operations block until the GPU
- * has finished the transfer.
+ * The buffer lives in device-local memory and is persistent, like the OpenGL backend's buffer: it
+ * is allocated on the first [bind] for a given [StorageBuffer] instance and reused by all later
+ * dispatches, so GPU-side state survives between them. It is released when the source becomes
+ * unreachable or the backend is closed, [close] only drops this instance's reference.
  *
- * Unlike the OpenGL backend, the underlying `VkBuffer` is owned by this instance and released in
- * [close].
+ * Data is moved between host and device through temporary staging buffers: the first [bind]
+ * uploads the source data, [read] copies the device buffer into a host-visible staging buffer and
+ * converts it back into [T]. Both operations block until the GPU has finished the transfer. As in
+ * the OpenGL backend, changing the data of the source afterwards does not update the buffer unless
+ * the size changes.
  *
  * Note: [LongArray] and [DoubleArray] require the matching shader features (`int64`, `float64`).
  *
@@ -51,10 +53,9 @@ VulkanReadable<T> {
     fun handle(): Long = requireBound().buffer
 
     /**
-     * Allocates the device buffer (or reallocates it if the source size changed) and uploads the
-     * source data for [StorageBuffer.Mode.Input] and [StorageBuffer.Mode.ReadWrite] buffers.
-     *
-     * Calling [bind] again re-uploads the current source data.
+     * Looks up the persistent device buffer of the source, allocating it if it does not exist yet (or
+     * if the source size changed), and uploads the source data into a newly allocated buffer for
+     * [StorageBuffer.Mode.Input] and [StorageBuffer.Mode.ReadWrite] buffers.
      *
      * @throws KomputeConfigurationException if the buffer is empty or larger than 2 GiB
      */
@@ -64,20 +65,14 @@ VulkanReadable<T> {
             "StorageBuffer must be between 1 byte and 2 GiB, was $byteSize bytes"
         }
 
-        val existing = deviceBuffer
-        val buffer = if (existing != null && existing.size == byteSize) {
-            existing
-        } else {
-            existing?.close()
-            deviceBuffer = null
-            context.allocator.createBuffer(byteSize, DEVICE_BUFFER_USAGE, VulkanMemoryKind.DEVICE)
-                .also { deviceBuffer = it }
-        }
-
-        when (val mode = source.mode()) {
-            is StorageBuffer.Mode.Input -> upload(mode.data, buffer)
-            is StorageBuffer.Mode.ReadWrite -> upload(mode.data, buffer)
-            is StorageBuffer.Mode.Output -> Unit
+        val (buffer, isNew) = context.bufferCache.getOrAllocate(source, byteSize, DEVICE_BUFFER_USAGE)
+        deviceBuffer = buffer
+        if (isNew) {
+            when (val mode = source.mode()) {
+                is StorageBuffer.Mode.Input -> upload(mode.data, buffer)
+                is StorageBuffer.Mode.ReadWrite -> upload(mode.data, buffer)
+                is StorageBuffer.Mode.Output -> Unit
+            }
         }
     }
 
@@ -105,19 +100,10 @@ VulkanReadable<T> {
     override fun describe(
         write: VkWriteDescriptorSet,
         stack: MemoryStack,
-    ) {
-        val bufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
-            .buffer(requireBound().buffer)
-            .offset(0)
-            .range(VK10.VK_WHOLE_SIZE)
-        write.dstBinding(source.index)
-            .descriptorType(VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
-            .descriptorCount(1)
-            .pBufferInfo(bufferInfo)
-    }
+    ) = write.describeBuffer(source.index, VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, requireBound(), stack)
 
     override fun close() {
-        deviceBuffer?.close()
+        // the buffer is persistent: its lifetime is managed by the buffer cache
         deviceBuffer = null
     }
 

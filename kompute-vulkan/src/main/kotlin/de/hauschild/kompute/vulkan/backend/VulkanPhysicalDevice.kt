@@ -58,6 +58,21 @@ class VulkanPhysicalDevice(
             )
         }
     }
+    private val deviceLimits: VulkanLimits by lazy {
+        MemoryStack.stackPush().use { stack ->
+            val deviceProperties = VkPhysicalDeviceProperties.malloc(stack)
+            vkGetPhysicalDeviceProperties(physicalDevice, deviceProperties)
+            val limits = deviceProperties.limits()
+            VulkanLimits(
+                maxComputeWorkGroupCountX = limits.maxComputeWorkGroupCount(0).toUnsignedLong(),
+                maxComputeWorkGroupCountY = limits.maxComputeWorkGroupCount(1).toUnsignedLong(),
+                maxComputeWorkGroupCountZ = limits.maxComputeWorkGroupCount(2).toUnsignedLong(),
+                maxImageDimension2D = limits.maxImageDimension2D().toUnsignedLong(),
+                maxStorageBufferRange = limits.maxStorageBufferRange().toUnsignedLong(),
+                maxUniformBufferRange = limits.maxUniformBufferRange().toUnsignedLong(),
+            )
+        }
+    }
 
     init {
         val (physicalDevice, queueFamilyIndex) = pickComputeCapableDevice(dedicatedComputeQueue, deviceName, instance)
@@ -84,6 +99,13 @@ class VulkanPhysicalDevice(
      * The raw, vendor-specific driver version.
      */
     fun driverVersion(): Int = properties.driverVersion
+
+    /**
+     * The hardware limits that are validated before work is submitted.
+     *
+     * @return the [VulkanLimits] of the selected physical device
+     */
+    fun limits(): VulkanLimits = deviceLimits
 
     private fun pickComputeCapableDevice(
         dedicatedComputeQueue: Boolean,
@@ -225,3 +247,5 @@ class VulkanPhysicalDevice(
         private val logger = KotlinLogging.logger {}
     }
 }
+
+private fun Int.toUnsignedLong(): Long = toUInt().toLong()

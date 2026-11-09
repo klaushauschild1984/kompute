@@ -29,6 +29,7 @@ class VulkanBackend : AbstractBackend() {
     private lateinit var vulkanDevice: VulkanDevice
     private lateinit var vulkanCommandPool: VulkanCommandPool
     private lateinit var vulkanAllocator: VulkanAllocator
+    private lateinit var vulkanContext: VulkanContext
 
     @InternalApi
     override fun type(): Type = Type.Vulkan
@@ -40,6 +41,9 @@ class VulkanBackend : AbstractBackend() {
         vulkanDevice = VulkanDevice(vulkanPhysicalDevice)
         vulkanCommandPool = VulkanCommandPool(vulkanDevice, vulkanPhysicalDevice)
         vulkanAllocator = VulkanAllocator(vulkanInstance, vulkanPhysicalDevice, vulkanDevice)
+        vulkanContext = VulkanContext(
+            vulkanDevice, vulkanAllocator, vulkanCommandPool, vulkanPhysicalDevice.limits(),
+        )
 
         logger.info {
             "Vulkan Backend initialized with device: ${vulkanPhysicalDevice.name()}, " +
@@ -58,14 +62,13 @@ class VulkanBackend : AbstractBackend() {
             vulkanShaderModule.close()
             throw t
         }
-        return VulkanCompiledShader(
-            vulkanShaderModule,
-            vulkanPipeline,
-            VulkanContext(vulkanDevice, vulkanAllocator, vulkanCommandPool),
-        )
+        return VulkanCompiledShader(vulkanShaderModule, vulkanPipeline, vulkanContext)
     }
 
     override fun close() {
+        if (::vulkanContext.isInitialized) {
+            vulkanContext.close()
+        }
         if (::vulkanAllocator.isInitialized) {
             vulkanAllocator.close()
         }

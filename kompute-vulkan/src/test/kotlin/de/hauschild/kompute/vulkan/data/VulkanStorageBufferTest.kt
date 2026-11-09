@@ -3,43 +3,21 @@ package de.hauschild.kompute.vulkan.data
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.exception.KomputeBackendInitializationException
 import de.hauschild.kompute.core.exception.KomputeConfigurationException
-import de.hauschild.kompute.vulkan.backend.VulkanAllocator
-import de.hauschild.kompute.vulkan.backend.VulkanCommandPool
-import de.hauschild.kompute.vulkan.backend.VulkanContext
-import de.hauschild.kompute.vulkan.backend.VulkanDevice
-import de.hauschild.kompute.vulkan.backend.VulkanInstance
-import de.hauschild.kompute.vulkan.backend.VulkanPhysicalDevice
+import de.hauschild.kompute.vulkan.VulkanTestContext
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VulkanStorageBufferTest {
-    private lateinit var instance: VulkanInstance
-    private lateinit var device: VulkanDevice
-    private lateinit var commandPool: VulkanCommandPool
-    private lateinit var allocator: VulkanAllocator
-    private lateinit var context: VulkanContext
-
-    @BeforeAll
-    fun setUp() {
-        instance = VulkanInstance()
-        val physicalDevice = VulkanPhysicalDevice(false, null, instance)
-        device = VulkanDevice(physicalDevice)
-        commandPool = VulkanCommandPool(device, physicalDevice)
-        allocator = VulkanAllocator(instance, physicalDevice, device)
-        context = VulkanContext(device, allocator, commandPool)
-    }
+    private val testContext = VulkanTestContext()
+    private val context = testContext.context
 
     @AfterAll
     fun tearDown() {
-        allocator.close()
-        commandPool.close()
-        device.close()
-        instance.close()
+        testContext.close()
     }
 
     @Test
@@ -86,12 +64,28 @@ class VulkanStorageBufferTest {
     }
 
     @Test
-    fun `binding again uploads the current source data`() {
+    fun `binding the same source again reuses the persistent buffer and its content`() {
+        val source = StorageBuffer<IntArray>(0).data(intArrayOf(1, 2, 3)).asOutput()
+        val first = VulkanStorageBuffer(source, context).also { it.bind() }
+        val handle = first.handle()
+        first.close()
+
+        VulkanStorageBuffer(source, context).use { second ->
+            second.bind()
+
+            assertThat(second.handle()).isEqualTo(handle)
+            assertThat(second.read()).containsExactly(1, 2, 3)
+        }
+    }
+
+    @Test
+    fun `a changed source size replaces the buffer`() {
         val source = StorageBuffer<IntArray>(0).data(intArrayOf(1, 2, 3)).asOutput()
         VulkanStorageBuffer(source, context).use { buffer ->
             buffer.bind()
             source.data(intArrayOf(4, 5, 6, 7))
             buffer.bind()
+
             assertThat(buffer.read()).containsExactly(4, 5, 6, 7)
         }
     }

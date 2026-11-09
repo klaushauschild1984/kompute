@@ -24,7 +24,11 @@ internal class VulkanAllocatedBuffer(
     val size: Long,
     val mappedAddress: Long,
 ) : AutoCloseable {
-    private var closed = false
+    /**
+     * Whether the buffer has been destroyed.
+     */
+    var isClosed = false
+        private set
 
     /**
      * Returns the persistently mapped memory of this buffer in native byte order.
@@ -52,8 +56,8 @@ internal class VulkanAllocatedBuffer(
     }
 
     override fun close() {
-        if (!closed) {
-            closed = true
+        if (!isClosed) {
+            isClosed = true
             Vma.vmaDestroyBuffer(allocator, buffer, allocation)
         }
     }

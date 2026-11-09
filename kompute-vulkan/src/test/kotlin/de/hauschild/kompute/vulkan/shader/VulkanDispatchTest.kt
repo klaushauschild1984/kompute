@@ -209,6 +209,46 @@ class VulkanDispatchTest {
     }
 
     @Test
+    fun `storage buffer state persists across dispatches`(backend: VulkanBackend) {
+        val buffer = StorageBuffer<IntArray>(0).data(intArrayOf(0, 10, 20)).asOutput()
+
+        val results = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1) in;
+                layout(std430, binding = 0) buffer Data { int values[]; };
+                void main() { values[gl_GlobalInvocationID.x] += 1; }
+                """.trimIndent(),
+            ),
+        ).compile().use { shader ->
+            List(3) { _ -> shader.dispatch(3, buffer).use { result -> result[buffer].toList() } }
+        }
+
+        assertThat(results).containsExactly(listOf(1, 11, 21), listOf(2, 12, 22), listOf(3, 13, 23))
+    }
+
+    @Test
+    fun `atomic counter is reset to its start value on every dispatch`(backend: VulkanBackend) {
+        val counter = AtomicCounter(0).start(10)
+
+        val values = backend.shader(
+            Code(
+                """
+                #version 450
+                layout(local_size_x = 1) in;
+                layout(std430, binding = 0) buffer Counter { uint counter; };
+                void main() { atomicAdd(counter, 1u); }
+                """.trimIndent(),
+            ),
+        ).compile().use { shader ->
+            List(3) { _ -> shader.dispatch(5, counter).use { result -> result[counter] } }
+        }
+
+        assertThat(values).containsExactly(15, 15, 15)
+    }
+
+    @Test
     fun `result that is never read can be closed`(backend: VulkanBackend) {
         val input = StorageBuffer<FloatArray>(0).data(floatArrayOf(1f))
         val output = StorageBuffer<FloatArray>(1).size(1).asOutput()

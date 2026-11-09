@@ -2,45 +2,68 @@ package de.hauschild.kompute.vulkan.data
 
 import de.hauschild.kompute.core.data.AtomicCounter
 import de.hauschild.kompute.core.data.OutputCapable
-import de.hauschild.kompute.core.data.StorageBuffer
+import de.hauschild.kompute.core.exception.KomputeBackendInitializationException
 import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
+import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
+import de.hauschild.kompute.vulkan.backend.describeBuffer
+import de.hauschild.kompute.vulkan.backend.download
+import de.hauschild.kompute.vulkan.backend.upload
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.vulkan.VK10
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 
 /**
- * Wraps [AtomicCounter] as a thin adapter around a [VulkanStorageBuffer].
+ * Wraps an [AtomicCounter] as a persistent storage buffer holding a single `Int`.
  *
  * Vulkan has no dedicated atomic-counter resource type - the shader-side equivalent is a regular
- * storage buffer with an atomic operation on one of its members (see `VULKAN-TODO.md`). This class
- * translates [AtomicCounter]'s single-`Int` contract to and from an internal
- * `StorageBuffer<IntArray>` of size 1, re-uploading [AtomicCounter.start] on every [bind] to match
- * the reset-per-dispatch semantics of the OpenGL backend's `OpenGLAtomicCounter`.
+ * storage buffer with an atomic operation on one of its members (see `VULKAN-TODO.md`). Like the
+ * OpenGL backend's `OpenGLAtomicCounter`, the buffer is allocated once per [AtomicCounter] instance
+ * and reused, but the counter is reset to [AtomicCounter.start] on every [bind], preserving
+ * per-dispatch reset semantics. [close] only drops this instance's reference.
  *
  * @param source the [AtomicCounter] configuration this counter is based on
  * @param context the [VulkanContext] used for memory allocation and transfer commands
  */
 class VulkanAtomicCounter(
     source: AtomicCounter,
-    context: VulkanContext,
+    private val context: VulkanContext,
 ) : VulkanBuffer<AtomicCounter>(source),
 OutputCapable<Int> by source,
 VulkanReadable<Int> {
-    private val wrappedSource = StorageBuffer(source.index, IntArray::class).asOutput()
-    private val wrapped = VulkanStorageBuffer(wrappedSource, context)
+    private var deviceBuffer: VulkanAllocatedBuffer? = null
 
     override fun bind() {
-        wrappedSource.data(intArrayOf(source.start))
-        wrapped.bind()
+        val (buffer, _) = context.bufferCache.getOrAllocate(source, Int.SIZE_BYTES.toLong(), BUFFER_USAGE)
+        deviceBuffer = buffer
+        context.upload(buffer) { staging -> staging.putInt(source.start) }
     }
 
-    override fun read(): Int = wrapped.read()[0]
+    /**
+     * Reads the current counter value back from the GPU buffer.
+     *
+     * @return the counter value after shader execution
+     * @throws KomputeBackendInitializationException if [bind] was not called before
+     */
+    override fun read(): Int = context.download(requireBound()) { bytes -> bytes.getInt(0) }
 
     override fun describe(
         write: VkWriteDescriptorSet,
         stack: MemoryStack,
-    ) = wrapped.describe(write, stack)
+    ) = write.describeBuffer(source.index, VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, requireBound(), stack)
 
-    override fun close() = wrapped.close()
+    override fun close() {
+        // the buffer is persistent: its lifetime is managed by the buffer cache
+        deviceBuffer = null
+    }
+
+    private fun requireBound(): VulkanAllocatedBuffer = deviceBuffer
+        ?: throw KomputeBackendInitializationException("bind() must be called before using the counter")
+
+    companion object {
+        private const val TRANSFER_USAGE =
+            VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT or VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT
+        private const val BUFFER_USAGE = VK10.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT or TRANSFER_USAGE
+    }
 }

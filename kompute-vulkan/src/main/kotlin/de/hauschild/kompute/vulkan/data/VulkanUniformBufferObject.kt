@@ -7,10 +7,10 @@ import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanMemoryKind
+import de.hauschild.kompute.vulkan.backend.describeBuffer
 import de.hauschild.kompute.vulkan.backend.upload
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
-import org.lwjgl.vulkan.VkDescriptorBufferInfo
 import org.lwjgl.vulkan.VkWriteDescriptorSet
 
 /**
@@ -56,14 +56,7 @@ class VulkanUniformBufferObject(
         stack: MemoryStack,
     ) {
         val buffer = checkNotNull(deviceBuffer) { "bind() must be called before describe()" }
-        val bufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
-            .buffer(buffer.buffer)
-            .offset(0)
-            .range(VK10.VK_WHOLE_SIZE)
-        write.dstBinding(source.index)
-            .descriptorType(VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER)
-            .descriptorCount(1)
-            .pBufferInfo(bufferInfo)
+        write.describeBuffer(source.index, VK10.VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, buffer, stack)
     }
 
     override fun close() {
