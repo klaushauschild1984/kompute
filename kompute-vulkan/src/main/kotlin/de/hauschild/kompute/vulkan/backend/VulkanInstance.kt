@@ -120,8 +120,10 @@ class VulkanInstance(
         message: String?,
     ) {
         when {
-            severity and VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT != 0 ->
+            severity and VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT != 0 -> {
+                VulkanValidationErrors.global.record(message.orEmpty())
                 logger.error { "Vulkan validation: $message" }
+            }
             severity and VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT != 0 ->
                 logger.warn { "Vulkan validation: $message" }
             else -> logger.debug { "Vulkan validation: $message" }

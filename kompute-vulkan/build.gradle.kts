@@ -15,3 +15,10 @@ dependencies {
     testFixturesImplementation(platform(libs.junit.bom))
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-api")
 }
+
+tasks.test {
+    // -PvulkanValidation=true runs the tests with the Khronos validation layer and fails them on its errors
+    providers.gradleProperty("vulkanValidation").orNull?.let {
+        systemProperty("kompute.backend.vulkan.validation", it)
+    }
+}
