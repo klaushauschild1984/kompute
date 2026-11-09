@@ -6,6 +6,8 @@ import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.vulkan.VulkanBuffer
 import de.hauschild.kompute.vulkan.VulkanReadable
 import de.hauschild.kompute.vulkan.backend.VulkanContext
+import org.lwjgl.system.MemoryStack
+import org.lwjgl.vulkan.VkWriteDescriptorSet
 
 /**
  * Wraps [AtomicCounter] as a thin adapter around a [VulkanStorageBuffer].
@@ -34,6 +36,11 @@ VulkanReadable<Int> {
     }
 
     override fun read(): Int = wrapped.read()[0]
+
+    override fun describe(
+        write: VkWriteDescriptorSet,
+        stack: MemoryStack,
+    ) = wrapped.describe(write, stack)
 
     override fun close() = wrapped.close()
 }

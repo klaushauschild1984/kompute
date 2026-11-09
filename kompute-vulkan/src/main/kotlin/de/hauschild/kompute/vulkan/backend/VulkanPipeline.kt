@@ -24,9 +24,23 @@ class VulkanPipeline(
     private val device: VulkanDevice,
     shaderModule: VulkanShaderModule,
 ) : AutoCloseable {
-    private var descriptorSetLayout: Long = VK10.VK_NULL_HANDLE
-    private var pipelineLayout: Long = VK10.VK_NULL_HANDLE
-    private var pipeline: Long = VK10.VK_NULL_HANDLE
+    /**
+     * The raw `VkDescriptorSetLayout` handle, built from the reflected shader bindings.
+     */
+    var descriptorSetLayout: Long = VK10.VK_NULL_HANDLE
+        private set
+
+    /**
+     * The raw `VkPipelineLayout` handle.
+     */
+    var pipelineLayout: Long = VK10.VK_NULL_HANDLE
+        private set
+
+    /**
+     * The raw `VkPipeline` handle of the compute pipeline.
+     */
+    var pipeline: Long = VK10.VK_NULL_HANDLE
+        private set
 
     init {
         try {
@@ -97,12 +111,15 @@ class VulkanPipeline(
     override fun close() {
         if (pipeline != VK10.VK_NULL_HANDLE) {
             VK10.vkDestroyPipeline(device.device, pipeline, null)
+            pipeline = VK10.VK_NULL_HANDLE
         }
         if (pipelineLayout != VK10.VK_NULL_HANDLE) {
             VK10.vkDestroyPipelineLayout(device.device, pipelineLayout, null)
+            pipelineLayout = VK10.VK_NULL_HANDLE
         }
         if (descriptorSetLayout != VK10.VK_NULL_HANDLE) {
             VK10.vkDestroyDescriptorSetLayout(device.device, descriptorSetLayout, null)
+            descriptorSetLayout = VK10.VK_NULL_HANDLE
         }
     }
 }

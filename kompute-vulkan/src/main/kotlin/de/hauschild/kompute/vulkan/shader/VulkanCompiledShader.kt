@@ -13,13 +13,16 @@ import de.hauschild.kompute.core.result.ShaderResult
 import de.hauschild.kompute.core.shader.AbstractCompiledShader
 import de.hauschild.kompute.vulkan.VulkanBindable
 import de.hauschild.kompute.vulkan.backend.VulkanContext
+import de.hauschild.kompute.vulkan.backend.VulkanDescriptorSet
 import de.hauschild.kompute.vulkan.backend.VulkanPipeline
 import de.hauschild.kompute.vulkan.backend.VulkanShaderModule
 import de.hauschild.kompute.vulkan.data.VulkanAtomicCounter
 import de.hauschild.kompute.vulkan.data.VulkanImage2D
 import de.hauschild.kompute.vulkan.data.VulkanStorageBuffer
 import de.hauschild.kompute.vulkan.data.VulkanUniformBufferObject
+import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
+import org.lwjgl.vulkan.VkCommandBuffer
 
 /**
  * A compiled Vulkan compute shader, backed by a [VulkanShaderModule] and its [VulkanPipeline].
@@ -76,15 +79,65 @@ class VulkanCompiledShader(
         )
     }
 
+    @Suppress("TooGenericExceptionCaught") // releases the bound resources on any failure and rethrows
     override fun doDispatch(
         x: Int,
         y: Int,
         z: Int,
         data: List<ShaderData>
     ): ShaderResult {
-        @Suppress("UnusedVariable") // consumed by the dispatch once it is implemented
         val bindables = bind(data)
-        TODO("Not yet implemented")
+        try {
+            dispatch(x, y, z, bindables)
+        } catch (t: Throwable) {
+            closeAfterFailure(bindables, t)
+            throw t
+        }
+        return ShaderResult(VulkanResultReader(bindables))
+    }
+
+    private fun dispatch(
+        x: Int,
+        y: Int,
+        z: Int,
+        bindables: List<VulkanBindable>,
+    ) {
+        val descriptorSet = if (bindables.isEmpty()) {
+            null
+        } else {
+            VulkanDescriptorSet(context.device, vulkanPipeline.descriptorSetLayout, vulkanShaderModule.bindings)
+        }
+        descriptorSet.use {
+            descriptorSet?.update(bindables)
+            context.commandPool.executeOneTime { commandBuffer ->
+                VK10.vkCmdBindPipeline(commandBuffer, VK10.VK_PIPELINE_BIND_POINT_COMPUTE, vulkanPipeline.pipeline)
+                descriptorSet?.let { bindDescriptorSet(commandBuffer, it) }
+                VK10.vkCmdDispatch(commandBuffer, x, y, z)
+            }
+        }
+    }
+
+    private fun bindDescriptorSet(
+        commandBuffer: VkCommandBuffer,
+        descriptorSet: VulkanDescriptorSet,
+    ) {
+        MemoryStack.stackPush().use { stack ->
+            VK10.vkCmdBindDescriptorSets(
+                commandBuffer,
+                VK10.VK_PIPELINE_BIND_POINT_COMPUTE,
+                vulkanPipeline.pipelineLayout,
+                0,
+                stack.longs(descriptorSet.handle),
+                null,
+            )
+        }
+    }
+
+    private fun closeAfterFailure(
+        bindables: List<VulkanBindable>,
+        failure: Throwable,
+    ) {
+        bindables.forEach { runCatching { it.close() }.onFailure(failure::addSuppressed) }
     }
 
     @Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
@@ -94,8 +147,8 @@ class VulkanCompiledShader(
             data.forEach { shaderData ->
                 val bindable: VulkanBindable = when (shaderData) {
                     is StorageBuffer<*> -> VulkanStorageBuffer(shaderData, context)
-                    is UniformBufferObject -> VulkanUniformBufferObject(shaderData)
-                    is Image2D -> VulkanImage2D(shaderData)
+                    is UniformBufferObject -> VulkanUniformBufferObject(shaderData, context)
+                    is Image2D -> VulkanImage2D(shaderData, context)
                     is AtomicCounter -> VulkanAtomicCounter(shaderData, context)
                     is NamedUniform<*> -> throw KomputeConfigurationException(
                         "${shaderData::class.simpleName} is not supported by the Vulkan backend",

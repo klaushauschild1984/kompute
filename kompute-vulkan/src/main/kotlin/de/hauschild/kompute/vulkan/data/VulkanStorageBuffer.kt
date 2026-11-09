@@ -10,11 +10,12 @@ import de.hauschild.kompute.vulkan.VulkanReadable
 import de.hauschild.kompute.vulkan.backend.VulkanAllocatedBuffer
 import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanMemoryKind
-import de.hauschild.kompute.vulkan.backend.memoryBarrier
+import de.hauschild.kompute.vulkan.backend.download
+import de.hauschild.kompute.vulkan.backend.upload
 import org.lwjgl.system.MemoryStack
 import org.lwjgl.vulkan.VK10
-import org.lwjgl.vulkan.VkBufferCopy
-import org.lwjgl.vulkan.VkCommandBuffer
+import org.lwjgl.vulkan.VkDescriptorBufferInfo
+import org.lwjgl.vulkan.VkWriteDescriptorSet
 
 /**
  * Wraps a Vulkan shader storage buffer (SSBO) for a [StorageBuffer].
@@ -83,22 +84,7 @@ VulkanReadable<T> {
     private fun upload(
         data: T,
         target: VulkanAllocatedBuffer,
-    ) {
-        context.allocator.createBuffer(target.size, VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-            VulkanMemoryKind.STAGING_UPLOAD).use { staging ->
-            StorageBufferCodec.write(data, staging.mapped())
-            staging.flush()
-            context.commandPool.executeOneTime { commandBuffer ->
-                copy(commandBuffer, staging.buffer, target.buffer, target.size)
-                commandBuffer.memoryBarrier(
-                    VK10.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK10.VK_ACCESS_TRANSFER_WRITE_BIT,
-                    VK10.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                    VK10.VK_ACCESS_SHADER_READ_BIT or VK10.VK_ACCESS_SHADER_WRITE_BIT,
-                )
-            }
-        }
-    }
+    ) = context.upload(target) { staging -> StorageBufferCodec.write(data, staging) }
 
     /**
      * Copies the device buffer back to host memory.
@@ -109,28 +95,25 @@ VulkanReadable<T> {
      */
     override fun read(): T {
         requireConfiguration(source.isOutput) { "Cannot read an input-only buffer" }
-        val device = requireBound()
-        context.allocator.createBuffer(device.size, VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-            VulkanMemoryKind.STAGING_READBACK).use { staging ->
-            context.commandPool.executeOneTime { commandBuffer ->
-                commandBuffer.memoryBarrier(
-                    VK10.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                    VK10.VK_ACCESS_SHADER_WRITE_BIT,
-                    VK10.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK10.VK_ACCESS_TRANSFER_READ_BIT,
-                )
-                copy(commandBuffer, device.buffer, staging.buffer, device.size)
-                commandBuffer.memoryBarrier(
-                    VK10.VK_PIPELINE_STAGE_TRANSFER_BIT,
-                    VK10.VK_ACCESS_TRANSFER_WRITE_BIT,
-                    VK10.VK_PIPELINE_STAGE_HOST_BIT,
-                    VK10.VK_ACCESS_HOST_READ_BIT,
-                )
-            }
-            staging.invalidate()
-            @Suppress("UNCHECKED_CAST")
-            return StorageBufferCodec.read(source.type, elementCount(), staging.mapped()) as T
-        }
+        val count = elementCount()
+        @Suppress("UNCHECKED_CAST")
+        return context.download(requireBound()) { bytes ->
+            StorageBufferCodec.read(source.type, count, bytes)
+        } as T
+    }
+
+    override fun describe(
+        write: VkWriteDescriptorSet,
+        stack: MemoryStack,
+    ) {
+        val bufferInfo = VkDescriptorBufferInfo.calloc(1, stack)
+            .buffer(requireBound().buffer)
+            .offset(0)
+            .range(VK10.VK_WHOLE_SIZE)
+        write.dstBinding(source.index)
+            .descriptorType(VK10.VK_DESCRIPTOR_TYPE_STORAGE_BUFFER)
+            .descriptorCount(1)
+            .pBufferInfo(bufferInfo)
     }
 
     override fun close() {
@@ -140,21 +123,6 @@ VulkanReadable<T> {
 
     private fun requireBound(): VulkanAllocatedBuffer = deviceBuffer
         ?: throw KomputeBackendInitializationException("bind() must be called before using the buffer")
-
-    private fun copy(
-        commandBuffer: VkCommandBuffer,
-        from: Long,
-        to: Long,
-        size: Long,
-    ) {
-        MemoryStack.stackPush().use { stack ->
-            val region = VkBufferCopy.calloc(1, stack)
-                .srcOffset(0)
-                .dstOffset(0)
-                .size(size)
-            VK10.vkCmdCopyBuffer(commandBuffer, from, to, region)
-        }
-    }
 
     private fun elementCount(): Int = when (val mode = source.mode()) {
         is StorageBuffer.Mode.Input -> StorageBufferCodec.elementCount(mode.data)
