@@ -9,6 +9,7 @@ package de.hauschild.kompute.vulkan.backend
  * [VulkanBackend]. It owns the persistent buffers and the open resources: [close] releases them and
  * must be called before the allocator is closed.
  *
+ * @param directAccess whether persistent buffers use directly accessible memory where the device has it
  * @property device the [VulkanDevice]
  * @property allocator the [VulkanAllocator] used for buffer and image memory
  * @property commandPool the [VulkanCommandPool] used for one-time transfer commands
@@ -19,11 +20,12 @@ class VulkanContext(
     val allocator: VulkanAllocator,
     val commandPool: VulkanCommandPool,
     val limits: VulkanLimits,
+    directAccess: Boolean = true,
 ) : AutoCloseable {
     /**
      * Device-local buffers that outlive a single dispatch, keyed by the shader data they belong to.
      */
-    internal val bufferCache = VulkanBufferCache(allocator)
+    internal val bufferCache = VulkanBufferCache(allocator, directAccess)
 
     /**
      * Resources of dispatches whose result has not been read or closed yet.

@@ -16,6 +16,8 @@ import java.nio.ByteOrder
  * @property allocation the raw VMA allocation handle
  * @property size the buffer size in bytes
  * @property mappedAddress the address of the persistently mapped memory, or `NULL` if not host-visible
+ * @property isDirectlyAccessible whether the host can read and write the buffer through [mapped] at
+ * full speed, which needs memory that is device-local, host-visible and host-cached
  */
 internal class VulkanAllocatedBuffer(
     val allocator: Long,
@@ -23,6 +25,7 @@ internal class VulkanAllocatedBuffer(
     val allocation: Long,
     val size: Long,
     val mappedAddress: Long,
+    val isDirectlyAccessible: Boolean = false,
 ) : AutoCloseable {
     /**
      * Whether the buffer has been destroyed.

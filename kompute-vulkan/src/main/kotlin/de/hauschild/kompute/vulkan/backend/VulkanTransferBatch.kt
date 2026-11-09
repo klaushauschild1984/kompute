@@ -11,6 +11,10 @@ import java.nio.ByteBuffer
  * Without a batch every copy would be a submission of its own, and a submission - recording, queue
  * submit and waiting for the fence - is the most expensive part of a small dispatch.
  *
+ * Buffers that the host can access directly (see [VulkanAllocatedBuffer.isDirectlyAccessible]) need
+ * no copy at all: uploads are written to them right away and downloads read them in place, after the
+ * dispatch made its writes visible to the host.
+ *
  * The staging buffers of the batch are released on [close]. If a submission times out they are kept,
  * because the GPU may still use them, and released with the backend.
  *
@@ -23,17 +27,24 @@ class VulkanTransferBatch(
     private val uploads = mutableListOf<(VkCommandBuffer) -> Unit>()
     private val downloads = mutableListOf<(VkCommandBuffer) -> Unit>()
     private var abandoned = false
+    private var hostReadsPending = false
 
     /**
-     * Schedules filling [target] with the bytes written by [write].
+     * Fills [target] with the bytes written by [write]: right away if the host can access the buffer
+     * directly, otherwise by scheduling a copy from a staging buffer.
      *
      * @param target the device-local buffer, must have been created with `TRANSFER_DST` usage
-     * @param write writes up to [VulkanAllocatedBuffer.size] bytes into the given staging memory
+     * @param write writes up to [VulkanAllocatedBuffer.size] bytes into the given memory
      */
     internal fun upload(
         target: VulkanAllocatedBuffer,
         write: (ByteBuffer) -> Unit,
     ) {
+        if (target.isDirectlyAccessible) {
+            write(target.mapped())
+            target.flush()
+            return
+        }
         val staging = createStaging(
             target.size, VK10.VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VulkanMemoryKind.STAGING_UPLOAD,
         )
@@ -53,12 +64,28 @@ class VulkanTransferBatch(
     }
 
     /**
-     * Schedules copying [source] to host memory.
+     * Notes that the dispatch uses [buffer], so that the writes of the shader are made visible to the
+     * host if the host reads the buffer directly.
+     *
+     * @param buffer a buffer bound for the dispatch
+     */
+    internal fun use(buffer: VulkanAllocatedBuffer) {
+        if (buffer.isDirectlyAccessible) {
+            hostReadsPending = true
+        }
+    }
+
+    /**
+     * Schedules copying [source] to host memory, which is not necessary if the host can access the
+     * buffer directly.
      *
      * @param source the device-local buffer, must have been created with `TRANSFER_SRC` usage
      * @return the pending download, readable after [submit]
      */
     internal fun download(source: VulkanAllocatedBuffer): VulkanDownload {
+        if (source.isDirectlyAccessible) {
+            return VulkanDownload(source)
+        }
         val staging = createStaging(
             source.size, VK10.VK_BUFFER_USAGE_TRANSFER_DST_BIT, VulkanMemoryKind.STAGING_READBACK,
         )
@@ -110,6 +137,7 @@ class VulkanTransferBatch(
         }
         uploads.clear()
         downloads.clear()
+        hostReadsPending = false
     }
 
     override fun close() {
@@ -133,6 +161,14 @@ class VulkanTransferBatch(
             )
         }
         additional?.invoke(commandBuffer)
+        if (hostReadsPending) {
+            commandBuffer.memoryBarrier(
+                VK10.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+                VK10.VK_ACCESS_SHADER_WRITE_BIT,
+                VK10.VK_PIPELINE_STAGE_HOST_BIT,
+                VK10.VK_ACCESS_HOST_READ_BIT,
+            )
+        }
         if (downloads.isNotEmpty()) {
             commandBuffer.memoryBarrier(
                 VK10.VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,

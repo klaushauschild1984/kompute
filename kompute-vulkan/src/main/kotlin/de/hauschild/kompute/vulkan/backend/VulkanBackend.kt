@@ -31,6 +31,10 @@ import org.lwjgl.vulkan.VK13
  * System property `kompute.backend.vulkan.timeout`: the number of seconds to wait for the GPU to
  * finish a submission, `0` or unset waits forever. When it elapses a [VulkanTimeoutException] is
  * thrown and the backend is unusable and has to be closed.
+ *
+ * System property `kompute.backend.vulkan.directAccess`: defaults to `true`. On devices with unified memory
+ * (e.g. integrated GPUs) the persistent buffers then live in memory the host can access directly, so no
+ * staging copies are needed. `false` always uses staging buffers.
  */
 class VulkanBackend : AbstractBackend() {
     private lateinit var vulkanInstance: VulkanInstance
@@ -51,7 +55,11 @@ class VulkanBackend : AbstractBackend() {
         vulkanCommandPool = VulkanCommandPool(vulkanDevice, vulkanPhysicalDevice, fenceTimeoutNanos())
         vulkanAllocator = VulkanAllocator(vulkanInstance, vulkanPhysicalDevice, vulkanDevice)
         vulkanContext = VulkanContext(
-            vulkanDevice, vulkanAllocator, vulkanCommandPool, vulkanPhysicalDevice.limits(),
+            vulkanDevice,
+            vulkanAllocator,
+            vulkanCommandPool,
+            vulkanPhysicalDevice.limits(),
+            System.getProperty(DIRECT_ACCESS_PROPERTY)?.toBoolean() ?: true,
         )
 
         logger.info {
@@ -112,6 +120,7 @@ class VulkanBackend : AbstractBackend() {
         private const val DEVICE_NAME_PROPERTY = "kompute.backend.vulkan.device"
         private const val VALIDATION_PROPERTY = "kompute.backend.vulkan.validation"
         private const val TIMEOUT_PROPERTY = "kompute.backend.vulkan.timeout"
+        private const val DIRECT_ACCESS_PROPERTY = "kompute.backend.vulkan.directAccess"
         private const val MAX_TIMEOUT_SECONDS = Long.MAX_VALUE / VulkanCommandPool.NANOS_PER_SECOND
         private const val BYTES_PER_GB = 1_024 * 1_024 * 1_024
         private val logger = KotlinLogging.logger {}

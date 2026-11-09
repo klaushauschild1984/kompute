@@ -20,10 +20,16 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * the first [getOrAllocate] call, the buffer is not updated and the caller does not upload again.
  * Only a changed size replaces the buffer.
  *
+ * If [directAccess] is set and the device has memory that is device-local, host-visible and
+ * host-cached (unified memory, e.g. integrated GPUs), the buffers live there and the host reads and
+ * writes them directly, without staging buffers and the submissions to copy to and from them.
+ *
  * @param allocator the [VulkanAllocator] the buffers are allocated from
+ * @param directAccess whether to use directly accessible memory where the device has it
  */
 internal class VulkanBufferCache(
     private val allocator: VulkanAllocator,
+    private val directAccess: Boolean = true,
 ) : AutoCloseable {
     private val buffers = WeakHashMap<Any, VulkanAllocatedBuffer>()
     private val pendingDeletions = ConcurrentLinkedQueue<VulkanAllocatedBuffer>()
@@ -53,7 +59,8 @@ internal class VulkanBufferCache(
             return existing to false
         }
         existing?.close()
-        val buffer = allocator.createBuffer(size, usage, VulkanMemoryKind.DEVICE)
+        val kind = if (directAccess) VulkanMemoryKind.DEVICE_PREFER_SHARED else VulkanMemoryKind.DEVICE
+        val buffer = allocator.createBuffer(size, usage, kind)
         buffers[key] = buffer
         cleaner.register(key) { pendingDeletions.add(buffer) }
         return buffer to true

@@ -70,6 +70,7 @@ VulkanReadable<T> {
 
         val (buffer, isNew) = context.bufferCache.getOrAllocate(source, byteSize, DEVICE_BUFFER_USAGE)
         deviceBuffer = buffer
+        batch.use(buffer)
         if (isNew) {
             when (val mode = source.mode()) {
                 is StorageBuffer.Mode.Input -> upload(batch, mode.data, buffer)

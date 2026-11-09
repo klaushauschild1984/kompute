@@ -3,6 +3,7 @@ package de.hauschild.kompute.vulkan.backend
 import de.hauschild.kompute.core.exception.KomputeBackendDispatchException
 import de.hauschild.kompute.core.exception.requireBackendInitialization
 import org.lwjgl.system.MemoryStack
+import org.lwjgl.system.MemoryUtil
 import org.lwjgl.util.vma.Vma
 import org.lwjgl.util.vma.Vma.vmaCreateAllocator
 import org.lwjgl.util.vma.Vma.vmaCreateBuffer
@@ -89,13 +90,28 @@ class VulkanAllocator(
         )
         checkVk(result) { "Failed to allocate Vulkan buffer of $size bytes" }
 
+        val allocation = allocationPointer.get(0)
+        val mappedAddress = allocationInfo.pMappedData()
+        val sharedAndMapped = kind == VulkanMemoryKind.DEVICE_PREFER_SHARED && mappedAddress != MemoryUtil.NULL
+        val directlyAccessible = sharedAndMapped && isHostVisibleAndCached(allocation, stack)
         VulkanAllocatedBuffer(
             allocator,
             bufferPointer.get(0),
-            allocationPointer.get(0),
+            allocation,
             size,
-            allocationInfo.pMappedData(),
+            mappedAddress,
+            directlyAccessible,
         )
+    }
+
+    private fun isHostVisibleAndCached(
+        allocation: Long,
+        stack: MemoryStack,
+    ): Boolean {
+        val flags = stack.mallocInt(1)
+        Vma.vmaGetAllocationMemoryProperties(allocator, allocation, flags)
+        val required = VK10.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT or VK10.VK_MEMORY_PROPERTY_HOST_CACHED_BIT
+        return flags.get(0) and required == required
     }
 
     /**

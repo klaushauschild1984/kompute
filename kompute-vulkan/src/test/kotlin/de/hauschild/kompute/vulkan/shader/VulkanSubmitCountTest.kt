@@ -5,13 +5,16 @@ import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.data.UniformBufferObject
 import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import de.hauschild.kompute.vulkan.VulkanTestContext
+import de.hauschild.kompute.vulkan.backend.VulkanContext
 import de.hauschild.kompute.vulkan.backend.VulkanPipeline
 import de.hauschild.kompute.vulkan.backend.VulkanShaderModule
 import de.hauschild.kompute.vulkan.backend.VulkanTransferBatch
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.lwjgl.vulkan.VK10
 
 /**
  * Checks that the uploads, the dispatch and the readbacks of a dispatch share submissions, because a
@@ -20,18 +23,27 @@ import org.junit.jupiter.api.TestInstance
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class VulkanSubmitCountTest {
     private val testContext = VulkanTestContext()
-    private val context = testContext.context
+    private val staging = testContext.contextWith(testContext.context.limits, directAccess = false)
+    private val direct = testContext.contextWith(testContext.context.limits, directAccess = true)
 
     @AfterAll
     fun tearDown() {
+        staging.close()
+        direct.close()
         testContext.close()
     }
 
-    private fun submits() = context.commandPool.submitCount
-
-    private fun compile(glsl: String): VulkanCompiledShader {
+    private fun compile(
+        glsl: String,
+        context: VulkanContext,
+    ): VulkanCompiledShader {
         val module = VulkanShaderModule(Code(glsl), testContext.device)
         return VulkanCompiledShader(module, VulkanPipeline(testContext.device, module), context)
+    }
+
+    private fun hasDirectAccess(): Boolean {
+        val (buffer, _) = direct.bufferCache.getOrAllocate(Any(), 16, VK10.VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+        return buffer.isDirectlyAccessible
     }
 
     @Test
@@ -41,13 +53,15 @@ class VulkanSubmitCountTest {
         val input = StorageBuffer<FloatArray>(2).data(floatArrayOf(1f))
         val output = StorageBuffer<FloatArray>(3).size(1).asOutput()
 
-        compile(MIXED_SHADER).use { shader ->
-            val before = submits()
+        compile(MIXED_SHADER, staging).use { shader ->
+            val before = staging.commandPool.submitCount
             val result = shader.dispatch(1, params, image, input, output)
-            assertThat(submits() - before).describedAs("uploads of 3 resources and the dispatch").isEqualTo(1)
+            assertThat(staging.commandPool.submitCount - before)
+                .describedAs("uploads of 3 resources and the dispatch")
+                .isEqualTo(1)
 
             result.use { it[output] }
-            assertThat(submits() - before).describedAs("including the readback").isEqualTo(2)
+            assertThat(staging.commandPool.submitCount - before).describedAs("including the readbacks").isEqualTo(2)
         }
     }
 
@@ -58,11 +72,11 @@ class VulkanSubmitCountTest {
         val input = StorageBuffer<FloatArray>(2).data(floatArrayOf(1f))
         val output = StorageBuffer<FloatArray>(3).size(1).asOutput()
 
-        compile(MIXED_SHADER).use { shader ->
-            val before = submits()
+        compile(MIXED_SHADER, staging).use { shader ->
+            val before = staging.commandPool.submitCount
             shader.dispatch(1, params, image, input, output).close()
 
-            assertThat(submits() - before).isEqualTo(1)
+            assertThat(staging.commandPool.submitCount - before).isEqualTo(1)
         }
     }
 
@@ -71,12 +85,12 @@ class VulkanSubmitCountTest {
         val first = StorageBuffer<IntArray>(0).size(1).asOutput()
         val second = StorageBuffer<IntArray>(1).size(1).asOutput()
 
-        compile(TWO_OUTPUT_SHADER).use { shader ->
+        compile(TWO_OUTPUT_SHADER, staging).use { shader ->
             shader.dispatch(1, first, second).use { result ->
-                val before = submits()
+                val before = staging.commandPool.submitCount
                 val values = result[first] to result[second]
 
-                assertThat(submits() - before).isEqualTo(1)
+                assertThat(staging.commandPool.submitCount - before).isEqualTo(1)
                 assertThat(values.first).containsExactly(1)
                 assertThat(values.second).containsExactly(2)
             }
@@ -84,12 +98,30 @@ class VulkanSubmitCountTest {
     }
 
     @Test
+    fun `persistent outputs are read without a submission on a device with unified memory`() {
+        assumeTrue(hasDirectAccess(), "the device has no memory the host can access directly")
+        val first = StorageBuffer<IntArray>(0).size(1).asOutput()
+        val second = StorageBuffer<IntArray>(1).size(1).asOutput()
+
+        compile(TWO_OUTPUT_SHADER, direct).use { shader ->
+            val before = direct.commandPool.submitCount
+            shader.dispatch(1, first, second).use { result ->
+                assertThat(direct.commandPool.submitCount - before).describedAs("the dispatch").isEqualTo(1)
+
+                assertThat(result[first]).containsExactly(1)
+                assertThat(result[second]).containsExactly(2)
+                assertThat(direct.commandPool.submitCount - before).describedAs("including reading").isEqualTo(1)
+            }
+        }
+    }
+
+    @Test
     fun `an empty batch submits nothing`() {
-        val before = submits()
+        val before = staging.commandPool.submitCount
 
-        VulkanTransferBatch(context).use { it.submit() }
+        VulkanTransferBatch(staging).use { it.submit() }
 
-        assertThat(submits()).isEqualTo(before)
+        assertThat(staging.commandPool.submitCount).isEqualTo(before)
     }
 
     companion object {

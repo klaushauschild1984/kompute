@@ -18,6 +18,7 @@ class VulkanTestContext : AutoCloseable {
     private val vulkanDevice = VulkanDevice(physicalDevice)
     private val commandPool = VulkanCommandPool(vulkanDevice, physicalDevice)
     private val allocator = VulkanAllocator(instance, physicalDevice, vulkanDevice)
+    private val directAccessByDefault = System.getProperty("kompute.backend.vulkan.directAccess")?.toBoolean() ?: true
 
     /**
      * The device the contexts were created for.
@@ -27,16 +28,20 @@ class VulkanTestContext : AutoCloseable {
     /**
      * The context under test.
      */
-    val context = VulkanContext(vulkanDevice, allocator, commandPool, physicalDevice.limits())
+    val context = VulkanContext(vulkanDevice, allocator, commandPool, physicalDevice.limits(), directAccessByDefault)
 
     /**
      * Creates a second context on the same device with other limits, e.g. artificially small ones, so
      * that limit validation can be tested independent of the hardware. It has to be closed.
      *
      * @param limits the limits the new context reports
+     * @param directAccess whether its persistent buffers may use directly accessible memory
      * @return the new context
      */
-    fun contextWith(limits: VulkanLimits) = VulkanContext(vulkanDevice, allocator, commandPool, limits)
+    fun contextWith(
+        limits: VulkanLimits,
+        directAccess: Boolean = directAccessByDefault,
+    ) = VulkanContext(vulkanDevice, allocator, commandPool, limits, directAccess)
 
     /**
      * Creates a second command pool with a fence timeout. It has to be closed.

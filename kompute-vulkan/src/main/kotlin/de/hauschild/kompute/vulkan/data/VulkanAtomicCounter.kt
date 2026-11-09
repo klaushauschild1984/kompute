@@ -37,6 +37,7 @@ VulkanReadable<Int> {
     override fun scheduleBind(batch: VulkanTransferBatch) {
         val (buffer, _) = context.bufferCache.getOrAllocate(source, Int.SIZE_BYTES.toLong(), BUFFER_USAGE)
         deviceBuffer = buffer
+        batch.use(buffer)
         batch.upload(buffer) { staging -> staging.putInt(source.start) }
     }
 
