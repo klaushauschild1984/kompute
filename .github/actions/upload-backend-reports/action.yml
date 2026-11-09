@@ -32,7 +32,8 @@ runs:
           if: always()
           with:
               name: Tests (${{ inputs.backend }} / ${{ inputs.os }})
-              path: ${{ inputs.module }}/build/test-results/test/*.xml
+              # testWithStaging exists only in the Vulkan module, a pattern without matches is ignored
+              path: ${{ inputs.module }}/build/test-results/test/*.xml,${{ inputs.module }}/build/test-results/testWithStaging/*.xml
               reporter: java-junit
 
         - name: Upload test results
@@ -40,7 +41,9 @@ runs:
           if: always()
           with:
               name: test-results-${{ inputs.backend }}-${{ inputs.os }}
-              path: ${{ inputs.module }}/build/test-results/test/*.xml
+              path: |
+                  ${{ inputs.module }}/build/test-results/test/*.xml
+                  ${{ inputs.module }}/build/test-results/testWithStaging/*.xml
 
         - name: Generate Coverage Badge
           uses: cicirello/jacoco-badge-generator@v2
