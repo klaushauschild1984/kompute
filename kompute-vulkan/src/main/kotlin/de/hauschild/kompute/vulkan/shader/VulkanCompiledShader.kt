@@ -104,7 +104,8 @@ class VulkanCompiledShader(
             closeAfterFailure(bindables, t)
             throw t
         }
-        return ShaderResult(VulkanResultReader(bindables))
+        val reader = VulkanResultReader(bindables, context.resources)
+        return ShaderResult(reader).also { context.resources.closeWhenUnreachable(it, reader) }
     }
 
     private fun dispatch(
