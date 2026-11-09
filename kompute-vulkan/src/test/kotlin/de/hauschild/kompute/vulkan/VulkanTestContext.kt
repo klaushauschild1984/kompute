@@ -10,10 +10,10 @@ import de.hauschild.kompute.vulkan.backend.VulkanPhysicalDevice
 
 /**
  * Creates the Vulkan objects behind a [VulkanContext] without a backend, so that resources can be
- * tested on their own.
+ * tested on their own. Honors the system property `kompute.backend.vulkan.validation` like the backend.
  */
 class VulkanTestContext : AutoCloseable {
-    private val instance = VulkanInstance()
+    private val instance = VulkanInstance(System.getProperty("kompute.backend.vulkan.validation").toBoolean())
     private val physicalDevice = VulkanPhysicalDevice(false, null, instance)
     private val vulkanDevice = VulkanDevice(physicalDevice)
     private val commandPool = VulkanCommandPool(vulkanDevice, physicalDevice)

@@ -22,6 +22,10 @@ import org.lwjgl.vulkan.VK13
  *
  * System property `kompute.backend.vulkan.device`: if set, only physical devices whose name
  * contains this value (case-insensitive) are considered; initialization fails if none match.
+ *
+ * System property `kompute.backend.vulkan.validation`: if `true`, enables the Khronos validation
+ * layer (`VK_LAYER_KHRONOS_validation`) and routes its messages to the logger; initialization fails
+ * if the layer is not installed. Meant for development, the layer slows down every call.
  */
 class VulkanBackend : AbstractBackend() {
     private lateinit var vulkanInstance: VulkanInstance
@@ -34,7 +38,7 @@ class VulkanBackend : AbstractBackend() {
     @InternalApi
     override fun type(): Type = Type.Vulkan
     override fun doInitialize() {
-        vulkanInstance = VulkanInstance()
+        vulkanInstance = VulkanInstance(System.getProperty(VALIDATION_PROPERTY).toBoolean())
         val dedicatedComputeQueue = System.getProperty(DEDICATED_COMPUTE_QUEUE_PROPERTY).toBoolean()
         val deviceName = System.getProperty(DEVICE_NAME_PROPERTY)
         vulkanPhysicalDevice = VulkanPhysicalDevice(dedicatedComputeQueue, deviceName, vulkanInstance)
@@ -88,6 +92,7 @@ class VulkanBackend : AbstractBackend() {
     companion object {
         private const val DEDICATED_COMPUTE_QUEUE_PROPERTY = "kompute.backend.vulkan.dedicatedComputeQueue"
         private const val DEVICE_NAME_PROPERTY = "kompute.backend.vulkan.device"
+        private const val VALIDATION_PROPERTY = "kompute.backend.vulkan.validation"
         private const val BYTES_PER_GB = 1_024 * 1_024 * 1_024
         private val logger = KotlinLogging.logger {}
 
