@@ -1,6 +1,6 @@
 plugins {
     id("kompute.kotlin-conventions")
-    id("kompute.lwjgl-conventions")
+    id("kompute.opengl-conventions")
     alias(libs.plugins.jmh)
 }
 

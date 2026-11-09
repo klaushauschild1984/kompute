@@ -22,7 +22,7 @@ interface Backend : AutoCloseable {
     /**
      * Initializes the backend, preparing it for use.
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeBackendInitializationException] if backend initialization
+     * @throws KomputeBackendInitializationException if backend initialization
      * fails
      */
     @InternalApi

@@ -12,7 +12,7 @@ sealed interface ShaderData {
     /**
      * Validates this shader data configuration.
      *
-     * @throws [KomputeConfigurationException] if the configuration is invalid
+     * @throws KomputeConfigurationException if the configuration is invalid
      */
     fun validate()
 }

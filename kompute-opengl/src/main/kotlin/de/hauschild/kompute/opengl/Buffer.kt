@@ -24,7 +24,7 @@ where T : ShaderData, T : IndexedBinding{
      * Validates that the buffer's binding index is within the GPU's supported range.
      *
      * @param maxBindings the maximum number of buffer bindings supported by the GPU
-     * @throws [KomputeConfigurationException] if the index exceeds the limit
+     * @throws KomputeConfigurationException if the index exceeds the limit
      */
     fun validate(maxBindings: Int) {
         requireConfiguration(source.index < maxBindings) {

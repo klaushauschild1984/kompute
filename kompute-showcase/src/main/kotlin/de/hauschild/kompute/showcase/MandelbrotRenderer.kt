@@ -5,7 +5,7 @@ import de.hauschild.kompute.core.backend.Backend
 import de.hauschild.kompute.core.data.Image2D
 import de.hauschild.kompute.core.data.Image2D.Format
 import de.hauschild.kompute.core.data.NamedUniform
-import de.hauschild.kompute.core.shader.ShaderSource.Code
+import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.awt.image.BufferedImage
 import kotlin.time.TimeSource

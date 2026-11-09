@@ -10,4 +10,6 @@
     </root>
 
     <logger name="de.hauschild.kompute" level="INFO"/>
+    <logger name="de.hauschild.kompute.opengl.backend" level="DEBUG"/>
+    <logger name="de.hauschild.kompute.vulkan.backend" level="DEBUG"/>
 </configuration>

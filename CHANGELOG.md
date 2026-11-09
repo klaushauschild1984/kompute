@@ -3,7 +3,14 @@
 All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [v0.13.0]
+## [v1.0.0]
+
+### Added
+- `kompute-vulkan` module — Vulkan compute backend via LWJGL, available through `Kompute.vulkan()`. Shaders are GLSL (compiled with shaderc) or SPIR-V; their bindings are reflected from the SPIR-V and validated against the supplied `ShaderData` and the device limits before every dispatch
+- `StorageBuffer`, `UniformBufferObject`, `Image2D` and `AtomicCounter` on Vulkan. `AtomicCounter` is a storage buffer with atomic operations in the shader, as Vulkan has no atomic counter resource; `NamedUniform` stays OpenGL-only
+- Persistent buffers on Vulkan — `StorageBuffer` and `AtomicCounter` keep their GPU memory across dispatches, like in the OpenGL backend
+- Vulkan system properties — `kompute.backend.vulkan.device` and `kompute.backend.vulkan.dedicatedComputeQueue` select the GPU, `kompute.backend.vulkan.validation` enables the Khronos validation layer, `kompute.backend.vulkan.timeout` limits how long to wait for the GPU and `kompute.backend.vulkan.directAccess` controls whether devices with unified memory skip the staging copies
+- Vulkan dispatches are cheap: uploads, dispatch and readbacks share submissions, and descriptor sets and command buffers are reused
 
 ### Changed
 - **Requires JDK 25** — the library is built for and targets Java 25 (was 21)

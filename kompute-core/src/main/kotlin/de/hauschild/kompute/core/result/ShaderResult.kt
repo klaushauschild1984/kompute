@@ -20,7 +20,7 @@ class ShaderResult(
      *
      * @param output the output buffer to retrieve the result for
      * @return the data for the particular [OutputCapable]
-     * @throws [KomputeConfigurationException] if no output is available for the given [OutputCapable]
+     * @throws KomputeConfigurationException if no output is available for the given [OutputCapable]
      */
     @Suppress("UNCHECKED_CAST")
     operator fun <T : Any> get(output: OutputCapable<T>): T =

@@ -7,7 +7,7 @@ import de.hauschild.kompute.core.data.NamedUniform
 import de.hauschild.kompute.core.data.StorageBuffer
 import de.hauschild.kompute.core.pipeline.Pipeline
 import de.hauschild.kompute.core.pipeline.Stage
-import de.hauschild.kompute.core.shader.ShaderSource.Code
+import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import de.hauschild.kompute.showcase.BackendUser
 import java.awt.image.BufferedImage
 import kotlin.math.ceil

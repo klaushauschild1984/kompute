@@ -11,7 +11,7 @@ sealed interface Binding {
     /**
      * Validates this binding's configuration.
      *
-     * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if the configuration is invalid
+     * @throws KomputeConfigurationException if the configuration is invalid
      */
     fun validate()
 }

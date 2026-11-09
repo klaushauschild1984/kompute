@@ -1,0 +1,137 @@
+package de.hauschild.kompute.vulkan.backend
+
+import de.hauschild.kompute.core.InternalApi
+import de.hauschild.kompute.core.backend.AbstractBackend
+import de.hauschild.kompute.core.backend.Type
+import de.hauschild.kompute.core.exception.requireBackendInitialization
+import de.hauschild.kompute.core.shader.CompiledShader
+import de.hauschild.kompute.core.shader.ShaderSource
+import de.hauschild.kompute.vulkan.shader.VulkanCompiledShader
+import io.github.oshai.kotlinlogging.KotlinLogging
+import org.lwjgl.vulkan.VK13
+
+/**
+ * Vulkan compute backend implementation using LWJGL.
+ *
+ * Creates a Vulkan instance, selects a compute-capable physical device, and sets up a logical
+ * device with a dedicated compute queue and command pool. Buffer and image memory is managed via
+ * the Vulkan Memory Allocator (VMA). An opt-in validation layer enables detailed API usage
+ * checking during development.
+ *
+ * Closing the backend releases everything that belongs to it: the compiled shaders and the results
+ * that were not closed, and the persistent buffers.
+ *
+ * System property `kompute.backend.vulkan.dedicatedComputeQueue`: if set, prefers a compute queue
+ * family without graphics capabilities, falling back to a combined family if none is found.
+ *
+ * System property `kompute.backend.vulkan.device`: if set, only physical devices whose name
+ * contains this value (case-insensitive) are considered; initialization fails if none match.
+ *
+ * System property `kompute.backend.vulkan.validation`: if `true`, enables the Khronos validation
+ * layer (`VK_LAYER_KHRONOS_validation`) and routes its messages to the logger; initialization fails
+ * if the layer is not installed. Meant for development, the layer slows down every call.
+ *
+ * System property `kompute.backend.vulkan.timeout`: the number of seconds to wait for the GPU to
+ * finish a submission, `0` or unset waits forever. When it elapses a [VulkanTimeoutException] is
+ * thrown and the backend is unusable and has to be closed.
+ *
+ * System property `kompute.backend.vulkan.directAccess`: defaults to `true`. On devices with unified memory
+ * (e.g. integrated GPUs) the persistent buffers then live in memory the host can access directly, so no
+ * staging copies are needed. `false` always uses staging buffers.
+ */
+class VulkanBackend : AbstractBackend() {
+    private lateinit var vulkanInstance: VulkanInstance
+    private lateinit var vulkanPhysicalDevice: VulkanPhysicalDevice
+    private lateinit var vulkanDevice: VulkanDevice
+    private lateinit var vulkanCommandPool: VulkanCommandPool
+    private lateinit var vulkanAllocator: VulkanAllocator
+    private lateinit var vulkanContext: VulkanContext
+
+    @InternalApi
+    override fun type(): Type = Type.Vulkan
+    override fun doInitialize() {
+        vulkanInstance = VulkanInstance(System.getProperty(VALIDATION_PROPERTY).toBoolean())
+        val dedicatedComputeQueue = System.getProperty(DEDICATED_COMPUTE_QUEUE_PROPERTY).toBoolean()
+        val deviceName = System.getProperty(DEVICE_NAME_PROPERTY)
+        vulkanPhysicalDevice = VulkanPhysicalDevice(dedicatedComputeQueue, deviceName, vulkanInstance)
+        vulkanDevice = VulkanDevice(vulkanPhysicalDevice)
+        vulkanCommandPool = VulkanCommandPool(vulkanDevice, vulkanPhysicalDevice, fenceTimeoutNanos())
+        vulkanAllocator = VulkanAllocator(vulkanInstance, vulkanPhysicalDevice, vulkanDevice)
+        vulkanContext = VulkanContext(
+            vulkanDevice,
+            vulkanAllocator,
+            vulkanCommandPool,
+            vulkanPhysicalDevice.limits(),
+            System.getProperty(DIRECT_ACCESS_PROPERTY)?.toBoolean() ?: true,
+        )
+
+        logger.info {
+            "Vulkan Backend initialized with device: ${vulkanPhysicalDevice.name()}, " +
+                    "apiVersion: ${vulkanPhysicalDevice.apiVersion()}, " +
+                    "deviceLocalMemory: ${vulkanPhysicalDevice.deviceLocalMemory() / BYTES_PER_GB} GB, " +
+                    "driverVersion: ${vulkanPhysicalDevice.driverVersion()}"
+        }
+    }
+
+    private fun fenceTimeoutNanos(): Long {
+        val value = System.getProperty(TIMEOUT_PROPERTY) ?: return VulkanCommandPool.NO_TIMEOUT
+        val seconds = value.toLongOrNull()
+        requireBackendInitialization(seconds != null && seconds >= 0) {
+            "$TIMEOUT_PROPERTY must be a non-negative number of seconds, was '$value'"
+        }
+        return if (seconds == 0L) {
+            VulkanCommandPool.NO_TIMEOUT
+        } else {
+            seconds.coerceAtMost(MAX_TIMEOUT_SECONDS) * VulkanCommandPool.NANOS_PER_SECOND
+        }
+    }
+
+    @Suppress("TooGenericExceptionCaught") // cleans up on any failure and rethrows
+    override fun compileSource(source: ShaderSource): CompiledShader {
+        val vulkanShaderModule = VulkanShaderModule(source, vulkanDevice)
+        val vulkanPipeline = try {
+            VulkanPipeline(vulkanDevice, vulkanShaderModule)
+        } catch (t: Throwable) {
+            vulkanShaderModule.close()
+            throw t
+        }
+        return VulkanCompiledShader(vulkanShaderModule, vulkanPipeline, vulkanContext)
+            .also { vulkanContext.resources.register(it) }
+    }
+
+    override fun close() {
+        if (::vulkanContext.isInitialized) {
+            vulkanContext.close()
+        }
+        if (::vulkanAllocator.isInitialized) {
+            vulkanAllocator.close()
+        }
+        if (::vulkanCommandPool.isInitialized) {
+            vulkanCommandPool.close()
+        }
+        if (::vulkanDevice.isInitialized) {
+            vulkanDevice.close()
+        }
+        if (::vulkanInstance.isInitialized) {
+            vulkanInstance.close()
+        }
+
+        logger.debug { "Vulkan Backend closed" }
+    }
+
+    companion object {
+        private const val DEDICATED_COMPUTE_QUEUE_PROPERTY = "kompute.backend.vulkan.dedicatedComputeQueue"
+        private const val DEVICE_NAME_PROPERTY = "kompute.backend.vulkan.device"
+        private const val VALIDATION_PROPERTY = "kompute.backend.vulkan.validation"
+        private const val TIMEOUT_PROPERTY = "kompute.backend.vulkan.timeout"
+        private const val DIRECT_ACCESS_PROPERTY = "kompute.backend.vulkan.directAccess"
+        private const val MAX_TIMEOUT_SECONDS = Long.MAX_VALUE / VulkanCommandPool.NANOS_PER_SECOND
+        private const val BYTES_PER_GB = 1_024 * 1_024 * 1_024
+        private val logger = KotlinLogging.logger {}
+
+        /**
+         * The Vulkan API version this backend targets.
+         */
+        val API_VERSION = VK13.VK_API_VERSION_1_3
+    }
+}

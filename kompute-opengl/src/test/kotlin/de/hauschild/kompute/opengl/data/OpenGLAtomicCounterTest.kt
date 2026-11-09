@@ -1,7 +1,7 @@
 package de.hauschild.kompute.opengl.data
 
 import de.hauschild.kompute.core.data.AtomicCounter
-import de.hauschild.kompute.core.shader.ShaderSource.Code
+import de.hauschild.kompute.core.shader.ShaderSource.Glsl.Code
 import de.hauschild.kompute.opengl.OpenGLBackendExtension
 import de.hauschild.kompute.opengl.backend.OpenGLBackend
 import org.assertj.core.api.Assertions.assertThat

@@ -24,7 +24,7 @@ interface NamedBinding : Binding {
          * Validates that no two named bindings share the same binding name.
          *
          * @param namedBindings the list of named bindings to cross-validate
-         * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if duplicate names are found
+         * @throws KomputeConfigurationException if duplicate names are found
          */
         fun crossValidate(namedBindings: List<NamedBinding>) {
             namedBindings.crossValidate("name") { it.name }

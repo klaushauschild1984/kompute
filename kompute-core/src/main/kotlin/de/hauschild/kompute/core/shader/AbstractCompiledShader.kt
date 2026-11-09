@@ -84,7 +84,7 @@ abstract class AbstractCompiledShader: CompiledShader {
      * @param y number of work groups in the Y dimension
      * @param z number of work groups in the Z dimension
      * @param data shader inputs and outputs to validate
-     * @throws [de.hauschild.kompute.core.exception.KomputeConfigurationException] if any constraint is violated
+     * @throws KomputeConfigurationException if any constraint is violated
      */
     protected open fun validateDispatch(
         x: Int,
